@@ -14,7 +14,14 @@
     "test:dev": "npm run prettier && npm run migrate:dev && jest --runInBand --coverage --coverageReporters=lcov",
     "test": "jest --runInBand --coverage --coverageReporters=lcov"
   },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.4.0",
     "@typescript-eslint/eslint-plugin": "^8.43.0",
