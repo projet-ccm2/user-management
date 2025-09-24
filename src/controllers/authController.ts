@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import {
-  TwitchAuthInfo,
-  validateAndParseTwitchTokens,
-} from "../services/twitchAuthService";
+import {TwitchAuthInfo} from "../class/TwitchAuthInfo";
+import {User} from "../class/User";
+import {Channel} from "../class/Channel";
+import {getUser} from "../services/authService";
 
 export const callbackConnexion = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -14,35 +14,26 @@ export const callbackConnexion = async (req: Request, res: Response): Promise<vo
       });
       return;
     }
+    const twitchInfo = TwitchAuthInfo.fromResBody(res.body)
 
-    const { accessToken, idToken, tokenType, expiresIn, scope, state } = req.body ?? {};
+      if(!twitchInfo){
+          res.status(400).json({
+              //TODO:
+          })
+      }
 
-    if (!accessToken || !idToken) {
-      res.status(400).json({
-        error: "Missing required fields: 'accessToken' and 'idToken' are mandatory",
-      });
-      return;
-    }
+      //TODO: get data from twitch API
+      const dataUser = await fetch("http://localhost:8080")
+      const channel = Channel.fromTwitchApi(dataUser)
+      const user = User.fromTwitchApi(dataUser, channel)
 
-    const payload: TwitchAuthInfo = {
-      accessToken: String(accessToken),
-      idToken: String(idToken),
-      tokenType: tokenType ? String(tokenType) : undefined,
-      expiresIn: typeof expiresIn === "number" ? expiresIn : undefined,
-      scope: Array.isArray(scope) ? scope.map(String) : undefined,
-      state: state ? String(state) : undefined,
-    };
-
-    const result = validateAndParseTwitchTokens(payload, {
-      clientId,
-      issuer: process.env.TWITCH_ISSUER || "https://id.twitch.tv/oauth2",
-    });
+      // getUser
+      const userDb = await getUser(user.id)
 
     res.status(200).json({
       ok: true,
-      userId: result.userId,
-      claims: result.claims,
     });
+
     return;
   } catch (error: unknown) {
     if (error instanceof Error) {
