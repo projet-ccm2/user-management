@@ -18,7 +18,7 @@ export const callbackConnexion = async (req: Request, res: Response): Promise<vo
 
       if(!twitchInfo){
           res.status(400).json({
-              //TODO:
+                error: "Invalid Twitch auth info",
           })
       }
 
