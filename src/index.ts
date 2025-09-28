@@ -1,12 +1,16 @@
 import "dotenv/config";
-import express from "express";
-import authRoutes from "./routes/authRoute";
 import cors from "cors";
+import express from "express";
+import passport from "passport";
+import { configurePassport } from "./config/passport";
+import authRoutes from "./routes/authRoute";
 
 const app = express();
 const allowedOrigins = [
     "https://frontend-service-782869810736.europe-west1.run.app",
 ];
+
+configurePassport();
 
 app.use(
     cors({
@@ -22,6 +26,7 @@ app.use(
     }),
 );
 app.use(express.json());
+app.use(passport.initialize());
 app.use("/auth", authRoutes);
 app.disable("x-powered-by");
 
