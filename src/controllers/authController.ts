@@ -1,49 +1,21 @@
 import { Request, Response } from "express";
-import {TwitchAuthInfo} from "../class/TwitchAuthInfo";
-import {User} from "../class/User";
-import {Channel} from "../class/Channel";
-import {getUser} from "../services/authService";
+import type { TwitchPassportUser } from "../strategies/twitchTokenStrategy";
 
-export const callbackConnexion = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const clientId = process.env.TWITCH_CLIENT_ID;
-    if (!clientId) {
-      res.status(500).json({
-        error:
-          "Missing env var TWITCH_CLIENT_ID. Configure it to validate id_token audience.",
-      });
-      return;
-    }
-    const twitchInfo = TwitchAuthInfo.fromResBody(res.body)
+type AuthenticatedRequest = Request & { user?: TwitchPassportUser };
 
-      if(!twitchInfo){
-          res.status(400).json({
-                error: "Invalid Twitch auth info",
-          })
-      }
+export const callbackConnexion = (req: Request, res: Response): void => {
+  const { user } = req as AuthenticatedRequest;
 
-      //TODO: get data from twitch API
-      const dataUser = await fetch("http://localhost:8080")
-      const channel = Channel.fromTwitchApi(dataUser)
-      const user = User.fromTwitchApi(dataUser, channel)
-
-      // getUser
-      const userDb = await getUser(user.id)
-
-    res.status(200).json({
-      ok: true,
+  if (!user) {
+    res.status(500).json({
+      error: "Authenticated user missing from request context",
     });
-
     return;
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      console.error(error);
-      res
-        .status(400)
-        .json({ error: "Error during registration :" + error.message });
-      return;
-    } else {
-      console.error("Unknown error", error);
-    }
   }
+  
+  res.status(200).json({
+    ok: true,
+    userId: user.userId,
+    claims: user.claims,
+  });
 };

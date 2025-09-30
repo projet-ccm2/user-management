@@ -1,5 +1,6 @@
-import passport from "passport";
+
 import { TwitchTokenStrategy } from "../strategies/twitchTokenStrategy";
+import passport from "passport";
 
 export const PASSPORT_TWITCH_STRATEGY = "twitch-token";
 
