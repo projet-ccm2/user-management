@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import type { TwitchPassportUser } from "../strategies/twitchTokenStrategy";
 import User, { type UserAuthApproval } from "../models/user";
 import { fetchTwitchUser } from "../services/twitchUserService";
+import { dbGatewayService } from "../services/dbGatewayService";
 import { config } from "../config/environment";
 import { logger } from "../utils/logger";
 import { CustomError } from "../middlewares/errorHandler";
@@ -60,12 +61,17 @@ export const callbackConnexion = async (req: Request, res: Response): Promise<vo
       username: username 
     });
 
-    // TODO: Envoyer vers le gateway de base de données
-    // await userGateway.saveUser(userModel);
+    const dbResult = await dbGatewayService.saveUser(userModel);
+    
+    logger.info("User saved to database", {
+      userId: dbResult.userId,
+      username: username
+    });
 
     res.status(200).json({
       success: true,
       user: userModel.getAllWithoutAuth(),
+      userId: dbResult.userId
     });
   } catch (error) {
     if (error instanceof CustomError) {

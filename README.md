@@ -2,7 +2,7 @@
 
 Twitch authentication API for user management with robust error handling and professional logging.
 
-## 🚀 Installation and Setup
+## Installation and Setup
 
 ```bash
 # Install dependencies
@@ -18,7 +18,7 @@ npm run build
 npm start
 ```
 
-## 🔧 Configuration
+## Configuration
 
 ### Required Environment Variables
 
@@ -31,9 +31,10 @@ NODE_ENV=development
 PORT=3000
 TWITCH_ISSUER=https://id.twitch.tv/oauth2
 ALLOWED_ORIGINS=https://frontend-service-782869810736.europe-west1.run.app
+DB_GATEWAY_URL=http://localhost:3001
 ```
 
-## 📚 API Documentation
+## API Documentation
 
 ### Base URL
 ```
@@ -42,7 +43,7 @@ http://localhost:3000
 
 ### Endpoints
 
-#### 🔐 POST /auth/callback
+#### POST /auth/callback
 User authentication via Twitch OAuth.
 
 **Request Body:**
@@ -70,7 +71,8 @@ User authentication via Twitch OAuth.
       "profileImageUrl": "string"
     },
     "channelsWhichIsMod": ["string"]
-  }
+  },
+  "userId": "string"
 }
 ```
 
@@ -101,7 +103,7 @@ User authentication via Twitch OAuth.
 }
 ```
 
-#### 🏥 GET /health
+#### GET /health
 API health check.
 
 **Response 200:**
@@ -113,21 +115,21 @@ API health check.
 }
 ```
 
-## 🛡️ Security
+## Security
 
 - **Security Headers**: XSS, CSRF, and other attack protections
 - **CORS**: Strict validation of allowed origins
 - **Validation**: Twitch token verification
 - **Logging**: Complete operation traceability
 
-## 📝 Logging
+## Logging
 
 The API uses Winston for professional logging:
 - **Development**: Colored and detailed logs
 - **Production**: Structured JSON logs
 - **Levels**: error, warn, info, debug
 
-## 🧪 Testing
+## Testing
 
 ```bash
 # Tests with coverage
@@ -137,7 +139,7 @@ npm test
 npm run test:dev
 ```
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 src/
@@ -151,14 +153,14 @@ src/
 └── utils/           # Utilities (logger)
 ```
 
-## 🔄 Authentication Flow
+## Authentication Flow
 
 1. **Frontend** → Sends Twitch tokens to `/auth/callback`
 2. **API** → Validates tokens with Twitch
 3. **API** → Retrieves user data
 4. **API** → Returns user information
 
-## 📋 Error Codes
+## Error Codes
 
 | Code | Description |
 |------|-------------|
@@ -170,7 +172,7 @@ src/
 | 500  | Internal server error |
 | 502  | External API error (Twitch) |
 
-## 🚀 Deployment
+## Deployment
 
 ```bash
 # Build for production
@@ -179,6 +181,4 @@ npm run build
 # Start in production
 npm start
 ```
-
-The API handles graceful shutdown with SIGTERM/SIGINT.
 
