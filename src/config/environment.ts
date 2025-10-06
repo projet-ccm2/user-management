@@ -33,7 +33,7 @@ function validateConfig(): Config {
       issuer: process.env.TWITCH_ISSUER || "https://id.twitch.tv/oauth2",
     },
     cors: {
-      allowedOrigins: process.env.ALLOWED_ORIGINS 
+      allowedOrigins: process.env.ALLOWED_ORIGINS
         ? process.env.ALLOWED_ORIGINS.split(",")
         : ["https://frontend-service-782869810736.europe-west1.run.app"],
     },

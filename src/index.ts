@@ -24,7 +24,7 @@ app.get("/health", (req, res) => {
   res.status(200).json({
     status: "healthy",
     timestamp: new Date().toISOString(),
-    environment: config.nodeEnv
+    environment: config.nodeEnv,
   });
 });
 
@@ -35,7 +35,7 @@ if (config.nodeEnv !== "test") {
   const server = app.listen(config.port, () => {
     logger.info(`Server started on port ${config.port}`, {
       environment: config.nodeEnv,
-      port: config.port
+      port: config.port,
     });
   });
 

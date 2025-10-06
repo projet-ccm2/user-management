@@ -1,4 +1,3 @@
-
 import { TwitchTokenStrategy } from "../strategies/twitchTokenStrategy";
 import passport from "passport";
 import { config } from "./environment";
@@ -23,13 +22,13 @@ export const configurePassport = (): void => {
 
     logger.info("Passport configured successfully", {
       strategy: PASSPORT_TWITCH_STRATEGY,
-      issuer: config.twitch.issuer
+      issuer: config.twitch.issuer,
     });
 
     isConfigured = true;
   } catch (error) {
-    logger.error("Failed to configure Passport", { 
-      error: error instanceof Error ? error.message : "Unknown error" 
+    logger.error("Failed to configure Passport", {
+      error: error instanceof Error ? error.message : "Unknown error",
     });
     throw error;
   }

@@ -5,9 +5,9 @@ import { config } from "../../../config/environment";
 jest.mock("../../../config/environment", () => ({
   config: {
     cors: {
-      allowedOrigins: ["https://allowed.com", "http://localhost:3000"]
-    }
-  }
+      allowedOrigins: ["https://allowed.com", "http://localhost:3000"],
+    },
+  },
 }));
 
 describe("Security Middlewares", () => {
@@ -17,14 +17,14 @@ describe("Security Middlewares", () => {
 
   beforeEach(() => {
     mockReq = {
-      headers: {}
+      headers: {},
     };
 
     mockRes = {
       removeHeader: jest.fn(),
       setHeader: jest.fn(),
       status: jest.fn().mockReturnThis(),
-      json: jest.fn().mockReturnThis()
+      json: jest.fn().mockReturnThis(),
     };
 
     mockNext = jest.fn();
@@ -36,13 +36,22 @@ describe("Security Middlewares", () => {
       securityHeaders(mockReq as Request, mockRes as Response, mockNext);
 
       expect(mockRes.removeHeader).toHaveBeenCalledWith("X-Powered-By");
-      expect(mockRes.setHeader).toHaveBeenCalledWith("X-Content-Type-Options", "nosniff");
+      expect(mockRes.setHeader).toHaveBeenCalledWith(
+        "X-Content-Type-Options",
+        "nosniff",
+      );
       expect(mockRes.setHeader).toHaveBeenCalledWith("X-Frame-Options", "DENY");
-      expect(mockRes.setHeader).toHaveBeenCalledWith("X-XSS-Protection", "1; mode=block");
-      expect(mockRes.setHeader).toHaveBeenCalledWith("Referrer-Policy", "strict-origin-when-cross-origin");
+      expect(mockRes.setHeader).toHaveBeenCalledWith(
+        "X-XSS-Protection",
+        "1; mode=block",
+      );
+      expect(mockRes.setHeader).toHaveBeenCalledWith(
+        "Referrer-Policy",
+        "strict-origin-when-cross-origin",
+      );
       expect(mockRes.setHeader).toHaveBeenCalledWith(
         "Content-Security-Policy",
-        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
+        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'",
       );
       expect(mockNext).toHaveBeenCalled();
     });
@@ -60,29 +69,35 @@ describe("Security Middlewares", () => {
 
     it("should allow requests from allowed origins", () => {
       mockReq.headers = {
-        origin: "https://allowed.com"
+        origin: "https://allowed.com",
       };
 
       corsValidator(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(mockRes.setHeader).toHaveBeenCalledWith("Access-Control-Allow-Origin", "https://allowed.com");
+      expect(mockRes.setHeader).toHaveBeenCalledWith(
+        "Access-Control-Allow-Origin",
+        "https://allowed.com",
+      );
       expect(mockNext).toHaveBeenCalled();
     });
 
     it("should allow requests from localhost", () => {
       mockReq.headers = {
-        origin: "http://localhost:3000"
+        origin: "http://localhost:3000",
       };
 
       corsValidator(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(mockRes.setHeader).toHaveBeenCalledWith("Access-Control-Allow-Origin", "http://localhost:3000");
+      expect(mockRes.setHeader).toHaveBeenCalledWith(
+        "Access-Control-Allow-Origin",
+        "http://localhost:3000",
+      );
       expect(mockNext).toHaveBeenCalled();
     });
 
     it("should reject requests from disallowed origins", () => {
       mockReq.headers = {
-        origin: "https://malicious.com"
+        origin: "https://malicious.com",
       };
 
       corsValidator(mockReq as Request, mockRes as Response, mockNext);
@@ -90,19 +105,22 @@ describe("Security Middlewares", () => {
       expect(mockRes.status).toHaveBeenCalledWith(403);
       expect(mockRes.json).toHaveBeenCalledWith({
         error: "Origin not allowed by CORS policy",
-        status: 403
+        status: 403,
       });
       expect(mockNext).not.toHaveBeenCalled();
     });
 
     it("should handle multiple allowed origins", () => {
       mockReq.headers = {
-        origin: "https://allowed.com"
+        origin: "https://allowed.com",
       };
 
       corsValidator(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(mockRes.setHeader).toHaveBeenCalledWith("Access-Control-Allow-Origin", "https://allowed.com");
+      expect(mockRes.setHeader).toHaveBeenCalledWith(
+        "Access-Control-Allow-Origin",
+        "https://allowed.com",
+      );
       expect(mockNext).toHaveBeenCalled();
     });
   });

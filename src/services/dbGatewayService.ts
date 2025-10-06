@@ -22,7 +22,7 @@ export class DbGatewayService {
     try {
       logger.info("Sending user data to database gateway", {
         username: user.username,
-        channelId: user.channel.id
+        channelId: user.channel.id,
       });
 
       const userData = {
@@ -35,10 +35,10 @@ export class DbGatewayService {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Accept": "application/json"
+          Accept: "application/json",
         },
         body: JSON.stringify(userData),
-        signal: AbortSignal.timeout(this.timeout)
+        signal: AbortSignal.timeout(this.timeout),
       });
 
       if (!response.ok) {
@@ -46,19 +46,19 @@ export class DbGatewayService {
         logger.error("Database gateway request failed", {
           status: response.status,
           statusText: response.statusText,
-          error: errorText.substring(0, 500)
+          error: errorText.substring(0, 500),
         });
         throw new CustomError(
           `Database gateway error: ${response.status} ${response.statusText}`,
-          response.status
+          response.status,
         );
       }
 
       const result = await response.json();
-      
+
       logger.info("User successfully saved to database", {
         userId: result.userId,
-        username: user.username
+        username: user.username,
       });
 
       return result;
@@ -69,13 +69,12 @@ export class DbGatewayService {
 
       logger.error("Failed to save user to database gateway", {
         error: error instanceof Error ? error.message : "Unknown error",
-        username: user.username
+        username: user.username,
       });
 
       throw new CustomError("Failed to save user data", 502);
     }
   }
-
 }
 
 export const dbGatewayService = new DbGatewayService();

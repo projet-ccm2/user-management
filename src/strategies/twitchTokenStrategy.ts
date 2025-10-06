@@ -1,6 +1,10 @@
 import type { Request } from "express";
 import passport from "passport";
-import { TwitchAuthInfo, validateAndParseTwitchTokens, type TwitchIdTokenClaims } from "../services/twitchAuthService";
+import {
+  TwitchAuthInfo,
+  validateAndParseTwitchTokens,
+  type TwitchIdTokenClaims,
+} from "../services/twitchAuthService";
 
 export type TwitchPassportUser = {
   userId?: string;
@@ -26,17 +30,26 @@ export class TwitchTokenStrategy extends passport.Strategy {
   }
 
   authenticate(req: Request): void {
-    const { accessToken, idToken, tokenType, expiresIn, scope, state } = req.body ?? {};
+    const { accessToken, idToken, tokenType, expiresIn, scope, state } =
+      req.body ?? {};
 
     if (!this.clientId) {
-      this.error(new Error("Missing env var TWITCH_CLIENT_ID. Configure it to validate id_token audience."));
+      this.error(
+        new Error(
+          "Missing env var TWITCH_CLIENT_ID. Configure it to validate id_token audience.",
+        ),
+      );
       return;
     }
 
     if (!accessToken || !idToken) {
-      this.fail({
-        message: "Missing required fields: 'accessToken' and 'idToken' are mandatory",
-      }, 400);
+      this.fail(
+        {
+          message:
+            "Missing required fields: 'accessToken' and 'idToken' are mandatory",
+        },
+        400,
+      );
       return;
     }
 
@@ -63,7 +76,10 @@ export class TwitchTokenStrategy extends passport.Strategy {
 
       this.success(user);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Unknown error during Twitch token validation";
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unknown error during Twitch token validation";
       this.fail({ message }, 400);
     }
   }

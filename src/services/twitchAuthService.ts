@@ -54,7 +54,9 @@ export function validateAndParseTwitchTokens(
   }
 
   if (claims.iss && claims.iss !== issuer) {
-    throw new Error(`Invalid issuer: expected '${issuer}', got '${claims.iss}'`);
+    throw new Error(
+      `Invalid issuer: expected '${issuer}', got '${claims.iss}'`,
+    );
   }
 
   if (typeof claims.aud === "string") {
@@ -103,4 +105,3 @@ function base64UrlDecode(input: string): string {
   const buff = Buffer.from(base64, "base64");
   return buff.toString("utf8");
 }
-

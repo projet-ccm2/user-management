@@ -7,9 +7,9 @@ jest.mock("../../../utils/logger");
 jest.mock("../../../config/environment", () => ({
   config: {
     dbGateway: {
-      url: "http://localhost:3001"
-    }
-  }
+      url: "http://localhost:3001",
+    },
+  },
 }));
 
 const mockLogger = logger as jest.Mocked<typeof logger>;
@@ -36,7 +36,7 @@ describe("DbGatewayService", () => {
         id: "123",
         name: "testuser",
         description: "Test user",
-        profileImageUrl: "https://example.com/avatar.jpg"
+        profileImageUrl: "https://example.com/avatar.jpg",
       },
       channelsWhichIsMod: [],
       auth: {
@@ -47,8 +47,8 @@ describe("DbGatewayService", () => {
         expiresIn: 3600,
         expiresAt: new Date(Date.now() + 3600000),
         state: "random_state",
-        approvedAt: new Date()
-      }
+        approvedAt: new Date(),
+      },
     });
 
     it("should successfully save user to database gateway", async () => {
@@ -57,8 +57,8 @@ describe("DbGatewayService", () => {
         json: jest.fn().mockResolvedValue({
           success: true,
           userId: "db_user_123",
-          message: "User created successfully"
-        })
+          message: "User created successfully",
+        }),
       };
 
       mockFetch.mockResolvedValue(mockResponse as any);
@@ -71,7 +71,7 @@ describe("DbGatewayService", () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Accept": "application/json"
+            Accept: "application/json",
           },
           body: JSON.stringify({
             username: "testuser",
@@ -79,33 +79,33 @@ describe("DbGatewayService", () => {
               id: "123",
               name: "testuser",
               description: "Test user",
-              profileImageUrl: "https://example.com/avatar.jpg"
+              profileImageUrl: "https://example.com/avatar.jpg",
             },
-            channelsWhichIsMod: []
-          })
-        })
+            channelsWhichIsMod: [],
+          }),
+        }),
       );
 
       expect(result).toEqual({
         success: true,
         userId: "db_user_123",
-        message: "User created successfully"
+        message: "User created successfully",
       });
 
       expect(mockLogger.info).toHaveBeenCalledWith(
         "Sending user data to database gateway",
         expect.objectContaining({
           username: "testuser",
-          channelId: "123"
-        })
+          channelId: "123",
+        }),
       );
 
       expect(mockLogger.info).toHaveBeenCalledWith(
         "User successfully saved to database",
         expect.objectContaining({
           userId: "db_user_123",
-          username: "testuser"
-        })
+          username: "testuser",
+        }),
       );
     });
 
@@ -114,45 +114,52 @@ describe("DbGatewayService", () => {
         ok: false,
         status: 500,
         statusText: "Internal Server Error",
-        text: jest.fn().mockResolvedValue("Database error")
+        text: jest.fn().mockResolvedValue("Database error"),
       };
 
       mockFetch.mockResolvedValue(mockResponse as any);
 
-      await expect(dbGatewayService.saveUser(mockUser)).rejects.toThrow(CustomError);
+      await expect(dbGatewayService.saveUser(mockUser)).rejects.toThrow(
+        CustomError,
+      );
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         "Database gateway request failed",
         expect.objectContaining({
           status: 500,
           statusText: "Internal Server Error",
-          error: "Database error"
-        })
+          error: "Database error",
+        }),
       );
     });
 
     it("should handle network error", async () => {
       mockFetch.mockRejectedValue(new Error("Network error"));
 
-      await expect(dbGatewayService.saveUser(mockUser)).rejects.toThrow(CustomError);
+      await expect(dbGatewayService.saveUser(mockUser)).rejects.toThrow(
+        CustomError,
+      );
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         "Failed to save user to database gateway",
         expect.objectContaining({
           error: "Network error",
-          username: "testuser"
-        })
+          username: "testuser",
+        }),
       );
     });
 
     it("should handle timeout", async () => {
-      mockFetch.mockImplementation(() => 
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error("Timeout")), 100)
-        )
+      mockFetch.mockImplementation(
+        () =>
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Timeout")), 100),
+          ),
       );
 
-      await expect(dbGatewayService.saveUser(mockUser)).rejects.toThrow(CustomError);
+      await expect(dbGatewayService.saveUser(mockUser)).rejects.toThrow(
+        CustomError,
+      );
     });
   });
 });

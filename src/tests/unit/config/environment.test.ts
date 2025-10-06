@@ -45,14 +45,15 @@ describe("Environment Configuration", () => {
 
   it("should parse ALLOWED_ORIGINS correctly", () => {
     process.env.TWITCH_CLIENT_ID = "test_client_id";
-    process.env.ALLOWED_ORIGINS = "https://app1.com,https://app2.com,http://localhost:3000";
+    process.env.ALLOWED_ORIGINS =
+      "https://app1.com,https://app2.com,http://localhost:3000";
 
     const { config: testConfig } = require("../../../config/environment");
 
     expect(testConfig.cors.allowedOrigins).toEqual([
       "https://app1.com",
-      "https://app2.com", 
-      "http://localhost:3000"
+      "https://app2.com",
+      "http://localhost:3000",
     ]);
   });
 
@@ -63,7 +64,7 @@ describe("Environment Configuration", () => {
     const { config: testConfig } = require("../../../config/environment");
 
     expect(testConfig.cors.allowedOrigins).toEqual([
-      "https://frontend-service-782869810736.europe-west1.run.app"
+      "https://frontend-service-782869810736.europe-west1.run.app",
     ]);
   });
 

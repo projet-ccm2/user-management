@@ -25,22 +25,24 @@ describe("TwitchUserService", () => {
 
     it("should successfully fetch Twitch user data", async () => {
       const mockTwitchResponse = {
-        data: [{
-          id: "twitch_123",
-          login: "testuser",
-          display_name: "TestUser",
-          type: "user",
-          broadcaster_type: "",
-          description: "Test user description",
-          profile_image_url: "https://example.com/avatar.jpg",
-          offline_image_url: "https://example.com/offline.jpg",
-          created_at: "2020-01-01T00:00:00Z"
-        }]
+        data: [
+          {
+            id: "twitch_123",
+            login: "testuser",
+            display_name: "TestUser",
+            type: "user",
+            broadcaster_type: "",
+            description: "Test user description",
+            profile_image_url: "https://example.com/avatar.jpg",
+            offline_image_url: "https://example.com/offline.jpg",
+            created_at: "2020-01-01T00:00:00Z",
+          },
+        ],
       };
 
       const mockResponse = {
         ok: true,
-        text: jest.fn().mockResolvedValue(JSON.stringify(mockTwitchResponse))
+        text: jest.fn().mockResolvedValue(JSON.stringify(mockTwitchResponse)),
       };
 
       mockFetch.mockResolvedValue(mockResponse as any);
@@ -53,10 +55,10 @@ describe("TwitchUserService", () => {
           headers: {
             Authorization: "Bearer valid_access_token",
             "Client-Id": "valid_client_id",
-            Accept: "application/json"
+            Accept: "application/json",
           },
-          signal: expect.any(AbortSignal)
-        })
+          signal: expect.any(AbortSignal),
+        }),
       );
 
       expect(result).toEqual(mockTwitchResponse.data[0]);
@@ -67,25 +69,35 @@ describe("TwitchUserService", () => {
         expect.objectContaining({
           url: "https://api.twitch.tv/helix/users",
           headers: expect.objectContaining({
-            Authorization: "[REDACTED]"
-          })
-        })
+            Authorization: "[REDACTED]",
+          }),
+        }),
       );
-      expect(mockLogger.debug).toHaveBeenCalledWith("Successfully parsed Twitch API response");
+      expect(mockLogger.debug).toHaveBeenCalledWith(
+        "Successfully parsed Twitch API response",
+      );
       expect(mockLogger.info).toHaveBeenCalledWith(
         "Successfully fetched Twitch user",
-        { userId: "twitch_123", username: "testuser" }
+        { userId: "twitch_123", username: "testuser" },
       );
     });
 
     it("should throw error for missing access token", async () => {
-      await expect(fetchTwitchUser("", validClientId)).rejects.toThrow(CustomError);
-      await expect(fetchTwitchUser("   ", validClientId)).rejects.toThrow(CustomError);
+      await expect(fetchTwitchUser("", validClientId)).rejects.toThrow(
+        CustomError,
+      );
+      await expect(fetchTwitchUser("   ", validClientId)).rejects.toThrow(
+        CustomError,
+      );
     });
 
     it("should throw error for missing client ID", async () => {
-      await expect(fetchTwitchUser(validAccessToken, "")).rejects.toThrow(CustomError);
-      await expect(fetchTwitchUser(validAccessToken, "   ")).rejects.toThrow(CustomError);
+      await expect(fetchTwitchUser(validAccessToken, "")).rejects.toThrow(
+        CustomError,
+      );
+      await expect(fetchTwitchUser(validAccessToken, "   ")).rejects.toThrow(
+        CustomError,
+      );
     });
 
     it("should handle Twitch API error response", async () => {
@@ -93,95 +105,112 @@ describe("TwitchUserService", () => {
         ok: false,
         status: 401,
         statusText: "Unauthorized",
-        text: jest.fn().mockResolvedValue("Invalid token")
+        text: jest.fn().mockResolvedValue("Invalid token"),
       };
 
       mockFetch.mockResolvedValue(mockResponse as any);
 
-      await expect(fetchTwitchUser(validAccessToken, validClientId)).rejects.toThrow(CustomError);
+      await expect(
+        fetchTwitchUser(validAccessToken, validClientId),
+      ).rejects.toThrow(CustomError);
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         "Twitch API request failed",
         expect.objectContaining({
           status: 401,
           statusText: "Unauthorized",
-          body: "Invalid token"
-        })
+          body: "Invalid token",
+        }),
       );
     });
 
     it("should handle network error", async () => {
       mockFetch.mockRejectedValue(new Error("Network error"));
 
-      await expect(fetchTwitchUser(validAccessToken, validClientId)).rejects.toThrow(CustomError);
+      await expect(
+        fetchTwitchUser(validAccessToken, validClientId),
+      ).rejects.toThrow(CustomError);
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         "Network error when calling Twitch API",
-        { error: "Network error" }
+        { error: "Network error" },
       );
     });
 
     it("should handle timeout", async () => {
-      mockFetch.mockImplementation(() => 
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error("Timeout")), 100)
-        )
+      mockFetch.mockImplementation(
+        () =>
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Timeout")), 100),
+          ),
       );
 
-      await expect(fetchTwitchUser(validAccessToken, validClientId)).rejects.toThrow(CustomError);
+      await expect(
+        fetchTwitchUser(validAccessToken, validClientId),
+      ).rejects.toThrow(CustomError);
     });
 
     it("should handle invalid JSON response", async () => {
       const mockResponse = {
         ok: true,
-        text: jest.fn().mockResolvedValue("invalid json")
+        text: jest.fn().mockResolvedValue("invalid json"),
       };
 
       mockFetch.mockResolvedValue(mockResponse as any);
 
-      await expect(fetchTwitchUser(validAccessToken, validClientId)).rejects.toThrow(CustomError);
+      await expect(
+        fetchTwitchUser(validAccessToken, validClientId),
+      ).rejects.toThrow(CustomError);
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         "Failed to parse Twitch API response",
         expect.objectContaining({
           error: expect.any(String),
-          response: "invalid json"
-        })
+          response: "invalid json",
+        }),
       );
     });
 
     it("should handle empty data response", async () => {
       const mockTwitchResponse = {
-        data: []
+        data: [],
       };
 
       const mockResponse = {
         ok: true,
-        text: jest.fn().mockResolvedValue(JSON.stringify(mockTwitchResponse))
+        text: jest.fn().mockResolvedValue(JSON.stringify(mockTwitchResponse)),
       };
 
       mockFetch.mockResolvedValue(mockResponse as any);
 
-      await expect(fetchTwitchUser(validAccessToken, validClientId)).rejects.toThrow(CustomError);
+      await expect(
+        fetchTwitchUser(validAccessToken, validClientId),
+      ).rejects.toThrow(CustomError);
 
-      expect(mockLogger.warn).toHaveBeenCalledWith("No user data returned from Twitch API");
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        "No user data returned from Twitch API",
+      );
     });
 
     it("should handle null data response", async () => {
       const mockTwitchResponse = {
-        data: null
+        data: null,
       };
 
       const mockResponse = {
         ok: true,
-        text: jest.fn().mockResolvedValue(JSON.stringify(mockTwitchResponse))
+        text: jest.fn().mockResolvedValue(JSON.stringify(mockTwitchResponse)),
       };
 
       mockFetch.mockResolvedValue(mockResponse as any);
 
-      await expect(fetchTwitchUser(validAccessToken, validClientId)).rejects.toThrow(CustomError);
+      await expect(
+        fetchTwitchUser(validAccessToken, validClientId),
+      ).rejects.toThrow(CustomError);
 
-      expect(mockLogger.warn).toHaveBeenCalledWith("No user data returned from Twitch API");
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        "No user data returned from Twitch API",
+      );
     });
 
     it("should handle undefined data response", async () => {
@@ -189,24 +218,30 @@ describe("TwitchUserService", () => {
 
       const mockResponse = {
         ok: true,
-        text: jest.fn().mockResolvedValue(JSON.stringify(mockTwitchResponse))
+        text: jest.fn().mockResolvedValue(JSON.stringify(mockTwitchResponse)),
       };
 
       mockFetch.mockResolvedValue(mockResponse as any);
 
-      await expect(fetchTwitchUser(validAccessToken, validClientId)).rejects.toThrow(CustomError);
+      await expect(
+        fetchTwitchUser(validAccessToken, validClientId),
+      ).rejects.toThrow(CustomError);
 
-      expect(mockLogger.warn).toHaveBeenCalledWith("No user data returned from Twitch API");
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        "No user data returned from Twitch API",
+      );
     });
 
     it("should handle unexpected error", async () => {
       mockFetch.mockRejectedValue("Unexpected error");
 
-      await expect(fetchTwitchUser(validAccessToken, validClientId)).rejects.toThrow(CustomError);
+      await expect(
+        fetchTwitchUser(validAccessToken, validClientId),
+      ).rejects.toThrow(CustomError);
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         "Network error when calling Twitch API",
-        { error: "Unknown error" }
+        { error: "Unknown error" },
       );
     });
   });

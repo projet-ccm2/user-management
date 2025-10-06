@@ -1,7 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import { config } from "../config/environment";
 
-export const securityHeaders = (req: Request, res: Response, next: NextFunction): void => {
+export const securityHeaders = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void => {
   res.removeHeader("X-Powered-By");
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("X-Frame-Options", "DENY");
@@ -9,27 +13,31 @@ export const securityHeaders = (req: Request, res: Response, next: NextFunction)
   res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
   res.setHeader(
     "Content-Security-Policy",
-    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'",
   );
   next();
 };
 
-export const corsValidator = (req: Request, res: Response, next: NextFunction): void => {
+export const corsValidator = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void => {
   const origin = req.headers.origin;
-  
+
   if (!origin) {
     next();
     return;
   }
-  
+
   if (config.cors.allowedOrigins.includes(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
     next();
     return;
   }
-  
+
   res.status(403).json({
     error: "Origin not allowed by CORS policy",
-    status: 403
+    status: 403,
   });
 };

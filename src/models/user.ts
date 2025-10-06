@@ -30,20 +30,21 @@ class User {
   }) {
     this.username = params.username;
     this.channel = params.channel;
-    this.channelsWhichIsMod = params.channelsWhichIsMod ? [...params.channelsWhichIsMod] : [];
+    this.channelsWhichIsMod = params.channelsWhichIsMod
+      ? [...params.channelsWhichIsMod]
+      : [];
     this.auth = {
       ...params.auth,
       scope: params.auth.scope ? [...params.auth.scope] : undefined,
     };
   }
 
-  public getAllWithoutAuth(): Partial<User>{
-
-      return {
-        username: this.username,
-        channel: this.channel,
-        channelsWhichIsMod: this.channelsWhichIsMod,
-      };
+  public getAllWithoutAuth(): Partial<User> {
+    return {
+      username: this.username,
+      channel: this.channel,
+      channelsWhichIsMod: this.channelsWhichIsMod,
+    };
   }
 }
 

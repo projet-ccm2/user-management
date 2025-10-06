@@ -37,6 +37,7 @@ DB_GATEWAY_URL=http://localhost:3001
 ## API Documentation
 
 ### Base URL
+
 ```
 http://localhost:3000
 ```
@@ -44,13 +45,15 @@ http://localhost:3000
 ### Endpoints
 
 #### POST /auth/callback
+
 User authentication via Twitch OAuth.
 
 **Request Body:**
+
 ```json
 {
   "accessToken": "string",
-  "idToken": "string", 
+  "idToken": "string",
   "tokenType": "string",
   "expiresIn": "number",
   "scope": ["string"],
@@ -59,6 +62,7 @@ User authentication via Twitch OAuth.
 ```
 
 **Response 200 - Success:**
+
 ```json
 {
   "success": true,
@@ -66,7 +70,7 @@ User authentication via Twitch OAuth.
     "username": "string",
     "channel": {
       "id": "string",
-      "name": "string", 
+      "name": "string",
       "description": "string",
       "profileImageUrl": "string"
     },
@@ -77,6 +81,7 @@ User authentication via Twitch OAuth.
 ```
 
 **Response 400 - Validation Error:**
+
 ```json
 {
   "error": "Validation failed: Field 'accessToken' is required",
@@ -86,6 +91,7 @@ User authentication via Twitch OAuth.
 ```
 
 **Response 401 - Authentication Error:**
+
 ```json
 {
   "error": "Authentication failed: user context missing",
@@ -95,6 +101,7 @@ User authentication via Twitch OAuth.
 ```
 
 **Response 502 - Twitch API Error:**
+
 ```json
 {
   "error": "Failed to connect to Twitch API",
@@ -104,9 +111,11 @@ User authentication via Twitch OAuth.
 ```
 
 #### GET /health
+
 API health check.
 
 **Response 200:**
+
 ```json
 {
   "status": "healthy",
@@ -125,6 +134,7 @@ API health check.
 ## Logging
 
 The API uses Winston for professional logging:
+
 - **Development**: Colored and detailed logs
 - **Production**: Structured JSON logs
 - **Levels**: error, warn, info, debug
@@ -162,14 +172,14 @@ src/
 
 ## Error Codes
 
-| Code | Description |
-|------|-------------|
-| 200  | Success |
-| 400  | Validation error |
-| 401  | Authentication error |
-| 403  | CORS not allowed |
-| 404  | Route not found |
-| 500  | Internal server error |
+| Code | Description                 |
+| ---- | --------------------------- |
+| 200  | Success                     |
+| 400  | Validation error            |
+| 401  | Authentication error        |
+| 403  | CORS not allowed            |
+| 404  | Route not found             |
+| 500  | Internal server error       |
 | 502  | External API error (Twitch) |
 
 ## Deployment
@@ -181,4 +191,3 @@ npm run build
 # Start in production
 npm start
 ```
-

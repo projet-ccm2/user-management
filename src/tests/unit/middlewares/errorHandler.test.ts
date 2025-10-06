@@ -1,5 +1,9 @@
 import { Request, Response, NextFunction } from "express";
-import { CustomError, errorHandler, notFoundHandler } from "../../../middlewares/errorHandler";
+import {
+  CustomError,
+  errorHandler,
+  notFoundHandler,
+} from "../../../middlewares/errorHandler";
 import { logger } from "../../../utils/logger";
 
 jest.mock("../../../utils/logger");
@@ -14,12 +18,12 @@ describe("ErrorHandler", () => {
   beforeEach(() => {
     mockReq = {
       url: "/test",
-      method: "GET"
+      method: "GET",
     };
 
     mockRes = {
       status: jest.fn().mockReturnThis(),
-      json: jest.fn().mockReturnThis()
+      json: jest.fn().mockReturnThis(),
     };
 
     mockNext = jest.fn();
@@ -29,7 +33,7 @@ describe("ErrorHandler", () => {
   describe("CustomError", () => {
     it("should create CustomError with default status code", () => {
       const error = new CustomError("Test error");
-      
+
       expect(error.message).toBe("Test error");
       expect(error.statusCode).toBe(500);
       expect(error.isOperational).toBe(true);
@@ -38,7 +42,7 @@ describe("ErrorHandler", () => {
 
     it("should create CustomError with custom status code", () => {
       const error = new CustomError("Not found", 404);
-      
+
       expect(error.message).toBe("Not found");
       expect(error.statusCode).toBe(404);
       expect(error.isOperational).toBe(true);
@@ -48,7 +52,7 @@ describe("ErrorHandler", () => {
   describe("errorHandler", () => {
     it("should handle CustomError", () => {
       const error = new CustomError("Test error", 400);
-      
+
       errorHandler(error, mockReq as Request, mockRes as Response, mockNext);
 
       expect(mockLogger.error).toHaveBeenCalledWith(
@@ -57,21 +61,21 @@ describe("ErrorHandler", () => {
           statusCode: 400,
           url: "/test",
           method: "GET",
-          stack: expect.any(String)
-        })
+          stack: expect.any(String),
+        }),
       );
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith({
         error: "Test error",
         status: 400,
-        timestamp: expect.any(String)
+        timestamp: expect.any(String),
       });
     });
 
     it("should handle regular Error with default status code", () => {
       const error = new Error("Regular error");
-      
+
       errorHandler(error, mockReq as Request, mockRes as Response, mockNext);
 
       expect(mockLogger.error).toHaveBeenCalledWith(
@@ -80,41 +84,41 @@ describe("ErrorHandler", () => {
           statusCode: 500,
           url: "/test",
           method: "GET",
-          stack: expect.any(String)
-        })
+          stack: expect.any(String),
+        }),
       );
 
       expect(mockRes.status).toHaveBeenCalledWith(500);
       expect(mockRes.json).toHaveBeenCalledWith({
         error: "Regular error",
         status: 500,
-        timestamp: expect.any(String)
+        timestamp: expect.any(String),
       });
     });
 
     it("should handle error without statusCode", () => {
       const error = { message: "Error without statusCode" } as any;
-      
+
       errorHandler(error, mockReq as Request, mockRes as Response, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(500);
       expect(mockRes.json).toHaveBeenCalledWith({
         error: "Error without statusCode",
         status: 500,
-        timestamp: expect.any(String)
+        timestamp: expect.any(String),
       });
     });
 
     it("should handle error without message", () => {
       const error = { statusCode: 400 } as any;
-      
+
       errorHandler(error, mockReq as Request, mockRes as Response, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith({
         error: undefined,
         status: 400,
-        timestamp: expect.any(String)
+        timestamp: expect.any(String),
       });
     });
   });
@@ -127,7 +131,7 @@ describe("ErrorHandler", () => {
       expect(mockRes.json).toHaveBeenCalledWith({
         error: "Route GET /test not found",
         status: 404,
-        timestamp: expect.any(String)
+        timestamp: expect.any(String),
       });
     });
 
@@ -140,7 +144,7 @@ describe("ErrorHandler", () => {
       expect(mockRes.json).toHaveBeenCalledWith({
         error: "Route POST /api/users not found",
         status: 404,
-        timestamp: expect.any(String)
+        timestamp: expect.any(String),
       });
     });
   });

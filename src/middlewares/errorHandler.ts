@@ -22,21 +22,21 @@ export const errorHandler = (
   error: AppError,
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): void => {
   const { statusCode = 500, message } = error;
-  
+
   logger.error(message, {
     statusCode,
     url: req.url,
     method: req.method,
-    stack: error.stack
+    stack: error.stack,
   });
 
   res.status(statusCode).json({
     error: message,
     status: statusCode,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 };
 
@@ -44,6 +44,6 @@ export const notFoundHandler = (req: Request, res: Response): void => {
   res.status(404).json({
     error: `Route ${req.method} ${req.url} not found`,
     status: 404,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 };
