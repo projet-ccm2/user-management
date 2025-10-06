@@ -2,50 +2,45 @@ import { Request, Response } from "express";
 import type { TwitchPassportUser } from "../strategies/twitchTokenStrategy";
 import User, { type UserAuthApproval } from "../models/user";
 import { fetchTwitchUser } from "../services/twitchUserService";
+import { config } from "../config/environment";
+import { logger } from "../utils/logger";
+import { CustomError } from "../middlewares/errorHandler";
 
 type AuthenticatedRequest = Request & { user?: TwitchPassportUser };
 
 export const callbackConnexion = async (req: Request, res: Response): Promise<void> => {
-  const { user } = req as AuthenticatedRequest;
-
-  if (!user) {
-    res.status(500).json({
-      error: "Authenticated user missing from request context",
-    });
-    return;
-  }
-
-  const { tokens } = user;
-
-  if (!tokens?.accessToken || !tokens.idToken) {
-    res.status(500).json({
-      error: "Missing Twitch tokens to retrieve user information",
-    });
-    return;
-  }
-
-  const clientId = process.env.TWITCH_CLIENT_ID;
-
-  if (!clientId) {
-    res.status(500).json({
-      error: "Missing env var TWITCH_CLIENT_ID, cannot contact Twitch API",
-    });
-    return;
-  }
-
-  const authInfo: UserAuthApproval = {
-    accessToken: tokens.accessToken,
-    idToken: tokens.idToken,
-    tokenType: tokens.tokenType,
-    scope: tokens.scope,
-    expiresIn: tokens.expiresIn,
-    expiresAt: typeof tokens.expiresIn === "number" ? new Date(Date.now() + tokens.expiresIn * 1000) : undefined,
-    state: tokens.state,
-    approvedAt: new Date(),
-  };
-
   try {
-    const twitchUser = await fetchTwitchUser(tokens.accessToken, clientId);
+    const { user } = req as AuthenticatedRequest;
+
+    if (!user) {
+      logger.error("Authentication callback called without user in request context");
+      throw new CustomError("Authentication failed: user context missing", 401);
+    }
+
+    const { tokens } = user;
+
+    if (!tokens?.accessToken || !tokens.idToken) {
+      logger.error("Authentication callback called with incomplete tokens", { 
+        hasAccessToken: !!tokens?.accessToken,
+        hasIdToken: !!tokens?.idToken 
+      });
+      throw new CustomError("Authentication failed: incomplete token data", 401);
+    }
+
+    logger.info("Processing Twitch authentication callback", { userId: user.userId });
+
+    const authInfo: UserAuthApproval = {
+      accessToken: tokens.accessToken,
+      idToken: tokens.idToken,
+      tokenType: tokens.tokenType,
+      scope: tokens.scope,
+      expiresIn: tokens.expiresIn,
+      expiresAt: typeof tokens.expiresIn === "number" ? new Date(Date.now() + tokens.expiresIn * 1000) : undefined,
+      state: tokens.state,
+      approvedAt: new Date(),
+    };
+
+    const twitchUser = await fetchTwitchUser(tokens.accessToken, config.twitch.clientId);
     const username = twitchUser.display_name || twitchUser.login;
 
     const userModel = new User({
@@ -60,16 +55,26 @@ export const callbackConnexion = async (req: Request, res: Response): Promise<vo
       auth: authInfo,
     });
 
-    // send to db gateway
+    logger.info("User authentication successful", { 
+      userId: twitchUser.id, 
+      username: username 
+    });
+
+    // TODO: Envoyer vers le gateway de base de données
+    // await userGateway.saveUser(userModel);
 
     res.status(200).json({
-      ok: true,
+      success: true,
       user: userModel.getAllWithoutAuth(),
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unable to fetch Twitch user profile";
-    res.status(502).json({
-      error: message,
+    if (error instanceof CustomError) {
+      throw error;
+    }
+    
+    logger.error("Unexpected error in authentication callback", { 
+      error: error instanceof Error ? error.message : "Unknown error" 
     });
+    throw new CustomError("Authentication failed due to internal error", 500);
   }
 };

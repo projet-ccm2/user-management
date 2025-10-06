@@ -1,6 +1,8 @@
 
 import { TwitchTokenStrategy } from "../strategies/twitchTokenStrategy";
 import passport from "passport";
+import { config } from "./environment";
+import { logger } from "../utils/logger";
 
 export const PASSPORT_TWITCH_STRATEGY = "twitch-token";
 
@@ -11,12 +13,24 @@ export const configurePassport = (): void => {
     return;
   }
 
-  passport.use(
-    new TwitchTokenStrategy({
-      clientId: process.env.TWITCH_CLIENT_ID,
-      issuer: process.env.TWITCH_ISSUER || "https://id.twitch.tv/oauth2",
-    }),
-  );
+  try {
+    passport.use(
+      new TwitchTokenStrategy({
+        clientId: config.twitch.clientId,
+        issuer: config.twitch.issuer,
+      }),
+    );
 
-  isConfigured = true;
+    logger.info("Passport configured successfully", {
+      strategy: PASSPORT_TWITCH_STRATEGY,
+      issuer: config.twitch.issuer
+    });
+
+    isConfigured = true;
+  } catch (error) {
+    logger.error("Failed to configure Passport", { 
+      error: error instanceof Error ? error.message : "Unknown error" 
+    });
+    throw error;
+  }
 };

@@ -1,4 +1,5 @@
-import https from "node:https";
+import { logger } from "../utils/logger";
+import { CustomError } from "../middlewares/errorHandler";
 
 const TWITCH_USERS_ENDPOINT = "https://api.twitch.tv/helix/users";
 
@@ -19,68 +20,61 @@ type TwitchUsersResponse = {
   data?: TwitchUser[];
 };
 
-function isFetchAvailable(): boolean {
-  return typeof fetch === "function";
-}
-
 async function requestWithFetch(url: string, headers: Record<string, string>): Promise<string> {
-  const response = await fetch(url, { headers });
-  const body = await response.text();
-
-  if (!response.ok) {
-    throw new Error(`[Twitch] HTTP ${response.status}: ${body}`);
-  }
-
-  return body;
-}
-
-function requestWithHttps(url: string, headers: Record<string, string>): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const req = https.request(url, { method: "GET", headers }, (res) => {
-      const chunks: Buffer[] = [];
-
-      res.on("data", (chunk: string | Buffer) => {
-        chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
-      });
-
-      res.on("end", () => {
-        const body = Buffer.concat(chunks).toString("utf8");
-        const statusCode = res.statusCode ?? 500;
-
-        if (statusCode >= 200 && statusCode < 300) {
-          resolve(body);
-        } else {
-          reject(new Error(`[Twitch] HTTP ${statusCode}: ${body}`));
-        }
-      });
+  try {
+    logger.debug("Making request to Twitch API", { url, headers: { ...headers, Authorization: "[REDACTED]" } });
+    
+    const response = await fetch(url, { 
+      headers,
+      signal: AbortSignal.timeout(10000)
     });
+    
+    const body = await response.text();
 
-    req.on("error", reject);
-    req.end();
-  });
+    if (!response.ok) {
+      logger.error("Twitch API request failed", { 
+        status: response.status, 
+        statusText: response.statusText,
+        body: body.substring(0, 500)
+      });
+      throw new CustomError(`Twitch API error: ${response.status} ${response.statusText}`, response.status);
+    }
+
+    return body;
+  } catch (error) {
+    if (error instanceof CustomError) {
+      throw error;
+    }
+    
+    logger.error("Network error when calling Twitch API", { error: error instanceof Error ? error.message : "Unknown error" });
+    throw new CustomError("Failed to connect to Twitch API", 502);
+  }
 }
 
 async function requestTwitchUsers(url: string, headers: Record<string, string>): Promise<TwitchUsersResponse> {
-  const raw = isFetchAvailable()
-    ? await requestWithFetch(url, headers)
-    : await requestWithHttps(url, headers);
+  const raw = await requestWithFetch(url, headers);
 
   try {
-    return JSON.parse(raw) as TwitchUsersResponse;
+    const parsed = JSON.parse(raw) as TwitchUsersResponse;
+    logger.debug("Successfully parsed Twitch API response");
+    return parsed;
   } catch (error) {
     const reason = error instanceof Error ? error.message : "unknown";
-    throw new Error(`Unable to parse Twitch response: ${reason}`);
+    logger.error("Failed to parse Twitch API response", { error: reason, response: raw.substring(0, 200) });
+    throw new CustomError(`Invalid response from Twitch API: ${reason}`, 502);
   }
 }
 
 export async function fetchTwitchUser(accessToken: string, clientId: string): Promise<TwitchUser> {
-  if (!accessToken) {
-    throw new Error("Missing access token to fetch Twitch user");
+  if (!accessToken?.trim()) {
+    throw new CustomError("Access token is required", 400);
   }
 
-  if (!clientId) {
-    throw new Error("Missing client ID to fetch Twitch user");
+  if (!clientId?.trim()) {
+    throw new CustomError("Client ID is required", 400);
   }
+
+  logger.info("Fetching Twitch user data");
 
   const headers = {
     Authorization: `Bearer ${accessToken}`,
@@ -88,11 +82,24 @@ export async function fetchTwitchUser(accessToken: string, clientId: string): Pr
     Accept: "application/json",
   };
 
-  const payload = await requestTwitchUsers(TWITCH_USERS_ENDPOINT, headers);
+  try {
+    const payload = await requestTwitchUsers(TWITCH_USERS_ENDPOINT, headers);
 
-  if (!payload.data || payload.data.length === 0) {
-    throw new Error("No Twitch user data returned");
+    if (!payload.data || payload.data.length === 0) {
+      logger.warn("No user data returned from Twitch API");
+      throw new CustomError("No user data found in Twitch response", 404);
+    }
+
+    const user = payload.data[0];
+    logger.info("Successfully fetched Twitch user", { userId: user.id, username: user.login });
+    
+    return user;
+  } catch (error) {
+    if (error instanceof CustomError) {
+      throw error;
+    }
+    
+    logger.error("Unexpected error while fetching Twitch user", { error: error instanceof Error ? error.message : "Unknown error" });
+    throw new CustomError("Failed to fetch user data from Twitch", 502);
   }
-
-  return payload.data[0];
 }
