@@ -28,7 +28,7 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
-        run: npm run test -- --coverage --coverageReporters=lcov
+        run: npm run test:coverage
 
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v4

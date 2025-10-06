@@ -12,8 +12,9 @@
     "start": "node dist/index.js",
     "prettier": "npx prettier . --write",
     "test:dev": "npm run prettier && npm run migrate:dev && jest --runInBand --coverage --coverageReporters=lcov",
-    "test": "jest --runInBand --coverage --coverageReporters=lcov",
-    "test:ts": "npx jest --testPathPattern='src/' --runInBand --coverage --coverageReporters=lcov"
+    "test": "jest --testPathPattern='src/' --runInBand --coverage --coverageReporters=lcov",
+    "test:ts": "npx jest --testPathPattern='src/' --runInBand --coverage --coverageReporters=lcov",
+    "test:coverage": "jest --testPathPattern='src/' --runInBand --coverage --coverageReporters=text --coverageReporters=lcov"
   },
   "dependencies": {
     "@types/winston": "^2.4.4",
