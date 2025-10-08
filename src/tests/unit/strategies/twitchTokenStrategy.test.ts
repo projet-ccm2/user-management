@@ -4,7 +4,10 @@ import { Request } from "express";
 
 jest.mock("../../../services/twitchAuthService");
 
-const mockValidateAndParseTwitchTokens = validateAndParseTwitchTokens as jest.MockedFunction<typeof validateAndParseTwitchTokens>;
+const mockValidateAndParseTwitchTokens =
+  validateAndParseTwitchTokens as jest.MockedFunction<
+    typeof validateAndParseTwitchTokens
+  >;
 
 describe("TwitchTokenStrategy", () => {
   let strategy: TwitchTokenStrategy;
@@ -75,7 +78,9 @@ describe("TwitchTokenStrategy", () => {
       strategyWithoutClientId.authenticate(mockRequest as Request);
 
       expect(mockError).toHaveBeenCalledWith(
-        new Error("Missing env var TWITCH_CLIENT_ID. Configure it to validate id_token audience.")
+        new Error(
+          "Missing env var TWITCH_CLIENT_ID. Configure it to validate id_token audience.",
+        ),
       );
     });
 
@@ -88,9 +93,10 @@ describe("TwitchTokenStrategy", () => {
 
       expect(mockFail).toHaveBeenCalledWith(
         {
-          message: "Missing required fields: 'accessToken' and 'idToken' are mandatory",
+          message:
+            "Missing required fields: 'accessToken' and 'idToken' are mandatory",
         },
-        400
+        400,
       );
     });
 
@@ -103,9 +109,10 @@ describe("TwitchTokenStrategy", () => {
 
       expect(mockFail).toHaveBeenCalledWith(
         {
-          message: "Missing required fields: 'accessToken' and 'idToken' are mandatory",
+          message:
+            "Missing required fields: 'accessToken' and 'idToken' are mandatory",
         },
-        400
+        400,
       );
     });
 
@@ -116,9 +123,10 @@ describe("TwitchTokenStrategy", () => {
 
       expect(mockFail).toHaveBeenCalledWith(
         {
-          message: "Missing required fields: 'accessToken' and 'idToken' are mandatory",
+          message:
+            "Missing required fields: 'accessToken' and 'idToken' are mandatory",
         },
-        400
+        400,
       );
     });
 
@@ -177,7 +185,7 @@ describe("TwitchTokenStrategy", () => {
 
       expect(mockFail).toHaveBeenCalledWith(
         { message: "Token validation failed" },
-        400
+        400,
       );
     });
 
@@ -190,7 +198,7 @@ describe("TwitchTokenStrategy", () => {
 
       expect(mockFail).toHaveBeenCalledWith(
         { message: "Unknown error during Twitch token validation" },
-        400
+        400,
       );
     });
 
@@ -201,9 +209,10 @@ describe("TwitchTokenStrategy", () => {
 
       expect(mockFail).toHaveBeenCalledWith(
         {
-          message: "Missing required fields: 'accessToken' and 'idToken' are mandatory",
+          message:
+            "Missing required fields: 'accessToken' and 'idToken' are mandatory",
         },
-        400
+        400,
       );
     });
 
@@ -214,9 +223,10 @@ describe("TwitchTokenStrategy", () => {
 
       expect(mockFail).toHaveBeenCalledWith(
         {
-          message: "Missing required fields: 'accessToken' and 'idToken' are mandatory",
+          message:
+            "Missing required fields: 'accessToken' and 'idToken' are mandatory",
         },
-        400
+        400,
       );
     });
   });

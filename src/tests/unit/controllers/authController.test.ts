@@ -12,8 +12,12 @@ jest.mock("../../../services/dbGatewayService");
 jest.mock("../../../config/environment");
 jest.mock("../../../utils/logger");
 
-const mockFetchTwitchUser = fetchTwitchUser as jest.MockedFunction<typeof fetchTwitchUser>;
-const mockDbGatewayService = dbGatewayService as jest.Mocked<typeof dbGatewayService>;
+const mockFetchTwitchUser = fetchTwitchUser as jest.MockedFunction<
+  typeof fetchTwitchUser
+>;
+const mockDbGatewayService = dbGatewayService as jest.Mocked<
+  typeof dbGatewayService
+>;
 const mockLogger = logger as jest.Mocked<typeof logger>;
 
 describe("authController", () => {
@@ -25,7 +29,7 @@ describe("authController", () => {
   beforeEach(() => {
     mockJson = jest.fn().mockReturnThis();
     mockStatus = jest.fn().mockReturnValue({ json: mockJson });
-    
+
     mockRequest = {
       user: {
         userId: "12345",
@@ -87,7 +91,7 @@ describe("authController", () => {
 
       expect(mockFetchTwitchUser).toHaveBeenCalledWith(
         "test-access-token",
-        "test-client-id"
+        "test-client-id",
       );
       expect(mockDbGatewayService.saveUser).toHaveBeenCalled();
       expect(mockStatus).toHaveBeenCalledWith(200);
@@ -102,11 +106,11 @@ describe("authController", () => {
       mockRequest.user = undefined;
 
       await expect(
-        callbackConnexion(mockRequest as Request, mockResponse as Response)
+        callbackConnexion(mockRequest as Request, mockResponse as Response),
       ).rejects.toThrow(CustomError);
 
       expect(mockLogger.error).toHaveBeenCalledWith(
-        "Authentication callback called without user in request context"
+        "Authentication callback called without user in request context",
       );
     });
 
@@ -114,7 +118,7 @@ describe("authController", () => {
       mockRequest.user!.tokens.accessToken = undefined as any;
 
       await expect(
-        callbackConnexion(mockRequest as Request, mockResponse as Response)
+        callbackConnexion(mockRequest as Request, mockResponse as Response),
       ).rejects.toThrow(CustomError);
 
       expect(mockLogger.error).toHaveBeenCalledWith(
@@ -122,7 +126,7 @@ describe("authController", () => {
         {
           hasAccessToken: false,
           hasIdToken: true,
-        }
+        },
       );
     });
 
@@ -130,7 +134,7 @@ describe("authController", () => {
       mockRequest.user!.tokens.idToken = undefined as any;
 
       await expect(
-        callbackConnexion(mockRequest as Request, mockResponse as Response)
+        callbackConnexion(mockRequest as Request, mockResponse as Response),
       ).rejects.toThrow(CustomError);
 
       expect(mockLogger.error).toHaveBeenCalledWith(
@@ -138,7 +142,7 @@ describe("authController", () => {
         {
           hasAccessToken: true,
           hasIdToken: false,
-        }
+        },
       );
     });
 
@@ -147,14 +151,14 @@ describe("authController", () => {
       mockFetchTwitchUser.mockRejectedValueOnce(error);
 
       await expect(
-        callbackConnexion(mockRequest as Request, mockResponse as Response)
+        callbackConnexion(mockRequest as Request, mockResponse as Response),
       ).rejects.toThrow(CustomError);
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         "Unexpected error in authentication callback",
         {
           error: "Twitch API error",
-        }
+        },
       );
     });
 
@@ -163,14 +167,14 @@ describe("authController", () => {
       mockDbGatewayService.saveUser.mockRejectedValueOnce(error);
 
       await expect(
-        callbackConnexion(mockRequest as Request, mockResponse as Response)
+        callbackConnexion(mockRequest as Request, mockResponse as Response),
       ).rejects.toThrow(CustomError);
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         "Unexpected error in authentication callback",
         {
           error: "Database error",
-        }
+        },
       );
     });
 
@@ -192,7 +196,7 @@ describe("authController", () => {
       expect(mockDbGatewayService.saveUser).toHaveBeenCalledWith(
         expect.objectContaining({
           username: "DisplayName",
-        })
+        }),
       );
     });
 
@@ -214,7 +218,7 @@ describe("authController", () => {
       expect(mockDbGatewayService.saveUser).toHaveBeenCalledWith(
         expect.objectContaining({
           username: "testuser",
-        })
+        }),
       );
     });
 
@@ -228,7 +232,7 @@ describe("authController", () => {
           auth: expect.objectContaining({
             expiresAt: expect.any(Date),
           }),
-        })
+        }),
       );
     });
 
@@ -242,7 +246,7 @@ describe("authController", () => {
           auth: expect.objectContaining({
             expiresAt: undefined,
           }),
-        })
+        }),
       );
     });
 
@@ -251,7 +255,7 @@ describe("authController", () => {
       mockFetchTwitchUser.mockRejectedValueOnce(customError);
 
       await expect(
-        callbackConnexion(mockRequest as Request, mockResponse as Response)
+        callbackConnexion(mockRequest as Request, mockResponse as Response),
       ).rejects.toThrow(customError);
     });
 
@@ -259,14 +263,14 @@ describe("authController", () => {
       mockFetchTwitchUser.mockRejectedValueOnce("string error");
 
       await expect(
-        callbackConnexion(mockRequest as Request, mockResponse as Response)
+        callbackConnexion(mockRequest as Request, mockResponse as Response),
       ).rejects.toThrow(CustomError);
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         "Unexpected error in authentication callback",
         {
           error: "Unknown error",
-        }
+        },
       );
     });
   });

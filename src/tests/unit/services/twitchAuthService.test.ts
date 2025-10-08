@@ -1,4 +1,8 @@
-import { TwitchAuthInfo, validateAndParseTwitchTokens, type TwitchIdTokenClaims } from "../../../services/twitchAuthService";
+import {
+  TwitchAuthInfo,
+  validateAndParseTwitchTokens,
+  type TwitchIdTokenClaims,
+} from "../../../services/twitchAuthService";
 
 describe("TwitchAuthService", () => {
   describe("TwitchAuthInfo", () => {
@@ -36,7 +40,9 @@ describe("TwitchAuthService", () => {
   });
 
   describe("validateAndParseTwitchTokens", () => {
-    const createValidJWT = (claims: Partial<TwitchIdTokenClaims> = {}): string => {
+    const createValidJWT = (
+      claims: Partial<TwitchIdTokenClaims> = {},
+    ): string => {
       const header = { alg: "RS256", typ: "JWT" };
       const payload = {
         iss: "https://id.twitch.tv/oauth2",
@@ -46,11 +52,15 @@ describe("TwitchAuthService", () => {
         iat: Math.floor(Date.now() / 1000),
         ...claims,
       };
-      
-      const encodedHeader = Buffer.from(JSON.stringify(header)).toString("base64url");
-      const encodedPayload = Buffer.from(JSON.stringify(payload)).toString("base64url");
+
+      const encodedHeader = Buffer.from(JSON.stringify(header)).toString(
+        "base64url",
+      );
+      const encodedPayload = Buffer.from(JSON.stringify(payload)).toString(
+        "base64url",
+      );
       const signature = "test-signature";
-      
+
       return `${encodedHeader}.${encodedPayload}.${signature}`;
     };
 
@@ -64,7 +74,7 @@ describe("TwitchAuthService", () => {
     it("should validate tokens successfully", () => {
       const idToken = createValidJWT();
       const authInfo = createAuthInfo(idToken);
-      
+
       const result = validateAndParseTwitchTokens(authInfo, {
         clientId: "test-client-id",
         issuer: "https://id.twitch.tv/oauth2",
@@ -79,7 +89,7 @@ describe("TwitchAuthService", () => {
     it("should use default issuer when not provided", () => {
       const idToken = createValidJWT();
       const authInfo = createAuthInfo(idToken);
-      
+
       const result = validateAndParseTwitchTokens(authInfo, {
         clientId: "test-client-id",
       });
@@ -91,7 +101,7 @@ describe("TwitchAuthService", () => {
     it("should handle custom issuer", () => {
       const idToken = createValidJWT({ iss: "https://custom.issuer.com" });
       const authInfo = createAuthInfo(idToken);
-      
+
       const result = validateAndParseTwitchTokens(authInfo, {
         clientId: "test-client-id",
         issuer: "https://custom.issuer.com",
@@ -102,9 +112,11 @@ describe("TwitchAuthService", () => {
     });
 
     it("should handle array audience", () => {
-      const idToken = createValidJWT({ aud: ["test-client-id", "other-client"] });
+      const idToken = createValidJWT({
+        aud: ["test-client-id", "other-client"],
+      });
       const authInfo = createAuthInfo(idToken);
-      
+
       const result = validateAndParseTwitchTokens(authInfo, {
         clientId: "test-client-id",
       });
@@ -114,7 +126,7 @@ describe("TwitchAuthService", () => {
 
     it("should throw error for invalid JWT format", () => {
       const authInfo = createAuthInfo("invalid.jwt");
-      
+
       expect(() => {
         validateAndParseTwitchTokens(authInfo, {
           clientId: "test-client-id",
@@ -124,7 +136,7 @@ describe("TwitchAuthService", () => {
 
     it("should throw error for invalid base64", () => {
       const authInfo = createAuthInfo("header.invalid-payload.signature");
-      
+
       expect(() => {
         validateAndParseTwitchTokens(authInfo, {
           clientId: "test-client-id",
@@ -135,19 +147,21 @@ describe("TwitchAuthService", () => {
     it("should throw error for wrong issuer", () => {
       const idToken = createValidJWT({ iss: "https://wrong.issuer.com" });
       const authInfo = createAuthInfo(idToken);
-      
+
       expect(() => {
         validateAndParseTwitchTokens(authInfo, {
           clientId: "test-client-id",
           issuer: "https://id.twitch.tv/oauth2",
         });
-      }).toThrow("Invalid issuer: expected 'https://id.twitch.tv/oauth2', got 'https://wrong.issuer.com'");
+      }).toThrow(
+        "Invalid issuer: expected 'https://id.twitch.tv/oauth2', got 'https://wrong.issuer.com'",
+      );
     });
 
     it("should throw error for wrong audience (string)", () => {
       const idToken = createValidJWT({ aud: "wrong-client-id" });
       const authInfo = createAuthInfo(idToken);
-      
+
       expect(() => {
         validateAndParseTwitchTokens(authInfo, {
           clientId: "test-client-id",
@@ -156,9 +170,11 @@ describe("TwitchAuthService", () => {
     });
 
     it("should throw error for wrong audience (array)", () => {
-      const idToken = createValidJWT({ aud: ["wrong-client-id", "other-client"] });
+      const idToken = createValidJWT({
+        aud: ["wrong-client-id", "other-client"],
+      });
       const authInfo = createAuthInfo(idToken);
-      
+
       expect(() => {
         validateAndParseTwitchTokens(authInfo, {
           clientId: "test-client-id",
@@ -169,7 +185,7 @@ describe("TwitchAuthService", () => {
     it("should throw error for missing audience", () => {
       const idToken = createValidJWT({ aud: undefined });
       const authInfo = createAuthInfo(idToken);
-      
+
       expect(() => {
         validateAndParseTwitchTokens(authInfo, {
           clientId: "test-client-id",
@@ -178,11 +194,11 @@ describe("TwitchAuthService", () => {
     });
 
     it("should throw error for expired token", () => {
-      const idToken = createValidJWT({ 
-        exp: Math.floor(Date.now() / 1000) - 3600
+      const idToken = createValidJWT({
+        exp: Math.floor(Date.now() / 1000) - 3600,
       });
       const authInfo = createAuthInfo(idToken);
-      
+
       expect(() => {
         validateAndParseTwitchTokens(authInfo, {
           clientId: "test-client-id",
@@ -193,7 +209,7 @@ describe("TwitchAuthService", () => {
     it("should handle missing exp claim", () => {
       const idToken = createValidJWT({ exp: undefined });
       const authInfo = createAuthInfo(idToken);
-      
+
       const result = validateAndParseTwitchTokens(authInfo, {
         clientId: "test-client-id",
       });
@@ -204,7 +220,7 @@ describe("TwitchAuthService", () => {
     it("should handle missing sub claim", () => {
       const idToken = createValidJWT({ sub: undefined });
       const authInfo = createAuthInfo(idToken);
-      
+
       const result = validateAndParseTwitchTokens(authInfo, {
         clientId: "test-client-id",
       });
@@ -215,7 +231,7 @@ describe("TwitchAuthService", () => {
     it("should handle non-string sub claim", () => {
       const idToken = createValidJWT({ sub: 12345 as any });
       const authInfo = createAuthInfo(idToken);
-      
+
       const result = validateAndParseTwitchTokens(authInfo, {
         clientId: "test-client-id",
       });
@@ -226,7 +242,7 @@ describe("TwitchAuthService", () => {
     it("should handle missing issuer claim", () => {
       const idToken = createValidJWT({ iss: undefined });
       const authInfo = createAuthInfo(idToken);
-      
+
       const result = validateAndParseTwitchTokens(authInfo, {
         clientId: "test-client-id",
         issuer: "https://id.twitch.tv/oauth2",
@@ -236,15 +252,15 @@ describe("TwitchAuthService", () => {
     });
 
     it("should handle additional claims", () => {
-      const idToken = createValidJWT({ 
+      const idToken = createValidJWT({
         email: "test@example.com",
         email_verified: true,
         preferred_username: "testuser",
         picture: "https://example.com/avatar.jpg",
-        custom_claim: "custom_value"
+        custom_claim: "custom_value",
       });
       const authInfo = createAuthInfo(idToken);
-      
+
       const result = validateAndParseTwitchTokens(authInfo, {
         clientId: "test-client-id",
       });

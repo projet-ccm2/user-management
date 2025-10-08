@@ -12,16 +12,14 @@ const mockLogger = logger as jest.Mocked<typeof logger>;
 describe("Express App", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     mockConfig.nodeEnv = "test";
     mockConfig.port = 3000;
   });
 
   describe("GET /health", () => {
     it("should return health status", async () => {
-      const response = await request(app)
-        .get("/health")
-        .expect(200);
+      const response = await request(app).get("/health").expect(200);
 
       expect(response.body).toEqual({
         status: "healthy",
@@ -31,9 +29,7 @@ describe("Express App", () => {
     });
 
     it("should return valid timestamp", async () => {
-      const response = await request(app)
-        .get("/health")
-        .expect(200);
+      const response = await request(app).get("/health").expect(200);
 
       const timestamp = new Date(response.body.timestamp);
       expect(timestamp).toBeInstanceOf(Date);
@@ -62,9 +58,7 @@ describe("Express App", () => {
     });
 
     it("should handle CORS", async () => {
-      const response = await request(app)
-        .get("/health")
-        .expect(200);
+      const response = await request(app).get("/health").expect(200);
 
       expect(response.body.status).toBe("healthy");
     });
@@ -81,9 +75,7 @@ describe("Express App", () => {
     });
 
     it("should return 404 for unknown routes", async () => {
-      const response = await request(app)
-        .get("/unknown-route")
-        .expect(404);
+      const response = await request(app).get("/unknown-route").expect(404);
 
       expect(response.body).toHaveProperty("error");
     });
@@ -102,7 +94,7 @@ describe("Express App", () => {
 
     it("should handle large payloads", async () => {
       const largeData = "x".repeat(11 * 1024 * 1024);
-      
+
       const response = await request(app)
         .post("/test")
         .send({ data: largeData })
@@ -119,16 +111,14 @@ describe("Express App", () => {
 
     it("should not start server in test environment", () => {
       expect(mockLogger.info).not.toHaveBeenCalledWith(
-        expect.stringContaining("Server started on port")
+        expect.stringContaining("Server started on port"),
       );
     });
   });
 
   describe("Security headers", () => {
     it("should include security headers", async () => {
-      const response = await request(app)
-        .get("/health")
-        .expect(200);
+      const response = await request(app).get("/health").expect(200);
 
       expect(response.headers).toHaveProperty("x-content-type-options");
       expect(response.headers).toHaveProperty("x-frame-options");
@@ -137,9 +127,7 @@ describe("Express App", () => {
 
   describe("CORS validation", () => {
     it("should validate CORS origins", async () => {
-      const response = await request(app)
-        .get("/health")
-        .expect(200);
+      const response = await request(app).get("/health").expect(200);
 
       expect(response.body.status).toBe("healthy");
     });

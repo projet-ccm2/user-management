@@ -1,4 +1,7 @@
-import { configurePassport, PASSPORT_TWITCH_STRATEGY } from "../../../config/passport";
+import {
+  configurePassport,
+  PASSPORT_TWITCH_STRATEGY,
+} from "../../../config/passport";
 import { TwitchTokenStrategy } from "../../../strategies/twitchTokenStrategy";
 import { config } from "../../../config/environment";
 import { logger } from "../../../utils/logger";
@@ -9,14 +12,16 @@ jest.mock("../../../config/environment");
 jest.mock("../../../utils/logger");
 jest.mock("passport");
 
-const mockTwitchTokenStrategy = TwitchTokenStrategy as jest.MockedClass<typeof TwitchTokenStrategy>;
+const mockTwitchTokenStrategy = TwitchTokenStrategy as jest.MockedClass<
+  typeof TwitchTokenStrategy
+>;
 const mockPassport = passport as jest.Mocked<typeof passport>;
 const mockLogger = logger as jest.Mocked<typeof logger>;
 
 describe("passport configuration", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     (config as any) = {
       twitch: {
         clientId: "test-client-id",
@@ -42,7 +47,7 @@ describe("passport configuration", () => {
       });
 
       expect(mockPassport.use).toHaveBeenCalledWith(
-        expect.any(TwitchTokenStrategy)
+        expect.any(TwitchTokenStrategy),
       );
 
       expect(mockLogger.info).toHaveBeenCalledWith(
@@ -50,7 +55,7 @@ describe("passport configuration", () => {
         {
           strategy: "twitch-token",
           issuer: "https://id.twitch.tv/oauth2",
-        }
+        },
       );
     });
 
