@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import { fetchTwitchUser } from "../../../services/twitchUserService";
 import { logger } from "../../../utils/logger";
 import { CustomError } from "../../../middlewares/errorHandler";
