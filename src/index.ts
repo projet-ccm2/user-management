@@ -9,7 +9,7 @@ import { securityHeaders, corsValidator } from "./middlewares/security";
 import authRoutes from "./routes/authRoute";
 
 const app = express();
-
+app.disable("x-powered-by");
 configurePassport();
 
 app.use(securityHeaders);
