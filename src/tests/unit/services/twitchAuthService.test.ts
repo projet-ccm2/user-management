@@ -179,7 +179,7 @@ describe("TwitchAuthService", () => {
 
     it("should throw error for expired token", () => {
       const idToken = createValidJWT({ 
-        exp: Math.floor(Date.now() / 1000) - 3600 // Expired 1 hour ago
+        exp: Math.floor(Date.now() / 1000) - 3600
       });
       const authInfo = createAuthInfo(idToken);
       

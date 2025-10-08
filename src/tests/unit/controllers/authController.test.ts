@@ -7,7 +7,6 @@ import { logger } from "../../../utils/logger";
 import { CustomError } from "../../../middlewares/errorHandler";
 import type { TwitchPassportUser } from "../../../strategies/twitchTokenStrategy";
 
-// Mock des dépendances
 jest.mock("../../../services/twitchUserService");
 jest.mock("../../../services/dbGatewayService");
 jest.mock("../../../config/environment");
@@ -53,14 +52,11 @@ describe("authController", () => {
       json: mockJson,
     };
 
-    // Mock config
     (config as any) = {
       twitch: {
         clientId: "test-client-id",
       },
     };
-
-    // Mock fetchTwitchUser
     mockFetchTwitchUser.mockResolvedValue({
       id: "12345",
       login: "testuser",
@@ -73,13 +69,10 @@ describe("authController", () => {
       created_at: "2020-01-01T00:00:00Z",
     });
 
-    // Mock dbGatewayService
     mockDbGatewayService.saveUser = jest.fn().mockResolvedValue({
       userId: "12345",
       username: "TestUser",
     });
-
-    // Mock logger
     mockLogger.info = jest.fn();
     mockLogger.error = jest.fn();
   });

@@ -3,7 +3,6 @@ import app from "../../index";
 import { config } from "../../config/environment";
 import { logger } from "../../utils/logger";
 
-// Mock des dépendances
 jest.mock("../../config/environment");
 jest.mock("../../utils/logger");
 
@@ -14,7 +13,6 @@ describe("Express App", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     
-    // Mock config
     mockConfig.nodeEnv = "test";
     mockConfig.port = 3000;
   });
@@ -48,9 +46,8 @@ describe("Express App", () => {
       const response = await request(app)
         .post("/test-json")
         .send({ test: "data" })
-        .expect(404); // Route doesn't exist, but should parse JSON
+        .expect(404);
 
-      // Si on arrive ici, c'est que le middleware JSON fonctionne
       expect(response.status).toBe(404);
     });
 
@@ -75,13 +72,11 @@ describe("Express App", () => {
 
   describe("Route handling", () => {
     it("should handle auth routes", async () => {
-      // Test que les routes auth sont bien montées
       const response = await request(app)
         .post("/auth/callback")
         .send({})
-        .expect(400); // Devrait échouer car pas d'authentification
+        .expect(400);
 
-      // Si on arrive ici, c'est que la route existe
       expect(response.status).toBe(400);
     });
 
@@ -106,12 +101,12 @@ describe("Express App", () => {
     });
 
     it("should handle large payloads", async () => {
-      const largeData = "x".repeat(11 * 1024 * 1024); // 11MB
+      const largeData = "x".repeat(11 * 1024 * 1024);
       
       const response = await request(app)
         .post("/test")
         .send({ data: largeData })
-        .expect(413); // Payload too large
+        .expect(413);
 
       expect(response.body).toHaveProperty("error");
     });
@@ -123,7 +118,6 @@ describe("Express App", () => {
     });
 
     it("should not start server in test environment", () => {
-      // En mode test, le serveur ne devrait pas démarrer
       expect(mockLogger.info).not.toHaveBeenCalledWith(
         expect.stringContaining("Server started on port")
       );
@@ -136,7 +130,6 @@ describe("Express App", () => {
         .get("/health")
         .expect(200);
 
-      // Vérifier que les headers de sécurité sont présents
       expect(response.headers).toHaveProperty("x-content-type-options");
       expect(response.headers).toHaveProperty("x-frame-options");
     });

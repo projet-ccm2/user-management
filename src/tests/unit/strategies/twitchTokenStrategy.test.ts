@@ -2,7 +2,6 @@ import { TwitchTokenStrategy } from "../../../strategies/twitchTokenStrategy";
 import { validateAndParseTwitchTokens } from "../../../services/twitchAuthService";
 import { Request } from "express";
 
-// Mock des dépendances
 jest.mock("../../../services/twitchAuthService");
 
 const mockValidateAndParseTwitchTokens = validateAndParseTwitchTokens as jest.MockedFunction<typeof validateAndParseTwitchTokens>;
@@ -24,7 +23,6 @@ describe("TwitchTokenStrategy", () => {
     mockFail = jest.fn();
     mockError = jest.fn();
 
-    // Mock des méthodes de la stratégie
     (strategy as any).success = mockSuccess;
     (strategy as any).fail = mockFail;
     (strategy as any).error = mockError;
@@ -40,7 +38,6 @@ describe("TwitchTokenStrategy", () => {
       },
     };
 
-    // Mock validateAndParseTwitchTokens
     mockValidateAndParseTwitchTokens.mockReturnValue({
       userId: "12345",
       claims: {

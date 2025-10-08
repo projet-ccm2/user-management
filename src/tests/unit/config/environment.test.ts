@@ -64,7 +64,7 @@ describe("Environment Configuration", () => {
     const { config: testConfig } = require("../../../config/environment");
 
     expect(testConfig.cors.allowedOrigins).toEqual([
-      "https://frontend-service-782869810736.europe-west1.run.app",
+      "http://localhost:3000",
     ]);
   });
 
