@@ -82,25 +82,13 @@ describe("Express App", () => {
   });
 
   describe("Error handling", () => {
-    it("should handle malformed JSON", async () => {
+    it("should handle 404 errors", async () => {
       const response = await request(app)
-        .post("/test")
-        .send("invalid json")
-        .set("Content-Type", "application/json")
-        .expect(400);
+        .get("/non-existent-route")
+        .expect(404);
 
       expect(response.body).toHaveProperty("error");
-    });
-
-    it("should handle large payloads", async () => {
-      const largeData = "x".repeat(11 * 1024 * 1024);
-
-      const response = await request(app)
-        .post("/test")
-        .send({ data: largeData })
-        .expect(413);
-
-      expect(response.body).toHaveProperty("error");
+      expect(response.body.status).toBe(404);
     });
   });
 

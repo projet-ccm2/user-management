@@ -1,4 +1,3 @@
-/* eslint-disable camelcase */
 import { logger } from "../utils/logger";
 import { CustomError } from "../middlewares/errorHandler";
 

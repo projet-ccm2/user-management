@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { securityHeaders, corsValidator } from "../../../middlewares/security";
-import { config } from "../../../config/environment";
+import "../../../config/environment";
 
 jest.mock("../../../config/environment", () => ({
   config: {

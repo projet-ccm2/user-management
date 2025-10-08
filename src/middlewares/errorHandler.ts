@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
 import { logger } from "../utils/logger";
 
 export interface AppError extends Error {
@@ -22,7 +22,6 @@ export const errorHandler = (
   error: AppError,
   req: Request,
   res: Response,
-  next: NextFunction,
 ): void => {
   const { statusCode = 500, message } = error;
 

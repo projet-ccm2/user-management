@@ -22,12 +22,12 @@ describe("passport configuration", () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    (config as any) = {
+    Object.assign(config, {
       twitch: {
         clientId: "test-client-id",
         issuer: "https://id.twitch.tv/oauth2",
       },
-    };
+    });
     mockPassport.use = jest.fn();
   });
 
@@ -75,12 +75,12 @@ describe("passport configuration", () => {
     });
 
     it("should use correct config values", () => {
-      (config as any) = {
+      Object.assign(config, {
         twitch: {
           clientId: "different-client-id",
           issuer: "https://different.issuer.com",
         },
-      };
+      });
 
       configurePassport();
 
@@ -88,12 +88,12 @@ describe("passport configuration", () => {
     });
 
     it("should handle undefined config values", () => {
-      (config as any) = {
+      Object.assign(config, {
         twitch: {
           clientId: undefined,
           issuer: undefined,
         },
-      };
+      });
 
       configurePassport();
 

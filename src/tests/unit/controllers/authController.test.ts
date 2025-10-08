@@ -1,8 +1,9 @@
+/* eslint-disable camelcase */
 import { Request, Response } from "express";
 import { callbackConnexion } from "../../../controllers/authController";
 import { fetchTwitchUser } from "../../../services/twitchUserService";
 import { dbGatewayService } from "../../../services/dbGatewayService";
-import { config } from "../../../config/environment";
+import "../../../config/environment";
 import { logger } from "../../../utils/logger";
 import { CustomError } from "../../../middlewares/errorHandler";
 import type { TwitchPassportUser } from "../../../strategies/twitchTokenStrategy";
@@ -56,11 +57,11 @@ describe("authController", () => {
       json: mockJson,
     };
 
-    (config as any) = {
+    Object.assign(require("../../../config/environment").config, {
       twitch: {
         clientId: "test-client-id",
       },
-    };
+    });
     mockFetchTwitchUser.mockResolvedValue({
       id: "12345",
       login: "testuser",

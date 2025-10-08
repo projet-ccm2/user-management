@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
 import {
   CustomError,
   errorHandler,
@@ -13,7 +13,6 @@ const mockLogger = logger as jest.Mocked<typeof logger>;
 describe("ErrorHandler", () => {
   let mockReq: Partial<Request>;
   let mockRes: Partial<Response>;
-  let mockNext: NextFunction;
 
   beforeEach(() => {
     mockReq = {
@@ -26,7 +25,6 @@ describe("ErrorHandler", () => {
       json: jest.fn().mockReturnThis(),
     };
 
-    mockNext = jest.fn();
     jest.clearAllMocks();
   });
 
@@ -53,7 +51,7 @@ describe("ErrorHandler", () => {
     it("should handle CustomError", () => {
       const error = new CustomError("Test error", 400);
 
-      errorHandler(error, mockReq as Request, mockRes as Response, mockNext);
+      errorHandler(error, mockReq as Request, mockRes as Response);
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         "Test error",
@@ -76,7 +74,7 @@ describe("ErrorHandler", () => {
     it("should handle regular Error with default status code", () => {
       const error = new Error("Regular error");
 
-      errorHandler(error, mockReq as Request, mockRes as Response, mockNext);
+      errorHandler(error, mockReq as Request, mockRes as Response);
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         "Regular error",
@@ -99,7 +97,7 @@ describe("ErrorHandler", () => {
     it("should handle error without statusCode", () => {
       const error = { message: "Error without statusCode" } as any;
 
-      errorHandler(error, mockReq as Request, mockRes as Response, mockNext);
+      errorHandler(error, mockReq as Request, mockRes as Response);
 
       expect(mockRes.status).toHaveBeenCalledWith(500);
       expect(mockRes.json).toHaveBeenCalledWith({
@@ -112,7 +110,7 @@ describe("ErrorHandler", () => {
     it("should handle error without message", () => {
       const error = { statusCode: 400 } as any;
 
-      errorHandler(error, mockReq as Request, mockRes as Response, mockNext);
+      errorHandler(error, mockReq as Request, mockRes as Response);
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith({
