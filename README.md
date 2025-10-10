@@ -20,7 +20,14 @@ npm start
 
 ## Configuration
 
-### Required Environment Variables
+### Environment Variables
+
+1. **Copy the example file**:
+   ```bash
+   cp env.example .env
+   ```
+
+2. **Configure your variables** in the `.env` file:
 
 ```bash
 # Required
@@ -30,9 +37,21 @@ TWITCH_CLIENT_ID=your_twitch_client_id_here
 NODE_ENV=development
 PORT=3000
 TWITCH_ISSUER=https://id.twitch.tv/oauth2
-ALLOWED_ORIGINS=https://frontend-service-782869810736.europe-west1.run.app
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001
 DB_GATEWAY_URL=http://localhost:3001
 ```
+
+### Get your TWITCH_CLIENT_ID
+
+1. Go to [https://dev.twitch.tv/console/apps](https://dev.twitch.tv/console/apps)
+2. Create a new application
+3. Copy the **Client ID** into your `.env` file
+
+### Configuration Files
+
+- `env.example`: Template with required variables
+- `ENVIRONMENT_VARIABLES.md`: Detailed variable documentation
+- `.env`: Your local configuration (do not commit)
 
 ## API Documentation
 
