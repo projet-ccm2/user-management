@@ -1,0 +1,71 @@
+name: Deploy to Production
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to deploy (e.g., v1.2.3)'
+        required: true
+        type: string
+
+jobs:
+  deploy-prod:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Configure kubectl
+        run: |
+          gcloud container clusters get-credentials ${{ secrets.GCP_CLUSTER_NAME_PROD }} --zone ${{ secrets.GCP_ZONE }}
+
+      - name: Deploy Infrastructure with Terraform
+        uses: projet-ccm2/shared-workflows/.github/workflows/terraform-deploy.yml@main
+        with:
+          environment: production
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          region: ${{ secrets.GCP_REGION }}
+          zone: ${{ secrets.GCP_ZONE }}
+          cluster_name: ${{ secrets.GCP_CLUSTER_NAME_PROD }}
+          database_url: ${{ secrets.PROD_DATABASE_URL }}
+          jwt_secret: ${{ secrets.PROD_JWT_SECRET }}
+          api_key: ${{ secrets.PROD_API_KEY }}
+          github_owner: ${{ github.repository_owner }}
+          image_tag: ${{ github.event.inputs.version || github.ref_name }}
+          domain_name: ${{ secrets.PROD_DOMAIN_NAME }}
+
+      - name: Deploy Application to Kubernetes
+        run: |
+          # Update image in deployment
+          kubectl set image deployment/user-management-api user-management-api=ghcr.io/${{ github.repository }}/user-management-api:${{ github.event.inputs.version || github.ref_name }} -n user-management-prod
+          
+          # Wait for rollout
+          kubectl rollout status deployment/user-management-api -n user-management-prod
+          
+          # Verify deployment
+          kubectl get pods -n user-management-prod
+          kubectl get services -n user-management-prod
+
+      - name: Run Production Health Checks
+        run: |
+          echo "🔍 Running production health checks..."
+          # Here you can add production-specific health checks
+          # For example, test the health endpoint, check metrics, etc.
+
+      - name: Notify Production Team
+        run: |
+          echo "✅ Successfully deployed to production environment"
+          echo "Version: ${{ github.event.inputs.version || github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Environment: production"
+          echo "Production deployment completed"
