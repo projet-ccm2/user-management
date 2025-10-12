@@ -141,3 +141,5 @@ vite.config.ts.timestamp-*
 .idea
 
 frontend-test/
+
+shared-workflows/
