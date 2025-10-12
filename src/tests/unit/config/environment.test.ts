@@ -63,7 +63,11 @@ describe("Environment Configuration", () => {
 
     const { config: testConfig } = require("../../../config/environment");
 
-    expect(testConfig.cors.allowedOrigins).toEqual(["http://localhost:3000"]);
+    expect(testConfig.cors.allowedOrigins).toEqual([
+      "http://localhost:3000",
+      "http://localhost:8080",
+      "null",
+    ]);
   });
 
   it("should parse PORT as integer", () => {

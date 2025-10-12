@@ -2,11 +2,11 @@ name: Deploy to Production
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to deploy (e.g., v1.2.3)'
+        description: "Version to deploy (e.g., v1.2.3)"
         required: true
         type: string
 
@@ -48,10 +48,10 @@ jobs:
         run: |
           # Update image in deployment
           kubectl set image deployment/user-management-api user-management-api=ghcr.io/${{ github.repository }}/user-management-api:${{ github.event.inputs.version || github.ref_name }} -n user-management-prod
-          
+
           # Wait for rollout
           kubectl rollout status deployment/user-management-api -n user-management-prod
-          
+
           # Verify deployment
           kubectl get pods -n user-management-prod
           kubectl get services -n user-management-prod

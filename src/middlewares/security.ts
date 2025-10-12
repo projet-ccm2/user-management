@@ -25,11 +25,17 @@ export const corsValidator = (
 ): void => {
   const origin = req.headers.origin;
 
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     if (origin && config.cors.allowedOrigins.includes(origin)) {
       res.setHeader("Access-Control-Allow-Origin", origin);
-      res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-      res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, Origin");
+      res.setHeader(
+        "Access-Control-Allow-Methods",
+        "GET, POST, PUT, DELETE, OPTIONS",
+      );
+      res.setHeader(
+        "Access-Control-Allow-Headers",
+        "Content-Type, Authorization, Origin",
+      );
       res.setHeader("Access-Control-Max-Age", "86400");
       res.status(200).end();
       return;
@@ -43,8 +49,14 @@ export const corsValidator = (
 
   if (config.cors.allowedOrigins.includes(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, Origin");
+    res.setHeader(
+      "Access-Control-Allow-Methods",
+      "GET, POST, PUT, DELETE, OPTIONS",
+    );
+    res.setHeader(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization, Origin",
+    );
     next();
     return;
   }

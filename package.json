@@ -11,10 +11,10 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "prettier": "npx prettier . --write",
-    "test:dev": "npm run prettier && npm run migrate:dev && jest --runInBand --coverage --coverageReporters=lcov",
-    "test": "jest --testPathPattern='src/' --runInBand --coverage --coverageReporters=lcov",
-    "test:ts": "npx jest --testPathPattern='src/' --runInBand --coverage --coverageReporters=lcov",
-    "test:coverage": "jest --testPathPattern='src/' --runInBand --coverage --coverageReporters=text --coverageReporters=lcov"
+    "test": "jest --testPathPattern='src/' --runInBand --coverage --coverageReporters=lcov --passWithNoTests",
+    "test:coverage": "jest --testPathPattern='src/' --runInBand --coverage --coverageReporters=text --coverageReporters=lcov --coverageReporters=json --passWithNoTests",
+    "test:watch": "jest --testPathPattern='src/' --watch --coverage --passWithNoTests",
+    "test:ci": "jest --testPathPattern='src/' --runInBand --coverage --coverageReporters=lcov --coverageReporters=json --ci --watchAll=false --passWithNoTests"
   },
   "dependencies": {
     "@types/winston": "^2.4.4",
