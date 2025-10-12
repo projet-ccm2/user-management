@@ -1,4 +1,4 @@
-name: ci
+name: call-ci
 on:
   push:
     branches: ["**"]
