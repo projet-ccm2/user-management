@@ -4,6 +4,17 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      image-tag:
+        description: "Docker image tag to deploy (default: int-{sha})"
+        required: false
+        type: string
+        default: ""
+      run-tests:
+        description: "Run integration tests after deployment"
+        required: false
+        type: boolean
+        default: true
 
 jobs:
   deploy-int:
@@ -11,47 +22,31 @@ jobs:
     runs-on: ubuntu-latest
     environment: integration
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Google Cloud CLI
-        uses: google-github-actions/setup-gcloud@v2
+      - name: Deploy to Cloud Run
+        uses: ./.github/workflows/shared-workflows/.github/workflows/nodejs-cd.yml
         with:
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-
-      - name: Configure kubectl
-        run: |
-          gcloud container clusters get-credentials ${{ secrets.GCP_CLUSTER_NAME_INT }} --zone ${{ secrets.GCP_ZONE }}
-
-      - name: Deploy Infrastructure with Terraform
-        uses: projet-ccm2/shared-workflows/.github/workflows/terraform-deploy.yml@main
-        with:
+          service-name: user-management-int
+          service-region: europe-west1
+          service-memory: 1Gi
+          service-cpu: 2
+          service-max-instances: 10
+          service-min-instances: 1
+          service-timeout: 300
+          service-port: 8080
           environment: integration
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-          region: ${{ secrets.GCP_REGION }}
-          zone: ${{ secrets.GCP_ZONE }}
-          cluster_name: ${{ secrets.GCP_CLUSTER_NAME_INT }}
-          database_url: ${{ secrets.INT_DATABASE_URL }}
-          jwt_secret: ${{ secrets.INT_JWT_SECRET }}
-          api_key: ${{ secrets.INT_API_KEY }}
-          github_owner: ${{ github.repository_owner }}
-          image_tag: int-${{ github.sha }}
-          domain_name: ${{ secrets.INT_DOMAIN_NAME }}
-
-      - name: Deploy Application to Kubernetes
-        run: |
-          # Update image in deployment
-          kubectl set image deployment/user-management-api user-management-api=ghcr.io/${{ github.repository }}/user-management-api:int-${{ github.sha }} -n user-management-int
-
-          # Wait for rollout
-          kubectl rollout status deployment/user-management-api -n user-management-int
-
-          # Verify deployment
-          kubectl get pods -n user-management-int
-          kubectl get services -n user-management-int
+          project-id: ${{ secrets.GCP_PROJECT_ID }}
+          docker-image-name: user-management-api
+          docker-tag: ${{ github.event.inputs.image-tag || format('int-{0}', github.sha) }}
+          health-check-url: ${{ secrets.INT_HEALTH_CHECK_URL }}
+        secrets:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DATABASE_URL: ${{ secrets.INT_DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.INT_JWT_SECRET }}
+          API_KEY: ${{ secrets.INT_API_KEY }}
 
       - name: Run Integration Tests
+        if: ${{ github.event.inputs.run-tests != false }}
         run: |
           echo "🧪 Running integration tests..."
           # Here you can add specific integration tests

@@ -4,6 +4,17 @@ on:
     branches:
       - develop
   workflow_dispatch:
+    inputs:
+      image-tag:
+        description: "Docker image tag to deploy (default: dev-{sha})"
+        required: false
+        type: string
+        default: ""
+      force-deploy:
+        description: "Force deployment even if no changes"
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   deploy-dev:
@@ -11,49 +22,25 @@ jobs:
     runs-on: ubuntu-latest
     environment: development
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Google Cloud CLI
-        uses: google-github-actions/setup-gcloud@v2
+      - name: Deploy to Cloud Run
+        uses: ./.github/workflows/shared-workflows/.github/workflows/nodejs-cd.yml
         with:
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-
-      - name: Configure kubectl
-        run: |
-          gcloud container clusters get-credentials ${{ secrets.GCP_CLUSTER_NAME_DEV }} --zone ${{ secrets.GCP_ZONE }}
-
-      - name: Deploy Infrastructure with Terraform
-        uses: projet-ccm2/shared-workflows/.github/workflows/terraform-deploy.yml@main
-        with:
+          service-name: user-management-dev
+          service-region: europe-west1
+          service-memory: 512Mi
+          service-cpu: 1
+          service-max-instances: 5
+          service-min-instances: 0
+          service-timeout: 300
+          service-port: 8080
           environment: development
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-          region: ${{ secrets.GCP_REGION }}
-          zone: ${{ secrets.GCP_ZONE }}
-          cluster_name: ${{ secrets.GCP_CLUSTER_NAME_DEV }}
-          database_url: ${{ secrets.DEV_DATABASE_URL }}
-          jwt_secret: ${{ secrets.DEV_JWT_SECRET }}
-          api_key: ${{ secrets.DEV_API_KEY }}
-          github_owner: ${{ github.repository_owner }}
-          image_tag: dev-${{ github.sha }}
-          domain_name: ${{ secrets.DEV_DOMAIN_NAME }}
-
-      - name: Deploy Application to Kubernetes
-        run: |
-          # Update image in deployment
-          kubectl set image deployment/user-management-api user-management-api=ghcr.io/${{ github.repository }}/user-management-api:dev-${{ github.sha }} -n user-management-dev
-
-          # Wait for rollout
-          kubectl rollout status deployment/user-management-api -n user-management-dev
-
-          # Verify deployment
-          kubectl get pods -n user-management-dev
-          kubectl get services -n user-management-dev
-
-      - name: Notify Development Team
-        run: |
-          echo "✅ Successfully deployed to development environment"
-          echo "Commit: ${{ github.sha }}"
-          echo "Branch: ${{ github.ref_name }}"
-          echo "Environment: development"
+          project-id: ${{ secrets.GCP_PROJECT_ID }}
+          docker-image-name: user-management-api
+          docker-tag: ${{ github.event.inputs.image-tag || format('dev-{0}', github.sha) }}
+          health-check-url: ${{ secrets.DEV_HEALTH_CHECK_URL }}
+        secrets:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DATABASE_URL: ${{ secrets.DEV_DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.DEV_JWT_SECRET }}
+          API_KEY: ${{ secrets.DEV_API_KEY }}
