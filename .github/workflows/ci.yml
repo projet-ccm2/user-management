@@ -2,6 +2,7 @@ name: call-ci
 on:
   push:
     branches: ["**"]
+  workflow_dispatch:
 
 jobs:
   ci:
