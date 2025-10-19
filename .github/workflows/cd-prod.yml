@@ -19,19 +19,24 @@ jobs:
       - name: Deploy to Cloud Run
         uses: ./.github/workflows/shared-workflows/.github/workflows/nodejs-cd.yml
         with:
-          service-name: user-management-prod
-          service-region: europe-west1
-          service-memory: 2Gi
-          service-cpu: 4
-          service-max-instances: 100
-          service-min-instances: 2
-          service-timeout: 300
-          service-port: 8080
-          environment: production
-          project-id: ${{ secrets.GCP_PROJECT_ID }}
+          node-version: '22.13.1'
+          build-command: 'npm run build'
+          install-command: 'npm install'
+          dockerfile-path: './Dockerfile'
+          docker-context: '.'
           docker-image-name: user-management-api
           docker-tag: ${{ github.event.inputs.version || github.ref_name }}
+          registry-url: 'ghcr.io'
+          environment: production
           health-check-url: ${{ secrets.PROD_HEALTH_CHECK_URL }}
+          health-check-timeout: '300'
+          gcp-project-id: ${{ secrets.GCP_PROJECT_ID }}
+          gcp-region: europe-west1
+          cloud-run-service-name: user-management-prod
+          cloud-run-port: '8080'
+          cloud-run-memory: '1Gi'
+          cloud-run-cpu: '2'
+          cloud-run-max-instances: '5'
         secrets:
           GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
           REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
