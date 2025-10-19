@@ -23,7 +23,7 @@ jobs:
     environment: integration
     steps:
       - name: Deploy to Cloud Run
-        uses: ./.github/workflows/shared-workflows/.github/workflows/nodejs-cd.yml
+        uses: projet-ccm2/shared-workflows/.github/workflows/shared-workflows/.github/workflows/nodejs-cd.yml
         with:
           node-version: '22.13.1'
           build-command: 'npm run build'
