@@ -1,7 +1,9 @@
 name: call-ci
 on:
   push:
-    branches: ["**"]
+    branches: ["develop","main"]
+  pull_request:
+    types: [opened, synchronize, reopened]
   workflow_dispatch:
 
 jobs:
