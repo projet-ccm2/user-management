@@ -13,4 +13,3 @@ jobs:
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       GITHUB_TOKEN_SECRET: ${{ secrets.GITHUB_TOKEN }}
-      
