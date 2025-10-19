@@ -25,7 +25,7 @@ function validateConfig(): Config {
   }
 
   return {
-    port: parseInt(process.env.PORT || "3000", 10),
+    port: Number.parseInt(process.env.PORT || "3000", 10),
     nodeEnv: process.env.NODE_ENV || "development",
     twitch: {
       clientId: process.env.TWITCH_CLIENT_ID!,

@@ -68,7 +68,7 @@ export function validateAndParseTwitchTokens(
       throw new Error("Client ID not in id_token audience");
     }
   } else {
-    throw new Error("Missing audience (aud) in id_token");
+    throw new TypeError("Missing audience (aud) in id_token");
   }
 
   if (typeof claims.exp === "number") {
@@ -97,7 +97,7 @@ function decodeJwtClaims(token: string): TwitchIdTokenClaims | null {
 }
 
 function base64UrlDecode(input: string): string {
-  let base64 = input.replace(/-/g, "+").replace(/_/g, "/");
+  let base64 = input.replaceAll("-", "+").replaceAll("_", "/");
   const pad = base64.length % 4;
   if (pad === 2) base64 += "==";
   else if (pad === 3) base64 += "=";

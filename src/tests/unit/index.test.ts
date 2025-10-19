@@ -101,6 +101,7 @@ describe("Express App", () => {
       expect(mockLogger.info).not.toHaveBeenCalledWith(
         expect.stringContaining("Server started on port"),
       );
+      expect(mockConfig.nodeEnv).toBe("test");
     });
   });
 
