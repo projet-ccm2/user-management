@@ -9,3 +9,4 @@ jobs:
     uses: projet-ccm2/shared-workflows/.github/workflows/nodejs-ci.yml@main
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
