@@ -32,6 +32,7 @@ jobs:
       registry-url: 'europe-west1-docker.pkg.dev'
       artifact-registry-repository: 'user-management-docker'
       environment: development
+      node-env: 'development'
       health-check-timeout: '300'
       gcp-region: europe-west1
       cloud-run-service-name: user-management-dev
