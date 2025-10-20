@@ -35,7 +35,7 @@ jobs:
       health-check-timeout: '300'
       gcp-region: europe-west1
       cloud-run-service-name: user-management-int
-      cloud-run-port: '8080'
+      cloud-run-port: '3000'
       cloud-run-memory: '512Mi'
       cloud-run-cpu: '1'
       cloud-run-max-instances: '3'
@@ -43,6 +43,7 @@ jobs:
       GCP_SA_KEY: ${{ secrets.INT_GCP_SA_KEY }}
       GCP_PROJECT_ID: ${{ secrets.INT_GCP_PROJECT_ID }}
       HEALTH_CHECK_URL: ${{ secrets.INT_HEALTH_CHECK_URL }}
+      TWITCH_CLIENT_ID: ${{ secrets.INT_TWITCH_CLIENT_ID }}
   integration-tests:
     name: Run Integration Tests
     runs-on: ubuntu-latest

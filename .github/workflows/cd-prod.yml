@@ -29,7 +29,7 @@ jobs:
       health-check-timeout: '300'
       gcp-region: europe-west1
       cloud-run-service-name: user-management-prod
-      cloud-run-port: '8080'
+      cloud-run-port: '3000'
       cloud-run-memory: '1Gi'
       cloud-run-cpu: '2'
       cloud-run-max-instances: '5'
@@ -37,6 +37,7 @@ jobs:
       GCP_SA_KEY: ${{ secrets.PROD_GCP_SA_KEY }}
       GCP_PROJECT_ID: ${{ secrets.PROD_GCP_PROJECT_ID }}
       HEALTH_CHECK_URL: ${{ secrets.PROD_HEALTH_CHECK_URL }}
+      TWITCH_CLIENT_ID: ${{ secrets.PROD_TWITCH_CLIENT_ID }}
 
   production-health-checks:
     name: Run Production Health Checks
