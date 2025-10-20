@@ -29,7 +29,8 @@ jobs:
       docker-context: '.'
       docker-image-name: user-management-api
       docker-tag: ${{ github.event.inputs.image-tag || format('int-{0}', github.sha) }}
-      registry-url: 'ghcr.io'
+      registry-url: 'europe-west1-docker.pkg.dev'
+      artifact-registry-repository: 'user-management-docker'
       environment: integration
       health-check-timeout: '300'
       gcp-region: europe-west1
@@ -40,7 +41,6 @@ jobs:
       cloud-run-max-instances: '3'
     secrets:
       GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
-      REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
       HEALTH_CHECK_URL: ${{ secrets.INT_HEALTH_CHECK_URL }}
   integration-tests:
