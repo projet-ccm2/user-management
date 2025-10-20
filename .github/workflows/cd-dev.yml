@@ -41,4 +41,3 @@ jobs:
     secrets:
       GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
       REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      DATABASE_URL: ${{ secrets.DEV_DATABASE_URL }}
