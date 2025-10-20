@@ -31,20 +31,13 @@ jobs:
       docker-tag: ${{ github.event.inputs.image-tag || format('int-{0}', github.sha) }}
       registry-url: 'ghcr.io'
       environment: integration
-      health-check-url: ${{ secrets.INT_HEALTH_CHECK_URL }}
       health-check-timeout: '300'
-      gcp-project-id: ${{ secrets.GCP_PROJECT_ID }}
       gcp-region: europe-west1
       cloud-run-service-name: user-management-int
       cloud-run-port: '8080'
       cloud-run-memory: '512Mi'
       cloud-run-cpu: '1'
       cloud-run-max-instances: '3'
-      gcp-sa-key: ${{ secrets.GCP_SA_KEY }}
-      registry-token: ${{ secrets.GITHUB_TOKEN }}
-      database-url: ${{ secrets.INT_DATABASE_URL }}
-      jwt-secret: ${{ secrets.INT_JWT_SECRET }}
-      api-key: ${{ secrets.INT_API_KEY }}
     secrets:
       GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
       REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
