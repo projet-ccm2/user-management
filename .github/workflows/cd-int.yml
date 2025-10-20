@@ -40,8 +40,8 @@ jobs:
       cloud-run-cpu: '1'
       cloud-run-max-instances: '3'
     secrets:
-      GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
-      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      GCP_SA_KEY: ${{ secrets.INT_GCP_SA_KEY }}
+      GCP_PROJECT_ID: ${{ secrets.INT_GCP_PROJECT_ID }}
       HEALTH_CHECK_URL: ${{ secrets.INT_HEALTH_CHECK_URL }}
   integration-tests:
     name: Run Integration Tests

@@ -34,8 +34,8 @@ jobs:
       cloud-run-cpu: '2'
       cloud-run-max-instances: '5'
     secrets:
-      GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
-      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      GCP_SA_KEY: ${{ secrets.PROD_GCP_SA_KEY }}
+      GCP_PROJECT_ID: ${{ secrets.PROD_GCP_PROJECT_ID }}
       HEALTH_CHECK_URL: ${{ secrets.PROD_HEALTH_CHECK_URL }}
 
   production-health-checks:
