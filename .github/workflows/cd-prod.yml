@@ -38,12 +38,11 @@ jobs:
           cloud-run-memory: '1Gi'
           cloud-run-cpu: '2'
           cloud-run-max-instances: '5'
-        secrets:
-          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
-          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
-          JWT_SECRET: ${{ secrets.PROD_JWT_SECRET }}
-          API_KEY: ${{ secrets.PROD_API_KEY }}
+          gcp-sa-key: ${{ secrets.GCP_SA_KEY }}
+          registry-token: ${{ secrets.GITHUB_TOKEN }}
+          database-url: ${{ secrets.PROD_DATABASE_URL }}
+          jwt-secret: ${{ secrets.PROD_JWT_SECRET }}
+          api-key: ${{ secrets.PROD_API_KEY }}
 
       - name: Run Production Health Checks
         run: |

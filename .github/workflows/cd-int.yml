@@ -44,12 +44,11 @@ jobs:
           cloud-run-memory: '512Mi'
           cloud-run-cpu: '1'
           cloud-run-max-instances: '3'
-        secrets:
-          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
-          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DATABASE_URL: ${{ secrets.INT_DATABASE_URL }}
-          JWT_SECRET: ${{ secrets.INT_JWT_SECRET }}
-          API_KEY: ${{ secrets.INT_API_KEY }}
+          gcp-sa-key: ${{ secrets.GCP_SA_KEY }}
+          registry-token: ${{ secrets.GITHUB_TOKEN }}
+          database-url: ${{ secrets.INT_DATABASE_URL }}
+          jwt-secret: ${{ secrets.INT_JWT_SECRET }}
+          api-key: ${{ secrets.INT_API_KEY }}
 
       - name: Run Integration Tests
         if: ${{ github.event.inputs.run-tests != false }}
