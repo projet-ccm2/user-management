@@ -1,0 +1,51 @@
+name: Deploy to Development
+on:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+    inputs:
+      image-tag:
+        description: "Docker image tag to deploy (default: dev-{sha})"
+        required: false
+        type: string
+        default: ""
+      force-deploy:
+        description: "Force deployment even if no changes"
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  deploy-dev:
+    name: Deploy to Development
+    runs-on: ubuntu-latest
+    environment: development
+    steps:
+      - name: Deploy to Cloud Run
+        uses: projet-ccm2/shared-workflows/.github/workflows/nodejs-cd.yml@main
+        with:
+          node-version: '22.13.1'
+          build-command: 'npm run build'
+          install-command: 'npm install'
+          dockerfile-path: './Dockerfile'
+          docker-context: '.'
+          docker-image-name: user-management-api
+          docker-tag: ${{ github.event.inputs.image-tag || format('dev-{0}', github.sha) }}
+          registry-url: 'ghcr.io'
+          environment: development
+          health-check-url: ${{ secrets.DEV_HEALTH_CHECK_URL }}
+          health-check-timeout: '300'
+          gcp-project-id: ${{ secrets.GCP_PROJECT_ID }}
+          gcp-region: europe-west1
+          cloud-run-service-name: user-management-dev
+          cloud-run-port: '8080'
+          cloud-run-memory: '256Mi'
+          cloud-run-cpu: '1'
+          cloud-run-max-instances: '2'
+        secrets:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DATABASE_URL: ${{ secrets.DEV_DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.DEV_JWT_SECRET }}
+          API_KEY: ${{ secrets.DEV_API_KEY }}

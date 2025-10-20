@@ -1,0 +1,59 @@
+name: Deploy to Production
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to deploy (e.g., v1.2.3)"
+        required: true
+        type: string
+
+jobs:
+  deploy-prod:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Deploy to Cloud Run
+        uses: projet-ccm2/shared-workflows/.github/workflows/nodejs-cd.yml@main
+        with:
+          node-version: '22.13.1'
+          build-command: 'npm run build'
+          install-command: 'npm install'
+          dockerfile-path: './Dockerfile'
+          docker-context: '.'
+          docker-image-name: user-management-api
+          docker-tag: ${{ github.event.inputs.version || github.ref_name }}
+          registry-url: 'ghcr.io'
+          environment: production
+          health-check-url: ${{ secrets.PROD_HEALTH_CHECK_URL }}
+          health-check-timeout: '300'
+          gcp-project-id: ${{ secrets.GCP_PROJECT_ID }}
+          gcp-region: europe-west1
+          cloud-run-service-name: user-management-prod
+          cloud-run-port: '8080'
+          cloud-run-memory: '1Gi'
+          cloud-run-cpu: '2'
+          cloud-run-max-instances: '5'
+        secrets:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.PROD_JWT_SECRET }}
+          API_KEY: ${{ secrets.PROD_API_KEY }}
+
+      - name: Run Production Health Checks
+        run: |
+          echo "🔍 Running production health checks..."
+          # Here you can add production-specific health checks
+          # For example, test the health endpoint, check metrics, etc.
+
+      - name: Notify Production Team
+        run: |
+          echo "✅ Successfully deployed to production environment"
+          echo "Version: ${{ github.event.inputs.version || github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Environment: production"
+          echo "Production deployment completed"

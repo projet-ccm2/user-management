@@ -1,0 +1,66 @@
+name: Deploy to Integration
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      image-tag:
+        description: "Docker image tag to deploy (default: int-{sha})"
+        required: false
+        type: string
+        default: ""
+      run-tests:
+        description: "Run integration tests after deployment"
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  deploy-int:
+    name: Deploy to Integration
+    runs-on: ubuntu-latest
+    environment: integration
+    steps:
+      - name: Deploy to Cloud Run
+        uses: projet-ccm2/shared-workflows/.github/workflows/nodejs-cd.yml@main
+        with:
+          node-version: '22.13.1'
+          build-command: 'npm run build'
+          install-command: 'npm install'
+          dockerfile-path: './Dockerfile'
+          docker-context: '.'
+          docker-image-name: user-management-api
+          docker-tag: ${{ github.event.inputs.image-tag || format('int-{0}', github.sha) }}
+          registry-url: 'ghcr.io'
+          environment: integration
+          health-check-url: ${{ secrets.INT_HEALTH_CHECK_URL }}
+          health-check-timeout: '300'
+          gcp-project-id: ${{ secrets.GCP_PROJECT_ID }}
+          gcp-region: europe-west1
+          cloud-run-service-name: user-management-int
+          cloud-run-port: '8080'
+          cloud-run-memory: '512Mi'
+          cloud-run-cpu: '1'
+          cloud-run-max-instances: '3'
+        secrets:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DATABASE_URL: ${{ secrets.INT_DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.INT_JWT_SECRET }}
+          API_KEY: ${{ secrets.INT_API_KEY }}
+
+      - name: Run Integration Tests
+        if: ${{ github.event.inputs.run-tests != false }}
+        run: |
+          echo "🧪 Running integration tests..."
+          # Here you can add specific integration tests
+          # For example, test the API with curl or automated tests
+
+      - name: Notify QA Team
+        run: |
+          echo "✅ Successfully deployed to integration environment"
+          echo "Commit: ${{ github.sha }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Environment: integration"
+          echo "Ready for QA testing"
