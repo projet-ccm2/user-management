@@ -22,12 +22,6 @@ jobs:
     runs-on: ubuntu-latest
     environment: integration
     if: github.event_name != 'pull_request'
-    secrets:
-      GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
-      REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      DATABASE_URL: ${{ secrets.INT_DATABASE_URL }}
-      JWT_SECRET: ${{ secrets.INT_JWT_SECRET }}
-      API_KEY: ${{ secrets.INT_API_KEY }}
     steps:
       - name: Deploy to Cloud Run
         uses: projet-ccm2/shared-workflows/.github/workflows/nodejs-cd.yml@main
@@ -50,6 +44,12 @@ jobs:
           cloud-run-memory: '512Mi'
           cloud-run-cpu: '1'
           cloud-run-max-instances: '3'
+        secrets:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DATABASE_URL: ${{ secrets.INT_DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.INT_JWT_SECRET }}
+          API_KEY: ${{ secrets.INT_API_KEY }}
 
       - name: Run Integration Tests
         if: ${{ github.event.inputs.run-tests != false }}
