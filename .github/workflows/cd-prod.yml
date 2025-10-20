@@ -37,7 +37,7 @@ jobs:
       GCP_SA_KEY: ${{ secrets.PROD_GCP_SA_KEY }}
       GCP_PROJECT_ID: ${{ secrets.PROD_GCP_PROJECT_ID }}
       HEALTH_CHECK_URL: ${{ secrets.PROD_HEALTH_CHECK_URL }}
-      TWITCH_CLIENT_ID: ${{ secrets.PROD_TWITCH_CLIENT_ID }}
+      TWITCH_CLIENT_ID: ${{ secrets.TWITCH_CLIENT_ID }}
 
   production-health-checks:
     name: Run Production Health Checks
