@@ -19,39 +19,39 @@ on:
 jobs:
   deploy-int:
     name: Deploy to Integration
-    runs-on: ubuntu-latest
-    environment: integration
-    steps:
-      - name: Deploy to Cloud Run
-        uses: projet-ccm2/shared-workflows/.github/workflows/nodejs-cd.yml@main
-        with:
-          node-version: '22.13.1'
-          build-command: 'npm run build'
-          install-command: 'npm install'
-          dockerfile-path: './Dockerfile'
-          docker-context: '.'
-          docker-image-name: user-management-api
-          docker-tag: ${{ github.event.inputs.image-tag || format('int-{0}', github.sha) }}
-          registry-url: 'ghcr.io'
-          environment: integration
-          health-check-url: ${{ secrets.INT_HEALTH_CHECK_URL }}
-          health-check-timeout: '300'
-          gcp-project-id: ${{ secrets.GCP_PROJECT_ID }}
-          gcp-region: europe-west1
-          cloud-run-service-name: user-management-int
-          cloud-run-port: '8080'
-          cloud-run-memory: '512Mi'
-          cloud-run-cpu: '1'
-          cloud-run-max-instances: '3'
-        secrets:
-          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
-          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DATABASE_URL: ${{ secrets.INT_DATABASE_URL }}
-          JWT_SECRET: ${{ secrets.INT_JWT_SECRET }}
-          API_KEY: ${{ secrets.INT_API_KEY }}
+    uses: projet-ccm2/shared-workflows/.github/workflows/nodejs-cd.yml@main
+    if: github.event_name != 'pull_request'
+    with:
+      node-version: '22.13.1'
+      build-command: 'npm run build'
+      install-command: 'npm install'
+      dockerfile-path: './Dockerfile'
+      docker-context: '.'
+      docker-image-name: user-management-api
+      docker-tag: ${{ github.event.inputs.image-tag || format('int-{0}', github.sha) }}
+      registry-url: 'ghcr.io'
+      environment: integration
+      health-check-timeout: '300'
+      gcp-region: europe-west1
+      cloud-run-service-name: user-management-int
+      cloud-run-port: '8080'
+      cloud-run-memory: '512Mi'
+      cloud-run-cpu: '1'
+      cloud-run-max-instances: '3'
+    secrets:
+      GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+      REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      DATABASE_URL: ${{ secrets.INT_DATABASE_URL }}
+      JWT_SECRET: ${{ secrets.INT_JWT_SECRET }}
+      API_KEY: ${{ secrets.INT_API_KEY }}
 
+  integration-tests:
+    name: Run Integration Tests
+    runs-on: ubuntu-latest
+    needs: deploy-int
+    if: github.event_name != 'pull_request' && github.event.inputs.run-tests != false
+    steps:
       - name: Run Integration Tests
-        if: ${{ github.event.inputs.run-tests != false }}
         run: |
           echo "🧪 Running integration tests..."
           # Here you can add specific integration tests
