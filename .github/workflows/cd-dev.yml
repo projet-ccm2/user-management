@@ -35,7 +35,7 @@ jobs:
       health-check-timeout: '300'
       gcp-region: europe-west1
       cloud-run-service-name: user-management-dev
-      cloud-run-port: '8080'
+      cloud-run-port: '3000'
       cloud-run-memory: '256Mi'
       cloud-run-cpu: '1'
       cloud-run-max-instances: '2'
