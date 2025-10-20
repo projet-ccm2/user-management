@@ -35,9 +35,8 @@ jobs:
     secrets:
       GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
       REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
-      JWT_SECRET: ${{ secrets.PROD_JWT_SECRET }}
-      API_KEY: ${{ secrets.PROD_API_KEY }}
+      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      HEALTH_CHECK_URL: ${{ secrets.PROD_HEALTH_CHECK_URL }}
 
   production-health-checks:
     name: Run Production Health Checks

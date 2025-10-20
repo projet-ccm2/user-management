@@ -41,10 +41,8 @@ jobs:
     secrets:
       GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
       REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      DATABASE_URL: ${{ secrets.INT_DATABASE_URL }}
-      JWT_SECRET: ${{ secrets.INT_JWT_SECRET }}
-      API_KEY: ${{ secrets.INT_API_KEY }}
-
+      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      HEALTH_CHECK_URL: ${{ secrets.INT_HEALTH_CHECK_URL }}
   integration-tests:
     name: Run Integration Tests
     runs-on: ubuntu-latest
