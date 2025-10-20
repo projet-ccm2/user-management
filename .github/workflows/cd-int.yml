@@ -21,6 +21,7 @@ jobs:
     name: Deploy to Integration
     runs-on: ubuntu-latest
     environment: integration
+    if: github.event_name != 'pull_request'
     secrets:
       GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
       REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
