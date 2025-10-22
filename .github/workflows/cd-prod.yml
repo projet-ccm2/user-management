@@ -21,28 +21,8 @@ jobs:
       artifact-registry-repository: 'user-management-docker-prod'
       environment: production
       cloud-run-service-name: user-management-prod
-
     secrets:
       GCP_SA_KEY: ${{ secrets.PROD_GCP_SA_KEY }}
       GCP_PROJECT_ID: ${{ secrets.PROD_GCP_PROJECT_ID }}
       TWITCH_CLIENT_ID: ${{ secrets.TWITCH_CLIENT_ID }}
 
-  production-health-checks:
-    name: Run Production Health Checks
-    runs-on: ubuntu-latest
-    needs: deploy-prod
-    if: github.event_name != 'pull_request'
-    steps:
-      - name: Run Production Health Checks
-        run: |
-          echo "🔍 Running production health checks..."
-          # Here you can add production-specific health checks
-          # For example, test the health endpoint, check metrics, etc.
-
-      - name: Notify Production Team
-        run: |
-          echo "✅ Successfully deployed to production environment"
-          echo "Version: ${{ github.event.inputs.version || github.ref_name }}"
-          echo "Commit: ${{ github.sha }}"
-          echo "Environment: production"
-          echo "Production deployment completed"

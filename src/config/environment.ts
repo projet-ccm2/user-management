@@ -8,9 +8,6 @@ interface Config {
   cors: {
     allowedOrigins: string[];
   };
-  dbGateway: {
-    url: string;
-  };
 }
 
 function validateConfig(): Config {
@@ -35,9 +32,6 @@ function validateConfig(): Config {
       allowedOrigins: process.env.ALLOWED_ORIGINS
         ? process.env.ALLOWED_ORIGINS.split(",")
         : ["http://localhost:3000", "http://localhost:8080", "null"],
-    },
-    dbGateway: {
-      url: process.env.DB_GATEWAY_URL || "http://localhost:3001",
     },
   };
 }
