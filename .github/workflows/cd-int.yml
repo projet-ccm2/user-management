@@ -22,24 +22,11 @@ jobs:
     uses: projet-ccm2/shared-workflows/.github/workflows/nodejs-cd.yml@main
     if: github.event_name != 'pull_request'
     with:
-      node-version: '22.13.1'
-      build-command: 'npm run build'
-      install-command: 'npm install'
-      dockerfile-path: './Dockerfile'
-      docker-context: '.'
-      docker-image-name: user-management-api
-      docker-tag: ${{ github.event.inputs.image-tag || format('int-{0}', github.sha) }}
-      registry-url: 'europe-west1-docker.pkg.dev'
-      artifact-registry-repository: 'user-management-docker'
+      docker-image-name: user-management-api-int
+      docker-tag: ${{ github.event.inputs.image-tag || format('dev-{0}', github.sha) }}
+      artifact-registry-repository: 'user-management-docker-int'
       environment: integration
-      node-env: 'integration'
-      health-check-timeout: '300'
-      gcp-region: europe-west1
       cloud-run-service-name: user-management-int
-      cloud-run-port: '3000'
-      cloud-run-memory: '512Mi'
-      cloud-run-cpu: '1'
-      cloud-run-max-instances: '3'
     secrets:
       GCP_SA_KEY: ${{ secrets.INT_GCP_SA_KEY }}
       GCP_PROJECT_ID: ${{ secrets.INT_GCP_PROJECT_ID }}
