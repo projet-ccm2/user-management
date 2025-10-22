@@ -27,6 +27,7 @@ jobs:
       artifact-registry-repository: 'user-management-docker-dev'
       environment: development
       cloud-run-service-name: user-management-dev
+      gcp-project-id: ''
     secrets:
       GCP_SA_KEY: ${{ secrets.DEV_GCP_SA_KEY }}
       GCP_PROJECT_ID: ${{ secrets.DEV_GCP_PROJECT_ID }}
