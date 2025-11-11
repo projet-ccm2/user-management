@@ -16,6 +16,13 @@ export type UserAuthApproval = {
   approvedAt: Date;
 };
 
+export type UserReward = {
+  id: string;
+  name?: string;
+  description?: string;
+  imageUrl?: string;
+};
+
 class User {
   username: string;
   channel: UserChannelInfo;
@@ -26,6 +33,7 @@ class User {
     username: string;
     channel: UserChannelInfo;
     channelsWhichIsMod?: string[];
+    rewards?: UserReward[];
     auth: UserAuthApproval;
   }) {
     this.username = params.username;
