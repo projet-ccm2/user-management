@@ -19,33 +19,15 @@ on:
 jobs:
   deploy-dev:
     name: Deploy to Development
-    runs-on: ubuntu-latest
-    environment: development
-    steps:
-      - name: Deploy to Cloud Run
-        uses: projet-ccm2/shared-workflows/.github/workflows/nodejs-cd.yml@main
-        with:
-          node-version: '22.13.1'
-          build-command: 'npm run build'
-          install-command: 'npm install'
-          dockerfile-path: './Dockerfile'
-          docker-context: '.'
-          docker-image-name: user-management-api
-          docker-tag: ${{ github.event.inputs.image-tag || format('dev-{0}', github.sha) }}
-          registry-url: 'ghcr.io'
-          environment: development
-          health-check-url: ${{ secrets.DEV_HEALTH_CHECK_URL }}
-          health-check-timeout: '300'
-          gcp-project-id: ${{ secrets.GCP_PROJECT_ID }}
-          gcp-region: europe-west1
-          cloud-run-service-name: user-management-dev
-          cloud-run-port: '8080'
-          cloud-run-memory: '256Mi'
-          cloud-run-cpu: '1'
-          cloud-run-max-instances: '2'
-        secrets:
-          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
-          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DATABASE_URL: ${{ secrets.DEV_DATABASE_URL }}
-          JWT_SECRET: ${{ secrets.DEV_JWT_SECRET }}
-          API_KEY: ${{ secrets.DEV_API_KEY }}
+    uses: projet-ccm2/shared-workflows/.github/workflows/nodejs-cd.yml@main
+    if: github.event_name != 'pull_request'
+    with:
+      docker-image-name: user-management-api-dev
+      docker-tag: ${{ github.event.inputs.image-tag || format('dev-{0}', github.sha) }}
+      artifact-registry-repository: 'user-management-docker-dev'
+      environment: development
+      cloud-run-service-name: user-management-dev
+    secrets:
+      GCP_SA_KEY: ${{ secrets.DEV_GCP_SA_KEY }}
+      GCP_PROJECT_ID: ${{ secrets.DEV_GCP_PROJECT_ID }}
+      TWITCH_CLIENT_ID: ${{ secrets.TWITCH_CLIENT_ID }}
