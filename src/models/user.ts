@@ -19,24 +19,26 @@ export type UserAuthApproval = {
 class User {
   username: string;
   channel: UserChannelInfo;
-  channelsWhichIsMod: string[];
-  auth: UserAuthApproval;
+  channelsWhichIsMod: UserChannelInfo[];
+  auth?: UserAuthApproval;
 
   constructor(params: {
     username: string;
     channel: UserChannelInfo;
-    channelsWhichIsMod?: string[];
-    auth: UserAuthApproval;
+    channelsWhichIsMod?: UserChannelInfo[];
+    auth?: UserAuthApproval;
   }) {
     this.username = params.username;
     this.channel = params.channel;
     this.channelsWhichIsMod = params.channelsWhichIsMod
       ? [...params.channelsWhichIsMod]
       : [];
-    this.auth = {
-      ...params.auth,
-      scope: params.auth.scope ? [...params.auth.scope] : undefined,
-    };
+    if (params.auth) {
+      this.auth = {
+        ...params.auth,
+        scope: params.auth.scope ? [...params.auth.scope] : undefined,
+      };
+    }
   }
 
   public getAllWithoutAuth(): Partial<User> {

@@ -9,6 +9,11 @@ interface DbGatewayResponse {
   message?: string;
 }
 
+interface DbGatewayUserData {
+  id: string;
+  username: string;
+}
+
 export class DbGatewayService {
   private readonly dbGatewayUrl: string;
   private readonly timeout: number;
@@ -73,6 +78,89 @@ export class DbGatewayService {
       });
 
       throw new CustomError("Failed to save user data", 502);
+    }
+  }
+
+  async getUserById(userId: string): Promise<User> {
+    try {
+      logger.info("Fetching user data from database gateway", {
+        userId,
+      });
+
+      /**
+       * need route to get all user data 
+       * /users/:id
+       * {
+       *   "id": "u_abc123",
+       *   "username": "john_doe"
+       * }
+       * miss description and profileImageUrl
+       * miss all Channel Membership of the user
+       */
+
+      const response = await fetch(`${this.dbGatewayUrl}/users/${userId}`, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+        },
+        signal: AbortSignal.timeout(this.timeout),
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          logger.warn("User not found in database gateway", { userId });
+          throw new CustomError("User not found", 404);
+        }
+
+        const errorText = await response.text();
+        logger.error("Database gateway request failed", {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText.substring(0, 500),
+        });
+        throw new CustomError(
+          `Database gateway error: ${response.status} ${response.statusText}`,
+          response.status,
+        );
+      }
+
+      const userData: DbGatewayUserData = await response.json();
+
+      const channel: DbGatewayUserData = {
+        id: userData.id,
+        username: userData.username,
+        //description: userData.channel.description,
+        //profileImageUrl: userData.channel.profileImageUrl,
+      };
+
+      const user = new User({
+        username: userData.username,
+        channel: userData.channel,
+        channelsWhichIsMod: userData.channelsWhichIsMod || []
+      });
+
+      logger.info("User successfully fetched from database", {
+        userId: userData.id,
+        username: userData.username,
+      });
+
+
+      return new User({
+        username: userData.username,
+        channel: userData.channel,
+        channelsWhichIsMod: userData.channelsWhichIsMod || [],
+      });
+    } catch (error) {
+      if (error instanceof CustomError) {
+        throw error;
+      }
+
+      logger.error("Failed to fetch user from database gateway", {
+        error: error instanceof Error ? error.message : "Unknown error",
+        userId,
+      });
+
+      throw new CustomError("Failed to fetch user data", 502);
     }
   }
 }
