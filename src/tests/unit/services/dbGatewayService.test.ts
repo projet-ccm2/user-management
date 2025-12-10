@@ -474,6 +474,135 @@ describe("DbGatewayService", () => {
       );
     });
 
+    it("should handle unknown error type when fetching users for channel", async () => {
+      const userId = "user_123";
+
+      const mockUserChannelResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue({
+          id: userId,
+          username: "testuser",
+          channelDescription: "Test description",
+          profileImageUrl: "https://example.com/avatar.jpg",
+        }),
+      };
+
+      const mockChannelsResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue({
+          channels: [
+            {
+              id: "channel_1",
+              name: "channel1",
+              userType: "moderator",
+            },
+          ],
+        }),
+      };
+
+      mockFetch
+        .mockResolvedValueOnce(mockUserChannelResponse as any)
+        .mockResolvedValueOnce(mockChannelsResponse as any)
+        .mockRejectedValueOnce("String error");
+
+      const result = await dbGatewayService.getAllDataUserById(userId);
+
+      expect(result.channelsWhichIsMod).toHaveLength(0);
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        "Error fetching users for channel",
+        expect.objectContaining({
+          channelId: "channel_1",
+          error: "Unknown error",
+        }),
+      );
+    });
+
+    it("should skip channel when users array is empty", async () => {
+      const userId = "user_123";
+
+      const mockUserChannelResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue({
+          id: userId,
+          username: "testuser",
+          channelDescription: "Test description",
+          profileImageUrl: "https://example.com/avatar.jpg",
+        }),
+      };
+
+      const mockChannelsResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue({
+          channels: [
+            {
+              id: "channel_1",
+              name: "channel1",
+              userType: "moderator",
+            },
+          ],
+        }),
+      };
+
+      const mockChannelUsersResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue({
+          users: [],
+        }),
+      };
+
+      mockFetch
+        .mockResolvedValueOnce(mockUserChannelResponse as any)
+        .mockResolvedValueOnce(mockChannelsResponse as any)
+        .mockResolvedValueOnce(mockChannelUsersResponse as any);
+
+      const result = await dbGatewayService.getAllDataUserById(userId);
+
+      expect(result.channelsWhichIsMod).toHaveLength(0);
+    });
+
+    it("should skip channel when users is undefined", async () => {
+      const userId = "user_123";
+
+      const mockUserChannelResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue({
+          id: userId,
+          username: "testuser",
+          channelDescription: "Test description",
+          profileImageUrl: "https://example.com/avatar.jpg",
+        }),
+      };
+
+      const mockChannelsResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue({
+          channels: [
+            {
+              id: "channel_1",
+              name: "channel1",
+              userType: "moderator",
+            },
+          ],
+        }),
+      };
+
+      const mockChannelUsersResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue({
+          users: undefined,
+        }),
+      };
+
+      mockFetch
+        .mockResolvedValueOnce(mockUserChannelResponse as any)
+        .mockResolvedValueOnce(mockChannelsResponse as any)
+        .mockResolvedValueOnce(mockChannelUsersResponse as any);
+
+      const result = await dbGatewayService.getAllDataUserById(userId);
+
+      expect(result.channelsWhichIsMod).toHaveLength(0);
+    });
+
     it("should handle network error", async () => {
       const userId = "user_123";
 
@@ -488,6 +617,53 @@ describe("DbGatewayService", () => {
         expect.objectContaining({
           error: "Network error",
           userId,
+        }),
+      );
+    });
+
+    it("should handle unknown error type in getAllDataUserById", async () => {
+      const userId = "user_123";
+
+      mockFetch.mockRejectedValue("String error");
+
+      await expect(dbGatewayService.getAllDataUserById(userId)).rejects.toThrow(
+        CustomError,
+      );
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        "Failed to fetch user from database gateway",
+        expect.objectContaining({
+          error: "Unknown error",
+          userId,
+        }),
+      );
+    });
+  });
+
+  describe("saveUser error handling", () => {
+    const mockUser = new User({
+      username: "testuser",
+      channel: {
+        id: "123",
+        username: "testuser",
+        channelDescription: "Test user",
+        profileImageUrl: "https://example.com/avatar.jpg",
+      },
+      channelsWhichIsMod: [],
+    });
+
+    it("should handle unknown error type in saveUser", async () => {
+      mockFetch.mockRejectedValue("String error");
+
+      await expect(dbGatewayService.saveUser(mockUser)).rejects.toThrow(
+        CustomError,
+      );
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        "Failed to save user to database gateway",
+        expect.objectContaining({
+          error: "Unknown error",
+          username: "testuser",
         }),
       );
     });
