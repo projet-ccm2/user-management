@@ -54,14 +54,19 @@ export class DbGatewayService {
     };
   }
 
-  private async fetchUserChannelsWhichIsMod(userId: string): Promise<UserChannelInfo[]> {
-    const channelsResponse = await fetch(`${this.dbGatewayUrl}/users/${userId}/channel`, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
+  private async fetchUserChannelsWhichIsMod(
+    userId: string,
+  ): Promise<UserChannelInfo[]> {
+    const channelsResponse = await fetch(
+      `${this.dbGatewayUrl}/users/${userId}/channel`,
+      {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+        },
+        signal: AbortSignal.timeout(this.timeout),
       },
-      signal: AbortSignal.timeout(this.timeout),
-    });
+    );
 
     if (!channelsResponse.ok) {
       if (channelsResponse.status === 404) {
@@ -85,7 +90,7 @@ export class DbGatewayService {
     const channelsData: UserChannelsResponse = await channelsResponse.json();
 
     const moderatorChannels = channelsData.channels.filter(
-      (channel) => channel.userType === "moderator"
+      (channel) => channel.userType === "moderator",
     );
 
     if (moderatorChannels.length === 0) {
@@ -105,7 +110,7 @@ export class DbGatewayService {
               Accept: "application/json",
             },
             signal: AbortSignal.timeout(this.timeout),
-          }
+          },
         );
 
         if (!usersResponse.ok) {

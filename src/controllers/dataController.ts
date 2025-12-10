@@ -38,4 +38,3 @@ export const getUserById = async (
     throw new CustomError("Failed to fetch user data", 500);
   }
 };
-

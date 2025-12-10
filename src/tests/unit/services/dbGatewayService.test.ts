@@ -319,9 +319,9 @@ describe("DbGatewayService", () => {
 
       mockFetch.mockResolvedValue(mockUserChannelResponse as any);
 
-      await expect(
-        dbGatewayService.getAllDataUserById(userId),
-      ).rejects.toThrow(CustomError);
+      await expect(dbGatewayService.getAllDataUserById(userId)).rejects.toThrow(
+        CustomError,
+      );
 
       expect(mockLogger.warn).toHaveBeenCalledWith(
         "User channel not found in database gateway",
@@ -341,9 +341,9 @@ describe("DbGatewayService", () => {
 
       mockFetch.mockResolvedValue(mockUserChannelResponse as any);
 
-      await expect(
-        dbGatewayService.getAllDataUserById(userId),
-      ).rejects.toThrow(CustomError);
+      await expect(dbGatewayService.getAllDataUserById(userId)).rejects.toThrow(
+        CustomError,
+      );
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         "Database gateway request failed",
@@ -378,9 +378,9 @@ describe("DbGatewayService", () => {
         .mockResolvedValueOnce(mockUserChannelResponse as any)
         .mockResolvedValueOnce(mockChannelsResponse as any);
 
-      await expect(
-        dbGatewayService.getAllDataUserById(userId),
-      ).rejects.toThrow(CustomError);
+      await expect(dbGatewayService.getAllDataUserById(userId)).rejects.toThrow(
+        CustomError,
+      );
     });
 
     it("should skip channel if users fetch fails", async () => {
@@ -479,9 +479,9 @@ describe("DbGatewayService", () => {
 
       mockFetch.mockRejectedValue(new Error("Network error"));
 
-      await expect(
-        dbGatewayService.getAllDataUserById(userId),
-      ).rejects.toThrow(CustomError);
+      await expect(dbGatewayService.getAllDataUserById(userId)).rejects.toThrow(
+        CustomError,
+      );
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         "Failed to fetch user from database gateway",

@@ -4,4 +4,3 @@ export interface DbGatewayUserData {
   channelDescription: string;
   profileImageUrl: string;
 }
-

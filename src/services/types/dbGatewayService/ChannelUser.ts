@@ -6,4 +6,3 @@ export interface ChannelUser {
   channelDescription: string;
   scope: string;
 }
-

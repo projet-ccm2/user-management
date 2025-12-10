@@ -3,4 +3,3 @@ export interface ChannelMembership {
   name: string;
   userType: string;
 }
-
