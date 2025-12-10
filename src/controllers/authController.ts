@@ -64,8 +64,8 @@ export const callbackConnexion = async (
       username,
       channel: {
         id: twitchUser.id,
-        name: username,
-        description: twitchUser.description,
+        username: username,
+        channelDescription: twitchUser.description || "",
         profileImageUrl: twitchUser.profile_image_url,
       },
       channelsWhichIsMod: [],

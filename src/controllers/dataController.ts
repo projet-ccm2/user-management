@@ -17,7 +17,7 @@ export const getUserById = async (
 
     logger.info("Fetching user data", { userId: id });
 
-    const user = await dbGatewayService.getUserById(id);
+    const user = await dbGatewayService.getAllDataUserById(id);
     const userWithoutAuth = user.getAllWithoutAuth();
 
     logger.info("User data successfully retrieved", {
