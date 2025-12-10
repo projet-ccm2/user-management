@@ -1,7 +1,7 @@
 export type UserChannelInfo = {
   id: string;
-  name: string;
-  description: string;
+  username: string;
+  channelDescription: string;
   profileImageUrl: string;
 };
 

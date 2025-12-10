@@ -1,18 +1,11 @@
 import { logger } from "../utils/logger";
 import { CustomError } from "../middlewares/errorHandler";
 import { config } from "../config/environment";
-import User from "../models/user";
-
-interface DbGatewayResponse {
-  success: boolean;
-  userId?: string;
-  message?: string;
-}
-
-interface DbGatewayUserData {
-  id: string;
-  username: string;
-}
+import User, { UserChannelInfo } from "../models/user";
+import type { DbGatewayResponse } from "./types/dbGatewayService/DbGatewayResponse";
+import type { DbGatewayUserData } from "./types/dbGatewayService/DbGatewayUserData";
+import type { UserChannelsResponse } from "./types/dbGatewayService/UserChannelsResponse";
+import type { ChannelUsersResponse } from "./types/dbGatewayService/ChannelUsersResponse";
 
 export class DbGatewayService {
   private readonly dbGatewayUrl: string;
@@ -21,6 +14,128 @@ export class DbGatewayService {
   constructor() {
     this.dbGatewayUrl = config.dbGateway.url;
     this.timeout = 10000;
+  }
+
+  private async fetchUserChannel(userId: string): Promise<UserChannelInfo> {
+    const response = await fetch(`${this.dbGatewayUrl}/users/${userId}`, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
+      signal: AbortSignal.timeout(this.timeout),
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        logger.warn("User channel not found in database gateway", { userId });
+        throw new CustomError("User channel not found", 404);
+      }
+
+      const errorText = await response.text();
+      logger.error("Database gateway request failed", {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText.substring(0, 500),
+        userId,
+      });
+      throw new CustomError(
+        `Database gateway error: ${response.status} ${response.statusText}`,
+        response.status,
+      );
+    }
+
+    const userData: DbGatewayUserData = await response.json();
+
+    return {
+      id: userData.id,
+      username: userData.username,
+      channelDescription: userData.channelDescription,
+      profileImageUrl: userData.profileImageUrl,
+    };
+  }
+
+  private async fetchUserChannelsWhichIsMod(userId: string): Promise<UserChannelInfo[]> {
+    const channelsResponse = await fetch(`${this.dbGatewayUrl}/users/${userId}/channel`, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
+      signal: AbortSignal.timeout(this.timeout),
+    });
+
+    if (!channelsResponse.ok) {
+      if (channelsResponse.status === 404) {
+        logger.warn("User channels not found in database gateway", { userId });
+        return [];
+      }
+
+      const errorText = await channelsResponse.text();
+      logger.error("Database gateway request failed for user channels", {
+        status: channelsResponse.status,
+        statusText: channelsResponse.statusText,
+        error: errorText.substring(0, 500),
+        userId,
+      });
+      throw new CustomError(
+        `Database gateway error: ${channelsResponse.status} ${channelsResponse.statusText}`,
+        channelsResponse.status,
+      );
+    }
+
+    const channelsData: UserChannelsResponse = await channelsResponse.json();
+
+    const moderatorChannels = channelsData.channels.filter(
+      (channel) => channel.userType === "moderator"
+    );
+
+    if (moderatorChannels.length === 0) {
+      logger.info("No moderator channels found for user", { userId });
+      return [];
+    }
+
+    const channelsWhichIsMod: UserChannelInfo[] = [];
+
+    for (const channel of moderatorChannels) {
+      try {
+        const usersResponse = await fetch(
+          `${this.dbGatewayUrl}/channels/${channel.id}/users`,
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+            },
+            signal: AbortSignal.timeout(this.timeout),
+          }
+        );
+
+        if (!usersResponse.ok) {
+          logger.warn("Failed to fetch users for channel", {
+            channelId: channel.id,
+            status: usersResponse.status,
+          });
+          continue;
+        }
+
+        const usersData: ChannelUsersResponse = await usersResponse.json();
+
+        if (usersData.users && usersData.users.length > 0) {
+          const firstUser = usersData.users[0];
+          channelsWhichIsMod.push({
+            id: firstUser.id,
+            username: firstUser.username,
+            channelDescription: firstUser.channelDescription,
+            profileImageUrl: firstUser.profileImageUrl,
+          });
+        }
+      } catch (error) {
+        logger.error("Error fetching users for channel", {
+          channelId: channel.id,
+          error: error instanceof Error ? error.message : "Unknown error",
+        });
+      }
+    }
+
+    return channelsWhichIsMod;
   }
 
   async saveUser(user: User): Promise<DbGatewayResponse> {
@@ -81,74 +196,25 @@ export class DbGatewayService {
     }
   }
 
-  async getUserById(userId: string): Promise<User> {
+  async getAllDataUserById(userId: string): Promise<User> {
     try {
       logger.info("Fetching user data from database gateway", {
         userId,
       });
 
-      /**
-       * need route to get all user data 
-       * /users/:id
-       * {
-       *   "id": "u_abc123",
-       *   "username": "john_doe"
-       * }
-       * miss description and profileImageUrl
-       * miss all Channel Membership of the user
-       */
-
-      const response = await fetch(`${this.dbGatewayUrl}/users/${userId}`, {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-        },
-        signal: AbortSignal.timeout(this.timeout),
-      });
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          logger.warn("User not found in database gateway", { userId });
-          throw new CustomError("User not found", 404);
-        }
-
-        const errorText = await response.text();
-        logger.error("Database gateway request failed", {
-          status: response.status,
-          statusText: response.statusText,
-          error: errorText.substring(0, 500),
-        });
-        throw new CustomError(
-          `Database gateway error: ${response.status} ${response.statusText}`,
-          response.status,
-        );
-      }
-
-      const userData: DbGatewayUserData = await response.json();
-
-      const channel: DbGatewayUserData = {
-        id: userData.id,
-        username: userData.username,
-        //description: userData.channel.description,
-        //profileImageUrl: userData.channel.profileImageUrl,
-      };
-
-      const user = new User({
-        username: userData.username,
-        channel: userData.channel,
-        channelsWhichIsMod: userData.channelsWhichIsMod || []
-      });
+      const channel = await this.fetchUserChannel(userId);
+      const channelsWhichIsMod = await this.fetchUserChannelsWhichIsMod(userId);
 
       logger.info("User successfully fetched from database", {
-        userId: userData.id,
-        username: userData.username,
+        userId: channel.id,
+        username: channel.username,
+        channelsWhichIsModCount: channelsWhichIsMod.length,
       });
 
-
       return new User({
-        username: userData.username,
-        channel: userData.channel,
-        channelsWhichIsMod: userData.channelsWhichIsMod || [],
+        username: channel.username,
+        channel: channel,
+        channelsWhichIsMod: channelsWhichIsMod,
       });
     } catch (error) {
       if (error instanceof CustomError) {
