@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import { dbGatewayService } from "../services/dbGatewayService";
-import User from "../models/user";
 import { logger } from "../utils/logger";
 import { CustomError } from "../middlewares/errorHandler";
 
