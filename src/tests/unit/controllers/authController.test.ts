@@ -223,6 +223,54 @@ describe("authController", () => {
       );
     });
 
+    it("should handle null description", async () => {
+      mockFetchTwitchUser.mockResolvedValueOnce({
+        id: "12345",
+        login: "testuser",
+        display_name: "TestUser",
+        type: "user",
+        broadcaster_type: "",
+        description: null as any,
+        profile_image_url: "https://example.com/avatar.jpg",
+        offline_image_url: "https://example.com/offline.jpg",
+        created_at: "2020-01-01T00:00:00Z",
+      });
+
+      await callbackConnexion(mockRequest as Request, mockResponse as Response);
+
+      expect(mockDbGatewayService.saveUser).toHaveBeenCalledWith(
+        expect.objectContaining({
+          channel: expect.objectContaining({
+            channelDescription: "",
+          }),
+        }),
+      );
+    });
+
+    it("should handle undefined description", async () => {
+      mockFetchTwitchUser.mockResolvedValueOnce({
+        id: "12345",
+        login: "testuser",
+        display_name: "TestUser",
+        type: "user",
+        broadcaster_type: "",
+        description: undefined as any,
+        profile_image_url: "https://example.com/avatar.jpg",
+        offline_image_url: "https://example.com/offline.jpg",
+        created_at: "2020-01-01T00:00:00Z",
+      });
+
+      await callbackConnexion(mockRequest as Request, mockResponse as Response);
+
+      expect(mockDbGatewayService.saveUser).toHaveBeenCalledWith(
+        expect.objectContaining({
+          channel: expect.objectContaining({
+            channelDescription: "",
+          }),
+        }),
+      );
+    });
+
     it("should handle expiresIn as number", async () => {
       mockRequest.user!.tokens.expiresIn = 7200;
 
