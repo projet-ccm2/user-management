@@ -1,7 +1,7 @@
 {
   "name": "user-management",
   "version": "1.0.0",
-  "description": "",
+  "description": "user management service",
   "license": "ISC",
   "author": "",
   "type": "commonjs",
