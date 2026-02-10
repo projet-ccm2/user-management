@@ -30,4 +30,7 @@ jobs:
     secrets:
       GCP_SA_KEY: ${{ secrets.INT_GCP_SA_KEY }}
       GCP_PROJECT_ID: ${{ secrets.INT_GCP_PROJECT_ID }}
-      TWITCH_CLIENT_ID: ${{ secrets.TWITCH_CLIENT_ID }}
+      TWITCH_CLIENT_ID: ${{ secrets.INT_TWITCH_CLIENT_ID }}
+      TWITCH_ISSUER: ${{ secrets.INT_TWITCH_ISSUER }}
+      ALLOWED_ORIGINS: ${{ secrets.INT_ALLOWED_ORIGINS }}
+      DB_SERVICE_URL: ${{ secrets.INT_DB_SERVICE_URL }}

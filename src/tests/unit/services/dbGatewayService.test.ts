@@ -52,13 +52,17 @@ describe("DbGatewayService", () => {
     });
 
     it("should successfully save user to database gateway", async () => {
+      const mockDbResponse = {
+        id: "db_user_123",
+        username: "testuser",
+        twitchUserId: "123",
+        profileImageUrl: "https://example.com/avatar.jpg",
+        channelDescription: "Test user",
+        scope: "user:read:email",
+      };
       const mockResponse = {
         ok: true,
-        json: jest.fn().mockResolvedValue({
-          success: true,
-          userId: "db_user_123",
-          message: "User created successfully",
-        }),
+        json: jest.fn().mockResolvedValue(mockDbResponse),
       };
 
       mockFetch.mockResolvedValue(mockResponse as any);
@@ -75,22 +79,15 @@ describe("DbGatewayService", () => {
           },
           body: JSON.stringify({
             username: "testuser",
-            channel: {
-              id: "123",
-              name: "testuser",
-              description: "Test user",
-              profileImageUrl: "https://example.com/avatar.jpg",
-            },
-            channelsWhichIsMod: [],
+            twitchUserId: "123",
+            profileImageUrl: "https://example.com/avatar.jpg",
+            channelDescription: "Test user",
+            scope: "user:read:email",
           }),
         }),
       );
 
-      expect(result).toEqual({
-        success: true,
-        userId: "db_user_123",
-        message: "User created successfully",
-      });
+      expect(result).toEqual(mockDbResponse);
 
       expect(mockLogger.info).toHaveBeenCalledWith(
         "Sending user data to database gateway",

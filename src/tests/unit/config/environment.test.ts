@@ -89,12 +89,12 @@ describe("Environment Configuration", () => {
     expect(testConfig.twitch.issuer).toBe("https://custom.twitch.issuer.com");
   });
 
-  it("should handle custom DB_GATEWAY_URL", () => {
+  it("should handle custom DB_SERVICE_URL", () => {
     process.env.TWITCH_CLIENT_ID = "test_client_id";
-    process.env.DB_GATEWAY_URL = "https://db-gateway.example.com";
+    process.env.DB_SERVICE_URL = "https://db-service.example.com";
 
     const { config: testConfig } = require("../../../config/environment");
 
-    expect(testConfig.dbGateway.url).toBe("https://db-gateway.example.com");
+    expect(testConfig.dbGateway.url).toBe("https://db-service.example.com");
   });
 });

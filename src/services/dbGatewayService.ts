@@ -2,12 +2,7 @@ import { logger } from "../utils/logger";
 import { CustomError } from "../middlewares/errorHandler";
 import { config } from "../config/environment";
 import User from "../models/user";
-
-interface DbGatewayResponse {
-  success: boolean;
-  userId?: string;
-  message?: string;
-}
+import type { DbGatewayResponse } from "./types/dbGatewayService/DbGatewayResponse";
 
 export class DbGatewayService {
   private readonly dbGatewayUrl: string;
@@ -25,10 +20,18 @@ export class DbGatewayService {
         channelId: user.channel.id,
       });
 
+      // Convert scope array to string (OAuth scopes are space-separated)
+      const scopeString =
+        user.auth.scope && user.auth.scope.length > 0
+          ? user.auth.scope.join(" ")
+          : null;
+
       const userData = {
         username: user.username,
-        channel: user.channel,
-        channelsWhichIsMod: user.channelsWhichIsMod,
+        twitchUserId: user.channel.id,
+        profileImageUrl: user.channel.profileImageUrl || null,
+        channelDescription: user.channel.description || null,
+        scope: scopeString,
       };
 
       const response = await fetch(`${this.dbGatewayUrl}/users`, {
@@ -54,10 +57,10 @@ export class DbGatewayService {
         );
       }
 
-      const result = await response.json();
+      const result: DbGatewayResponse = await response.json();
 
       logger.info("User successfully saved to database", {
-        userId: result.userId,
+        userId: result.id,
         username: user.username,
       });
 
