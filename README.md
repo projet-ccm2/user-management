@@ -40,7 +40,7 @@ NODE_ENV=development
 PORT=3000
 TWITCH_ISSUER=https://id.twitch.tv/oauth2
 ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001
-DB_GATEWAY_URL=http://localhost:3001
+DB_SERVICE_URL=http://localhost:3001
 ```
 
 ### Get your TWITCH_CLIENT_ID
