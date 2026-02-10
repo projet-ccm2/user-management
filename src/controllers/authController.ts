@@ -80,14 +80,14 @@ export const callbackConnexion = async (
     const dbResult = await dbGatewayService.saveUser(userModel);
 
     logger.info("User saved to database", {
-      userId: dbResult.userId,
+      userId: dbResult.id,
       username: username,
     });
 
     res.status(200).json({
       success: true,
       user: userModel.getAllWithoutAuth(),
-      userId: dbResult.userId,
+      userId: dbResult.id,
     });
   } catch (error) {
     if (error instanceof CustomError) {
