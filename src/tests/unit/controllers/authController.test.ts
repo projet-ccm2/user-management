@@ -77,7 +77,6 @@ describe("authController", () => {
     mockDbGatewayService.saveUser = jest.fn().mockResolvedValue({
       id: "12345",
       username: "TestUser",
-      twitchUserId: "12345",
       profileImageUrl: "https://example.com/avatar.jpg",
       channelDescription: "Test description",
       scope: "user:read:email",

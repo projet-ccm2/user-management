@@ -55,7 +55,6 @@ describe("DbGatewayService", () => {
       const mockDbResponse = {
         id: "db_user_123",
         username: "testuser",
-        twitchUserId: "123",
         profileImageUrl: "https://example.com/avatar.jpg",
         channelDescription: "Test user",
         scope: "user:read:email",
@@ -78,8 +77,8 @@ describe("DbGatewayService", () => {
             Accept: "application/json",
           },
           body: JSON.stringify({
+            id: "123",
             username: "testuser",
-            twitchUserId: "123",
             profileImageUrl: "https://example.com/avatar.jpg",
             channelDescription: "Test user",
             scope: "user:read:email",

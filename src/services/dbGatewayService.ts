@@ -27,8 +27,8 @@ export class DbGatewayService {
           : null;
 
       const userData = {
+        id: user.channel.id,
         username: user.username,
-        twitchUserId: user.channel.id,
         profileImageUrl: user.channel.profileImageUrl || null,
         channelDescription: user.channel.description || null,
         scope: scopeString,
