@@ -308,6 +308,156 @@ export class DbGatewayService {
       return { status: "unhealthy", error: message };
     }
   }
+
+  async getChannelById(id: string): Promise<ChannelResponse | null> {
+    try {
+      const response = await fetch(
+        `${this.dbGatewayUrl}/channels/${encodeURIComponent(id)}`,
+        {
+          method: "GET",
+          headers: this.headers,
+          signal: AbortSignal.timeout(this.timeout),
+        },
+      );
+
+      if (response.status === 404) return null;
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        logger.error("Database gateway request failed", {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText.substring(0, 500),
+        });
+        throw new CustomError(
+          `Database gateway error: ${response.status} ${response.statusText}`,
+          response.status,
+        );
+      }
+
+      return (await response.json()) as ChannelResponse;
+    } catch (error) {
+      if (error instanceof CustomError) throw error;
+      logger.error("Failed to get channel from database gateway", {
+        error: error instanceof Error ? error.message : "Unknown error",
+        channelId: id,
+      });
+      throw new CustomError("Failed to get channel data", 502);
+    }
+  }
+
+  async createChannel(name: string): Promise<ChannelResponse> {
+    try {
+      const response = await fetch(`${this.dbGatewayUrl}/channels`, {
+        method: "POST",
+        headers: this.headers,
+        body: JSON.stringify({ name }),
+        signal: AbortSignal.timeout(this.timeout),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        logger.error("Database gateway request failed", {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText.substring(0, 500),
+        });
+        throw new CustomError(
+          `Database gateway error: ${response.status} ${response.statusText}`,
+          response.status,
+        );
+      }
+
+      return (await response.json()) as ChannelResponse;
+    } catch (error) {
+      if (error instanceof CustomError) throw error;
+      logger.error("Failed to create channel in database gateway", {
+        error: error instanceof Error ? error.message : "Unknown error",
+        name,
+      });
+      throw new CustomError("Failed to create channel", 502);
+    }
+  }
+
+  async getAre(
+    userId: string,
+    channelId: string,
+  ): Promise<AreResponse | null> {
+    try {
+      const url = new URL(`${this.dbGatewayUrl}/are`);
+      url.searchParams.set("userId", userId);
+      url.searchParams.set("channelId", channelId);
+
+      const response = await fetch(url.toString(), {
+        method: "GET",
+        headers: this.headers,
+        signal: AbortSignal.timeout(this.timeout),
+      });
+
+      if (response.status === 404) return null;
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        logger.error("Database gateway request failed", {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText.substring(0, 500),
+        });
+        throw new CustomError(
+          `Database gateway error: ${response.status} ${response.statusText}`,
+          response.status,
+        );
+      }
+
+      return (await response.json()) as AreResponse;
+    } catch (error) {
+      if (error instanceof CustomError) throw error;
+      logger.error("Failed to get ARE from database gateway", {
+        error: error instanceof Error ? error.message : "Unknown error",
+        userId,
+        channelId,
+      });
+      throw new CustomError("Failed to get ARE data", 502);
+    }
+  }
+
+  async createAre(
+    userId: string,
+    channelId: string,
+    userType: string,
+  ): Promise<AreResponse> {
+    try {
+      const response = await fetch(`${this.dbGatewayUrl}/are`, {
+        method: "POST",
+        headers: this.headers,
+        body: JSON.stringify({ userId, channelId, userType }),
+        signal: AbortSignal.timeout(this.timeout),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        logger.error("Database gateway request failed", {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText.substring(0, 500),
+        });
+        throw new CustomError(
+          `Database gateway error: ${response.status} ${response.statusText}`,
+          response.status,
+        );
+      }
+
+      return (await response.json()) as AreResponse;
+    } catch (error) {
+      if (error instanceof CustomError) throw error;
+      logger.error("Failed to create ARE in database gateway", {
+        error: error instanceof Error ? error.message : "Unknown error",
+        userId,
+        channelId,
+      });
+      throw new CustomError("Failed to create ARE", 502);
+    }
+  }
 }
 
 export const dbGatewayService = new DbGatewayService();
