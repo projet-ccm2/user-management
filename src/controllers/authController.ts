@@ -84,9 +84,13 @@ export const callbackConnexion = async (
       username: username,
     });
 
-    const dbResult = await dbGatewayService.saveUser(userModel);
+    const existing = await dbGatewayService.getUserById(userModel.channel.id);
+    const dbResult =
+      existing === null
+        ? await dbGatewayService.saveUser(userModel)
+        : await dbGatewayService.updateUser(userModel.channel.id, userModel);
 
-    logger.info("User saved to database", {
+    logger.info("User saved or updated in database", {
       userId: dbResult.id,
       username: username,
     });

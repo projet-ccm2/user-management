@@ -29,28 +29,169 @@ describe("DbGatewayService", () => {
     jest.restoreAllMocks();
   });
 
-  describe("saveUser", () => {
-    const mockUser = new User({
-      username: "testuser",
-      channel: {
+  const mockUser = new User({
+    username: "testuser",
+    channel: {
+      id: "123",
+      name: "testuser",
+      description: "Test user",
+      profileImageUrl: "https://example.com/avatar.jpg",
+    },
+    channelsWhichIsMod: [],
+    auth: {
+      accessToken: "access_token",
+      idToken: "id_token",
+      tokenType: "Bearer",
+      scope: ["user:read:email"],
+      expiresIn: 3600,
+      expiresAt: new Date(Date.now() + 3600000),
+      state: "random_state",
+      approvedAt: new Date(),
+    },
+  });
+
+  describe("getUserById", () => {
+    it("should return user when GET returns 200", async () => {
+      const mockDbResponse = {
         id: "123",
-        name: "testuser",
-        description: "Test user",
+        username: "testuser",
         profileImageUrl: "https://example.com/avatar.jpg",
-      },
-      channelsWhichIsMod: [],
-      auth: {
-        accessToken: "access_token",
-        idToken: "id_token",
-        tokenType: "Bearer",
-        scope: ["user:read:email"],
-        expiresIn: 3600,
-        expiresAt: new Date(Date.now() + 3600000),
-        state: "random_state",
-        approvedAt: new Date(),
-      },
+        channelDescription: "Test user",
+        scope: "user:read:email",
+      };
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: jest.fn().mockResolvedValue(mockDbResponse),
+      } as any);
+
+      const result = await dbGatewayService.getUserById("123");
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://localhost:3001/users/123",
+        expect.objectContaining({
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+        }),
+      );
+      expect(result).toEqual(mockDbResponse);
     });
 
+    it("should return null when GET returns 404", async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 404,
+      } as any);
+
+      const result = await dbGatewayService.getUserById("123");
+
+      expect(result).toBeNull();
+    });
+
+    it("should throw CustomError when GET returns 500", async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: "Internal Server Error",
+        text: jest.fn().mockResolvedValue("Database error"),
+      } as any);
+
+      await expect(dbGatewayService.getUserById("123")).rejects.toThrow(
+        CustomError,
+      );
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        "Database gateway request failed",
+        expect.objectContaining({
+          status: 500,
+          statusText: "Internal Server Error",
+          error: "Database error",
+        }),
+      );
+    });
+  });
+
+  describe("updateUser", () => {
+    it("should successfully update user in database gateway", async () => {
+      const mockDbResponse = {
+        id: "123",
+        username: "testuser",
+        profileImageUrl: "https://example.com/avatar.jpg",
+        channelDescription: "Test user",
+        scope: "user:read:email",
+      };
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockDbResponse),
+      } as any);
+
+      const result = await dbGatewayService.updateUser("123", mockUser);
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://localhost:3001/users/123",
+        expect.objectContaining({
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            username: "testuser",
+            profileImageUrl: "https://example.com/avatar.jpg",
+            channelDescription: "Test user",
+            scope: "user:read:email",
+          }),
+        }),
+      );
+      expect(result).toEqual(mockDbResponse);
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        "User successfully updated in database",
+        expect.objectContaining({
+          userId: "123",
+          username: "testuser",
+        }),
+      );
+    });
+
+    it("should throw CustomError when PUT returns 404", async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: jest.fn().mockResolvedValue("not found"),
+      } as any);
+
+      await expect(
+        dbGatewayService.updateUser("123", mockUser),
+      ).rejects.toThrow(CustomError);
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        "Database gateway request failed",
+        expect.objectContaining({
+          status: 404,
+          statusText: "Not Found",
+        }),
+      );
+    });
+
+    it("should throw CustomError when PUT returns 500", async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: "Internal Server Error",
+        text: jest.fn().mockResolvedValue("Database error"),
+      } as any);
+
+      await expect(
+        dbGatewayService.updateUser("123", mockUser),
+      ).rejects.toThrow(CustomError);
+    });
+  });
+
+  describe("saveUser", () => {
     it("should successfully save user to database gateway", async () => {
       const mockDbResponse = {
         id: "db_user_123",

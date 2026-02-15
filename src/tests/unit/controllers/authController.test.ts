@@ -76,7 +76,15 @@ describe("authController", () => {
       created_at: "2020-01-01T00:00:00Z",
     });
 
+    mockDbGatewayService.getUserById = jest.fn().mockResolvedValue(null);
     mockDbGatewayService.saveUser = jest.fn().mockResolvedValue({
+      id: "12345",
+      username: "TestUser",
+      profileImageUrl: "https://example.com/avatar.jpg",
+      channelDescription: "Test description",
+      scope: "user:read:email",
+    });
+    mockDbGatewayService.updateUser = jest.fn().mockResolvedValue({
       id: "12345",
       username: "TestUser",
       profileImageUrl: "https://example.com/avatar.jpg",
@@ -103,13 +111,52 @@ describe("authController", () => {
         "test-access-token",
         "test-client-id",
       );
+      expect(mockDbGatewayService.getUserById).toHaveBeenCalledWith("12345");
       expect(mockDbGatewayService.saveUser).toHaveBeenCalled();
+      expect(mockDbGatewayService.updateUser).not.toHaveBeenCalled();
       expect(mockStatus).toHaveBeenCalledWith(200);
       expect(mockJson).toHaveBeenCalledWith({
         success: true,
         user: expect.any(Object),
         userId: "12345",
       });
+    });
+
+    it("should create user when getUserById returns null", async () => {
+      mockDbGatewayService.getUserById.mockResolvedValueOnce(null);
+
+      await callbackConnexion(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext,
+      );
+
+      expect(mockDbGatewayService.getUserById).toHaveBeenCalledWith("12345");
+      expect(mockDbGatewayService.saveUser).toHaveBeenCalled();
+      expect(mockDbGatewayService.updateUser).not.toHaveBeenCalled();
+    });
+
+    it("should update user when getUserById returns existing user", async () => {
+      mockDbGatewayService.getUserById.mockResolvedValueOnce({
+        id: "12345",
+        username: "TestUser",
+        profileImageUrl: "https://example.com/avatar.jpg",
+        channelDescription: "Test description",
+        scope: "user:read:email",
+      });
+
+      await callbackConnexion(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext,
+      );
+
+      expect(mockDbGatewayService.getUserById).toHaveBeenCalledWith("12345");
+      expect(mockDbGatewayService.updateUser).toHaveBeenCalledWith(
+        "12345",
+        expect.any(Object),
+      );
+      expect(mockDbGatewayService.saveUser).not.toHaveBeenCalled();
     });
 
     it("should call next with CustomError when user is missing", async () => {
@@ -210,6 +257,7 @@ describe("authController", () => {
 
     it("should call next with CustomError when dbGatewayService fails", async () => {
       const error = new Error("Database error");
+      mockDbGatewayService.getUserById.mockResolvedValueOnce(null);
       mockDbGatewayService.saveUser.mockRejectedValueOnce(error);
 
       await callbackConnexion(
