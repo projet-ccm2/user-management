@@ -276,10 +276,6 @@ export class DbGatewayService {
     }
   }
 
-  /**
-   * Checks connectivity with the db gateway by calling its health endpoint.
-   * Returns the db gateway health response on success, or an error object on failure.
-   */
   async checkHealth(): Promise<
     | { status: "healthy"; data: Record<string, unknown> }
     | { status: "unhealthy"; error: string }
