@@ -3,6 +3,7 @@ import type { TwitchPassportUser } from "../strategies/twitchTokenStrategy";
 import User, { type UserAuthApproval } from "../models/user";
 import { fetchTwitchUser } from "../services/twitchUserService";
 import { dbGatewayService } from "../services/dbGatewayService";
+import { syncChannelsAndAreAfterAuth } from "../services/syncChannelsAndAreService";
 import { config } from "../config/environment";
 import { logger } from "../utils/logger";
 import { CustomError } from "../middlewares/errorHandler";
@@ -94,6 +95,20 @@ export const callbackConnexion = async (
       userId: dbResult.id,
       username: username,
     });
+
+    try {
+      await syncChannelsAndAreAfterAuth(
+        dbResult.id,
+        userModel,
+        tokens.accessToken,
+        config.twitch.clientId,
+      );
+    } catch (syncErr) {
+      logger.error("Sync channels/ARE failed (auth still successful)", {
+        error: syncErr instanceof Error ? syncErr.message : "Unknown error",
+        userId: dbResult.id,
+      });
+    }
 
     res.status(200).json({
       success: true,

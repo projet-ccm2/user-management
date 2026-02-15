@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import { callbackConnexion } from "../../../controllers/authController";
 import { fetchTwitchUser } from "../../../services/twitchUserService";
 import { dbGatewayService } from "../../../services/dbGatewayService";
+import { syncChannelsAndAreAfterAuth } from "../../../services/syncChannelsAndAreService";
 import "../../../config/environment";
 import { logger } from "../../../utils/logger";
 import { CustomError } from "../../../middlewares/errorHandler";
@@ -10,6 +11,9 @@ import type { TwitchPassportUser } from "../../../strategies/twitchTokenStrategy
 
 jest.mock("../../../services/twitchUserService");
 jest.mock("../../../services/dbGatewayService");
+jest.mock("../../../services/syncChannelsAndAreService", () => ({
+  syncChannelsAndAreAfterAuth: jest.fn().mockResolvedValue(undefined),
+}));
 jest.mock("../../../config/environment");
 jest.mock("../../../utils/logger");
 
@@ -114,6 +118,12 @@ describe("authController", () => {
       expect(mockDbGatewayService.getUserById).toHaveBeenCalledWith("12345");
       expect(mockDbGatewayService.saveUser).toHaveBeenCalled();
       expect(mockDbGatewayService.updateUser).not.toHaveBeenCalled();
+      expect(syncChannelsAndAreAfterAuth).toHaveBeenCalledWith(
+        "12345",
+        expect.any(Object),
+        "test-access-token",
+        "test-client-id",
+      );
       expect(mockStatus).toHaveBeenCalledWith(200);
       expect(mockJson).toHaveBeenCalledWith({
         success: true,
