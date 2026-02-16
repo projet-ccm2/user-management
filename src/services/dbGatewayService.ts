@@ -20,6 +20,40 @@ export class DbGatewayService {
     this.timeout = 10000;
   }
 
+  private async throwIfNotOk(response: Response): Promise<void> {
+    if (response.ok) return;
+    const errorText = await response.text();
+    logger.error("Database gateway request failed", {
+      status: response.status,
+      statusText: response.statusText,
+      error: errorText.substring(0, 500),
+    });
+    throw new CustomError(
+      `Database gateway error: ${response.status} ${response.statusText}`,
+      response.status,
+    );
+  }
+
+  private handleFetchError(
+    error: unknown,
+    logMessage: string,
+    logContext: Record<string, unknown>,
+    errorMessage: string,
+  ): never {
+    if (error instanceof CustomError) throw error;
+    logger.error(logMessage, {
+      ...logContext,
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+    throw new CustomError(errorMessage, 502);
+  }
+
+  private getScopeString(user: User): string | null {
+    return user.auth.scope && user.auth.scope.length > 0
+      ? user.auth.scope.join(" ")
+      : null;
+  }
+
   async getUserById(id: string): Promise<DbGatewayResponse | null> {
     try {
       const response = await fetch(
@@ -31,33 +65,17 @@ export class DbGatewayService {
         },
       );
 
-      if (response.status === 404) {
-        return null;
-      }
+      if (response.status === 404) return null;
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        logger.error("Database gateway request failed", {
-          status: response.status,
-          statusText: response.statusText,
-          error: errorText.substring(0, 500),
-        });
-        throw new CustomError(
-          `Database gateway error: ${response.status} ${response.statusText}`,
-          response.status,
-        );
-      }
-
+      await this.throwIfNotOk(response);
       return (await response.json()) as DbGatewayResponse;
     } catch (error) {
-      if (error instanceof CustomError) {
-        throw error;
-      }
-      logger.error("Failed to get user from database gateway", {
-        error: error instanceof Error ? error.message : "Unknown error",
-        userId: id,
-      });
-      throw new CustomError("Failed to get user data", 502);
+      this.handleFetchError(
+        error,
+        "Failed to get user from database gateway",
+        { userId: id },
+        "Failed to get user data",
+      );
     }
   }
 
@@ -68,17 +86,12 @@ export class DbGatewayService {
         channelId: user.channel.id,
       });
 
-      const scopeString =
-        user.auth.scope && user.auth.scope.length > 0
-          ? user.auth.scope.join(" ")
-          : null;
-
       const userData = {
         id: user.channel.id,
         username: user.username,
         profileImageUrl: user.channel.profileImageUrl || null,
         channelDescription: user.channel.description || null,
-        scope: scopeString,
+        scope: this.getScopeString(user),
       };
 
       const response = await fetch(`${this.dbGatewayUrl}/users`, {
@@ -88,21 +101,7 @@ export class DbGatewayService {
         signal: AbortSignal.timeout(this.timeout),
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        logger.error("Database gateway request failed", {
-          status: response.status,
-          statusText: response.statusText,
-          error: errorText.substring(0, 500),
-          url: `${this.dbGatewayUrl}/users`,
-          username: user.username,
-        });
-        throw new CustomError(
-          `Database gateway error: ${response.status} ${response.statusText}`,
-          response.status,
-        );
-      }
-
+      await this.throwIfNotOk(response);
       const result: DbGatewayResponse = await response.json();
 
       logger.info("User successfully saved to database", {
@@ -112,18 +111,12 @@ export class DbGatewayService {
 
       return result;
     } catch (error) {
-      if (error instanceof CustomError) {
-        throw error;
-      }
-
-      logger.error("Failed to save user to database gateway", {
-        error: error instanceof Error ? error.message : "Unknown error",
-        stack: error instanceof Error ? error.stack : undefined,
-        username: user.username,
-        channelId: user.channel.id,
-      });
-
-      throw new CustomError("Failed to save user data", 502);
+      this.handleFetchError(
+        error,
+        "Failed to save user to database gateway",
+        { username: user.username },
+        "Failed to save user data",
+      );
     }
   }
 
@@ -134,16 +127,11 @@ export class DbGatewayService {
         channelId: id,
       });
 
-      const scopeString =
-        user.auth.scope && user.auth.scope.length > 0
-          ? user.auth.scope.join(" ")
-          : null;
-
       const body = {
         username: user.username,
         profileImageUrl: user.channel.profileImageUrl || null,
         channelDescription: user.channel.description || null,
-        scope: scopeString,
+        scope: this.getScopeString(user),
       };
 
       const response = await fetch(
@@ -156,19 +144,7 @@ export class DbGatewayService {
         },
       );
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        logger.error("Database gateway request failed", {
-          status: response.status,
-          statusText: response.statusText,
-          error: errorText.substring(0, 500),
-        });
-        throw new CustomError(
-          `Database gateway error: ${response.status} ${response.statusText}`,
-          response.status,
-        );
-      }
-
+      await this.throwIfNotOk(response);
       const result: DbGatewayResponse = await response.json();
 
       logger.info("User successfully updated in database", {
@@ -178,14 +154,12 @@ export class DbGatewayService {
 
       return result;
     } catch (error) {
-      if (error instanceof CustomError) {
-        throw error;
-      }
-      logger.error("Failed to update user in database gateway", {
-        error: error instanceof Error ? error.message : "Unknown error",
-        username: user.username,
-      });
-      throw new CustomError("Failed to update user data", 502);
+      this.handleFetchError(
+        error,
+        "Failed to update user in database gateway",
+        { username: user.username },
+        "Failed to update user data",
+      );
     }
   }
 
@@ -202,27 +176,15 @@ export class DbGatewayService {
 
       if (response.status === 404) return null;
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        logger.error("Database gateway request failed", {
-          status: response.status,
-          statusText: response.statusText,
-          error: errorText.substring(0, 500),
-        });
-        throw new CustomError(
-          `Database gateway error: ${response.status} ${response.statusText}`,
-          response.status,
-        );
-      }
-
+      await this.throwIfNotOk(response);
       return (await response.json()) as ChannelResponse;
     } catch (error) {
-      if (error instanceof CustomError) throw error;
-      logger.error("Failed to get channel from database gateway", {
-        error: error instanceof Error ? error.message : "Unknown error",
-        channelId: id,
-      });
-      throw new CustomError("Failed to get channel data", 502);
+      this.handleFetchError(
+        error,
+        "Failed to get channel from database gateway",
+        { channelId: id },
+        "Failed to get channel data",
+      );
     }
   }
 
@@ -235,27 +197,15 @@ export class DbGatewayService {
         signal: AbortSignal.timeout(this.timeout),
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        logger.error("Database gateway request failed", {
-          status: response.status,
-          statusText: response.statusText,
-          error: errorText.substring(0, 500),
-        });
-        throw new CustomError(
-          `Database gateway error: ${response.status} ${response.statusText}`,
-          response.status,
-        );
-      }
-
+      await this.throwIfNotOk(response);
       return (await response.json()) as ChannelResponse;
     } catch (error) {
-      if (error instanceof CustomError) throw error;
-      logger.error("Failed to create channel in database gateway", {
-        error: error instanceof Error ? error.message : "Unknown error",
-        name,
-      });
-      throw new CustomError("Failed to create channel", 502);
+      this.handleFetchError(
+        error,
+        "Failed to create channel in database gateway",
+        { name },
+        "Failed to create channel",
+      );
     }
   }
 
@@ -273,28 +223,15 @@ export class DbGatewayService {
 
       if (response.status === 404) return null;
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        logger.error("Database gateway request failed", {
-          status: response.status,
-          statusText: response.statusText,
-          error: errorText.substring(0, 500),
-        });
-        throw new CustomError(
-          `Database gateway error: ${response.status} ${response.statusText}`,
-          response.status,
-        );
-      }
-
+      await this.throwIfNotOk(response);
       return (await response.json()) as AreResponse;
     } catch (error) {
-      if (error instanceof CustomError) throw error;
-      logger.error("Failed to get ARE from database gateway", {
-        error: error instanceof Error ? error.message : "Unknown error",
-        userId,
-        channelId,
-      });
-      throw new CustomError("Failed to get ARE data", 502);
+      this.handleFetchError(
+        error,
+        "Failed to get ARE from database gateway",
+        { userId, channelId },
+        "Failed to get ARE data",
+      );
     }
   }
 
@@ -311,28 +248,15 @@ export class DbGatewayService {
         signal: AbortSignal.timeout(this.timeout),
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        logger.error("Database gateway request failed", {
-          status: response.status,
-          statusText: response.statusText,
-          error: errorText.substring(0, 500),
-        });
-        throw new CustomError(
-          `Database gateway error: ${response.status} ${response.statusText}`,
-          response.status,
-        );
-      }
-
+      await this.throwIfNotOk(response);
       return (await response.json()) as AreResponse;
     } catch (error) {
-      if (error instanceof CustomError) throw error;
-      logger.error("Failed to create ARE in database gateway", {
-        error: error instanceof Error ? error.message : "Unknown error",
-        userId,
-        channelId,
-      });
-      throw new CustomError("Failed to create ARE", 502);
+      this.handleFetchError(
+        error,
+        "Failed to create ARE in database gateway",
+        { userId, channelId },
+        "Failed to create ARE",
+      );
     }
   }
 }

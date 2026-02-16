@@ -1,3 +1,4 @@
+/* eslint-disable camelcase -- Twitch API responses use snake_case */
 import {
   getModeratedChannels,
   getModerators,
