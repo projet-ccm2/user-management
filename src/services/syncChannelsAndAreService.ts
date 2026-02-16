@@ -14,14 +14,20 @@ export async function syncChannelsAndAreAfterAuth(
     const ownChannel = await dbGatewayService.createChannel(userModel.username);
     ownChannelId = ownChannel.id;
   } catch (err) {
-    logger.warn("Could not ensure owner channel (create may have failed for duplicate name)", {
-      username: userModel.username,
-      error: err instanceof Error ? err.message : "Unknown error",
-    });
+    logger.warn(
+      "Could not ensure owner channel (create may have failed for duplicate name)",
+      {
+        username: userModel.username,
+        error: err instanceof Error ? err.message : "Unknown error",
+      },
+    );
     return;
   }
 
-  const existingOwnerAre = await dbGatewayService.getAre(dbUserId, ownChannelId);
+  const existingOwnerAre = await dbGatewayService.getAre(
+    dbUserId,
+    ownChannelId,
+  );
   if (!existingOwnerAre) {
     await dbGatewayService.createAre(dbUserId, ownChannelId, "owner");
     logger.info("Created owner ARE link", {
@@ -40,9 +46,12 @@ export async function syncChannelsAndAreAfterAuth(
       userModel.channel.id,
     );
   } catch (err) {
-    logger.warn("Could not fetch moderated channels from Twitch (scope or token)", {
-      error: err instanceof Error ? err.message : "Unknown error",
-    });
+    logger.warn(
+      "Could not fetch moderated channels from Twitch (scope or token)",
+      {
+        error: err instanceof Error ? err.message : "Unknown error",
+      },
+    );
   }
 
   try {
@@ -52,9 +61,12 @@ export async function syncChannelsAndAreAfterAuth(
       userModel.channel.id,
     );
   } catch (err) {
-    logger.warn("Could not fetch channel moderators from Twitch (scope or token)", {
-      error: err instanceof Error ? err.message : "Unknown error",
-    });
+    logger.warn(
+      "Could not fetch channel moderators from Twitch (scope or token)",
+      {
+        error: err instanceof Error ? err.message : "Unknown error",
+      },
+    );
   }
 
   for (const mod of myModerators) {

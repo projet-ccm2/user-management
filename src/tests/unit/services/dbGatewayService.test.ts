@@ -112,6 +112,19 @@ describe("DbGatewayService", () => {
         }),
       );
     });
+
+    it("should throw CustomError on non-Error rejection", async () => {
+      mockFetch.mockRejectedValue("string error");
+
+      await expect(dbGatewayService.getUserById("123")).rejects.toThrow(
+        CustomError,
+      );
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        "Failed to get user from database gateway",
+        expect.objectContaining({ error: "Unknown error" }),
+      );
+    });
   });
 
   describe("updateUser", () => {
@@ -337,6 +350,224 @@ describe("DbGatewayService", () => {
       await expect(dbGatewayService.saveUser(mockUser)).rejects.toThrow(
         CustomError,
       );
+    });
+
+    it("should send null scope when auth.scope is empty", async () => {
+      const userNoScope = new User({
+        username: "testuser",
+        channel: mockUser.channel,
+        channelsWhichIsMod: [],
+        auth: {
+          ...mockUser.auth,
+          scope: [],
+        },
+      });
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue({ id: "123", username: "testuser" }),
+      } as any);
+
+      await dbGatewayService.saveUser(userNoScope);
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://localhost:3001/users",
+        expect.objectContaining({
+          body: expect.stringContaining('"scope":null'),
+        }),
+      );
+    });
+  });
+
+  describe("getChannelById", () => {
+    it("should return channel when GET returns 200", async () => {
+      const mockChannel = { id: "channel-123", name: "testchannel" };
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: jest.fn().mockResolvedValue(mockChannel),
+      } as any);
+
+      const result = await dbGatewayService.getChannelById("channel-123");
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://localhost:3001/channels/channel-123",
+        expect.objectContaining({ method: "GET" }),
+      );
+      expect(result).toEqual(mockChannel);
+    });
+
+    it("should return null when GET returns 404", async () => {
+      mockFetch.mockResolvedValue({ ok: false, status: 404 } as any);
+
+      const result = await dbGatewayService.getChannelById("channel-123");
+
+      expect(result).toBeNull();
+    });
+
+    it("should throw CustomError when GET returns 500", async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: "Internal Server Error",
+        text: jest.fn().mockResolvedValue("Database error"),
+      } as any);
+
+      await expect(
+        dbGatewayService.getChannelById("channel-123"),
+      ).rejects.toThrow(CustomError);
+    });
+
+    it("should throw CustomError on network error", async () => {
+      mockFetch.mockRejectedValue(new Error("Network error"));
+
+      await expect(
+        dbGatewayService.getChannelById("channel-123"),
+      ).rejects.toThrow(CustomError);
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        "Failed to get channel from database gateway",
+        expect.objectContaining({ channelId: "channel-123" }),
+      );
+    });
+  });
+
+  describe("createChannel", () => {
+    it("should successfully create channel", async () => {
+      const mockChannel = { id: "channel-456", name: "newchannel" };
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockChannel),
+      } as any);
+
+      const result = await dbGatewayService.createChannel("newchannel");
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://localhost:3001/channels",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({ name: "newchannel" }),
+        }),
+      );
+      expect(result).toEqual(mockChannel);
+    });
+
+    it("should throw CustomError when POST returns 500", async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: "Internal Server Error",
+        text: jest.fn().mockResolvedValue("Database error"),
+      } as any);
+
+      await expect(
+        dbGatewayService.createChannel("newchannel"),
+      ).rejects.toThrow(CustomError);
+    });
+
+    it("should throw CustomError on network error", async () => {
+      mockFetch.mockRejectedValue(new Error("Network error"));
+
+      await expect(
+        dbGatewayService.createChannel("newchannel"),
+      ).rejects.toThrow(CustomError);
+    });
+  });
+
+  describe("getAre", () => {
+    it("should return ARE when GET returns 200", async () => {
+      const mockAre = {
+        userId: "user-1",
+        channelId: "channel-1",
+        userType: "owner",
+      };
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: jest.fn().mockResolvedValue(mockAre),
+      } as any);
+
+      const result = await dbGatewayService.getAre("user-1", "channel-1");
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("/are?userId=user-1&channelId=channel-1"),
+        expect.objectContaining({ method: "GET" }),
+      );
+      expect(result).toEqual(mockAre);
+    });
+
+    it("should return null when GET returns 404", async () => {
+      mockFetch.mockResolvedValue({ ok: false, status: 404 } as any);
+
+      const result = await dbGatewayService.getAre("user-1", "channel-1");
+
+      expect(result).toBeNull();
+    });
+
+    it("should throw CustomError when GET returns 500", async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: "Internal Server Error",
+        text: jest.fn().mockResolvedValue("Database error"),
+      } as any);
+
+      await expect(
+        dbGatewayService.getAre("user-1", "channel-1"),
+      ).rejects.toThrow(CustomError);
+    });
+
+    it("should throw CustomError on network error", async () => {
+      mockFetch.mockRejectedValue(new Error("Network error"));
+
+      await expect(
+        dbGatewayService.getAre("user-1", "channel-1"),
+      ).rejects.toThrow(CustomError);
+    });
+  });
+
+  describe("createAre", () => {
+    it("should successfully create ARE", async () => {
+      const mockAre = {
+        userId: "user-1",
+        channelId: "channel-1",
+        userType: "moderator",
+      };
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockAre),
+      } as any);
+
+      const result = await dbGatewayService.createAre(
+        "user-1",
+        "channel-1",
+        "moderator",
+      );
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://localhost:3001/are",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({
+            userId: "user-1",
+            channelId: "channel-1",
+            userType: "moderator",
+          }),
+        }),
+      );
+      expect(result).toEqual(mockAre);
+    });
+
+    it("should throw CustomError when POST returns 500", async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: "Internal Server Error",
+        text: jest.fn().mockResolvedValue("Database error"),
+      } as any);
+
+      await expect(
+        dbGatewayService.createAre("user-1", "channel-1", "owner"),
+      ).rejects.toThrow(CustomError);
     });
   });
 });

@@ -259,10 +259,7 @@ export class DbGatewayService {
     }
   }
 
-  async getAre(
-    userId: string,
-    channelId: string,
-  ): Promise<AreResponse | null> {
+  async getAre(userId: string, channelId: string): Promise<AreResponse | null> {
     try {
       const url = new URL(`${this.dbGatewayUrl}/are`);
       url.searchParams.set("userId", userId);

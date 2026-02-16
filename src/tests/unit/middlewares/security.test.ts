@@ -138,9 +138,11 @@ describe("Security Middlewares", () => {
       expect(mockNext).toHaveBeenCalled();
     });
 
-    it("should allow OPTIONS preflight from allowed origin", () => {
+    it("should handle OPTIONS preflight with allowed origin", () => {
       mockReq.method = "OPTIONS";
-      mockReq.headers = { origin: "https://allowed.com" };
+      mockReq.headers = {
+        origin: "https://allowed.com",
+      };
       (mockRes as any).end = jest.fn();
 
       corsValidator(mockReq as Request, mockRes as Response, mockNext);
@@ -153,15 +155,20 @@ describe("Security Middlewares", () => {
         "Access-Control-Allow-Origin",
         "https://allowed.com",
       );
+      expect(mockRes.setHeader).toHaveBeenCalledWith(
+        "Access-Control-Allow-Methods",
+        "GET, POST, PUT, DELETE, OPTIONS",
+      );
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect((mockRes as any).end).toHaveBeenCalled();
       expect(mockNext).not.toHaveBeenCalled();
     });
 
-    it("should reject OPTIONS preflight from disallowed origin", () => {
+    it("should handle OPTIONS preflight with disallowed origin", () => {
       mockReq.method = "OPTIONS";
-      mockReq.headers = { origin: "https://disallowed.com" };
-      (mockRes as any).end = jest.fn();
+      mockReq.headers = {
+        origin: "https://disallowed.com",
+      };
 
       corsValidator(mockReq as Request, mockRes as Response, mockNext);
 
@@ -173,6 +180,10 @@ describe("Security Middlewares", () => {
         },
       );
       expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: "Origin not allowed by CORS policy",
+        status: 403,
+      });
       expect(mockNext).not.toHaveBeenCalled();
     });
 
