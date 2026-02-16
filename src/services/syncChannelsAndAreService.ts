@@ -36,15 +36,10 @@ export async function syncChannelsAndAreAfterAuth(
     });
   }
 
-  let moderatedChannels: Awaited<ReturnType<typeof getModeratedChannels>> = [];
   let myModerators: Awaited<ReturnType<typeof getModerators>> = [];
 
   try {
-    moderatedChannels = await getModeratedChannels(
-      accessToken,
-      clientId,
-      userModel.channel.id,
-    );
+    await getModeratedChannels(accessToken, clientId, userModel.channel.id);
   } catch (err) {
     logger.warn(
       "Could not fetch moderated channels from Twitch (scope or token)",

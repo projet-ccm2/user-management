@@ -103,9 +103,9 @@ export const callbackConnexion = async (
         tokens.accessToken,
         config.twitch.clientId,
       );
-    } catch (syncErr) {
+    } catch (error_) {
       logger.error("Sync channels/ARE failed (auth still successful)", {
-        error: syncErr instanceof Error ? syncErr.message : "Unknown error",
+        error: error_ instanceof Error ? error_.message : "Unknown error",
         userId: dbResult.id,
       });
     }
