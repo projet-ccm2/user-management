@@ -169,9 +169,7 @@ describe("DbGatewayService", () => {
 
       const mockResponse = {
         ok: true,
-        json: jest
-          .fn()
-          .mockResolvedValue({ id: "db_456", username: "noscope" }),
+        json: jest.fn().mockResolvedValue({ id: "db_456", username: "noscope" }),
       };
       mockFetch.mockResolvedValue(mockResponse as any);
 
