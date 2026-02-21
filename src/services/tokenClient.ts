@@ -10,14 +10,6 @@ let cachedToken: string | null = null;
 let cachedExpiry = 0;
 const REFRESH_BUFFER_SECONDS = 60;
 
-/**
- * Calls POST /tokens on user-management to obtain a JWT for VPC access.
- * Used by user-management (auto-call) and by the second BFF.
- * When NODE_ENV=development, calls without GCP identity token (local dev).
- * Caches the token and refreshes when close to expiry.
- *
- * @returns JWT to use in Authorization header for db gateway requests
- */
 export async function getVpcToken(): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
   if (cachedToken && cachedExpiry > now + REFRESH_BUFFER_SECONDS) {

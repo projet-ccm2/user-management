@@ -56,7 +56,7 @@ function validateConfig(): Config {
     },
     token: {
       jwtSecret: process.env.JWT_SECRET || "dev-secret-change-in-production",
-      jwtExpiresInSeconds: 3600, // 1 hour
+      jwtExpiresInSeconds: 3600,
     },
     userManagement: {
       url: userManagementUrl,
