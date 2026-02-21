@@ -43,4 +43,17 @@ describe("authRoute", () => {
       }),
     );
   });
+
+  it("should log debug with hasBody false when auth callback has empty body", async () => {
+    await request(app).post("/auth/callback").send({}).expect(400);
+
+    expect(mockLogger.debug).toHaveBeenCalledWith(
+      "Auth callback route hit",
+      expect.objectContaining({
+        method: "POST",
+        path: "/callback",
+        hasBody: false,
+      }),
+    );
+  });
 });

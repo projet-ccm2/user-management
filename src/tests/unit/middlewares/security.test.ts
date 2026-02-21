@@ -34,6 +34,18 @@ describe("Security Middlewares", () => {
   });
 
   describe("securityHeaders", () => {
+    it("should call next with error when setHeader throws", () => {
+      (mockRes.setHeader as jest.Mock).mockImplementation(() => {
+        throw new Error("setHeader failed");
+      });
+
+      securityHeaders(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockNext).toHaveBeenCalledWith(
+        expect.objectContaining({ message: "setHeader failed" }),
+      );
+    });
+
     it("should set all security headers", () => {
       securityHeaders(mockReq as Request, mockRes as Response, mockNext);
 
@@ -162,6 +174,19 @@ describe("Security Middlewares", () => {
       );
       expect(mockRes.status).toHaveBeenCalledWith(403);
       expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it("should call next with error when corsValidator throws", () => {
+      mockReq.headers = { origin: "https://allowed.com" };
+      (mockRes.setHeader as jest.Mock).mockImplementation(() => {
+        throw new Error("setHeader failed");
+      });
+
+      corsValidator(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockNext).toHaveBeenCalledWith(
+        expect.objectContaining({ message: "setHeader failed" }),
+      );
     });
   });
 });

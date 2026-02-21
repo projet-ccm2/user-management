@@ -123,6 +123,85 @@ describe("ErrorHandler", () => {
         timestamp: expect.any(String),
       });
     });
+
+    it("should not send response when headers already sent", () => {
+      const error = new CustomError("Test error", 400);
+      (mockRes as any).headersSent = true;
+
+      errorHandler(error, mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockLogger.error).toHaveBeenCalled();
+      expect(mockRes.status).not.toHaveBeenCalled();
+      expect(mockRes.json).not.toHaveBeenCalled();
+    });
+
+    it("should handle handler failure and send 500 when headers not sent", () => {
+      const error = new CustomError("Test error", 400);
+      const mockEnd = jest.fn();
+      (mockRes as any).end = mockEnd;
+      (mockRes.json as jest.Mock).mockImplementation(() => {
+        throw new Error("JSON serialization failed");
+      });
+
+      errorHandler(error, mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        "Error handler failed",
+        expect.objectContaining({
+          originalError: "Test error",
+          handlerError: "JSON serialization failed",
+        }),
+      );
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockEnd).toHaveBeenCalledWith("Internal Server Error");
+    });
+
+    it("should handle handler failure when error is not Error instance", () => {
+      const error = "string error";
+      (mockRes as any).end = jest.fn();
+      (mockRes.json as jest.Mock).mockImplementation(() => {
+        throw new Error("Handler failed");
+      });
+
+      errorHandler(
+        error as any,
+        mockReq as Request,
+        mockRes as Response,
+        mockNext,
+      );
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        "Error handler failed",
+        expect.objectContaining({
+          originalError: "string error",
+          handlerError: "Handler failed",
+        }),
+      );
+    });
+
+    it("should not call res.end when handler fails but headers already sent", () => {
+      const error = new CustomError("Test error", 400);
+      const mockEnd = jest.fn();
+      (mockRes as any).end = mockEnd;
+      (mockRes.status as jest.Mock).mockImplementation((code: number) => {
+        (mockRes as any).headersSent = true;
+        return mockRes;
+      });
+      (mockRes.json as jest.Mock).mockImplementation(() => {
+        throw new Error("Handler failed");
+      });
+
+      errorHandler(error, mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        "Error handler failed",
+        expect.objectContaining({
+          originalError: "Test error",
+          handlerError: "Handler failed",
+        }),
+      );
+      expect(mockEnd).not.toHaveBeenCalled();
+    });
   });
 
   describe("notFoundHandler", () => {
