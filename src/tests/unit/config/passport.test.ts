@@ -66,13 +66,6 @@ describe("passport configuration", () => {
       expect(true).toBe(true);
     });
 
-    it("should handle configuration error", () => {
-      expect(typeof configurePassport).toBe("function");
-    });
-
-    it("should handle unknown error type", () => {
-      expect(typeof configurePassport).toBe("function");
-    });
 
     it("should use correct config values", () => {
       Object.assign(config, {

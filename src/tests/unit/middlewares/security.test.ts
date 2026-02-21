@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { securityHeaders, corsValidator } from "../../../middlewares/security";
 import "../../../config/environment";
+import { logger } from "../../../utils/logger";
 
 jest.mock("../../../config/environment", () => ({
   config: {
@@ -9,6 +10,7 @@ jest.mock("../../../config/environment", () => ({
     },
   },
 }));
+jest.mock("../../../utils/logger");
 
 describe("Security Middlewares", () => {
   let mockReq: Partial<Request>;
@@ -122,6 +124,44 @@ describe("Security Middlewares", () => {
         "https://allowed.com",
       );
       expect(mockNext).toHaveBeenCalled();
+    });
+
+    it("should allow OPTIONS preflight from allowed origin", () => {
+      mockReq.method = "OPTIONS";
+      mockReq.headers = { origin: "https://allowed.com" };
+      (mockRes as any).end = jest.fn();
+
+      corsValidator(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(logger.debug).toHaveBeenCalledWith(
+        "CORS: OPTIONS preflight allowed",
+        { origin: "https://allowed.com" },
+      );
+      expect(mockRes.setHeader).toHaveBeenCalledWith(
+        "Access-Control-Allow-Origin",
+        "https://allowed.com",
+      );
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect((mockRes as any).end).toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it("should reject OPTIONS preflight from disallowed origin", () => {
+      mockReq.method = "OPTIONS";
+      mockReq.headers = { origin: "https://disallowed.com" };
+      (mockRes as any).end = jest.fn();
+
+      corsValidator(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(logger.warn).toHaveBeenCalledWith(
+        "CORS: OPTIONS preflight rejected",
+        {
+          origin: "https://disallowed.com",
+          allowedOrigins: ["https://allowed.com", "http://localhost:3000"],
+        },
+      );
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockNext).not.toHaveBeenCalled();
     });
   });
 });

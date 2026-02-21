@@ -257,5 +257,48 @@ describe("TwitchUserService", () => {
         }),
       );
     });
+
+    it("should handle unexpected error in fetch flow with stack trace", async () => {
+      const mockTwitchResponse = {
+        data: [
+          {
+            id: "twitch_456",
+            login: "otheruser",
+            display_name: "OtherUser",
+            type: "user",
+            broadcaster_type: "",
+            description: "",
+            profile_image_url: "",
+            offline_image_url: "",
+            created_at: "2020-01-01T00:00:00Z",
+          },
+        ],
+      };
+      const mockResponse = {
+        ok: true,
+        text: jest.fn().mockResolvedValue(JSON.stringify(mockTwitchResponse)),
+      };
+      mockFetch.mockResolvedValue(mockResponse as any);
+      (mockLogger.info as jest.Mock).mockImplementation(
+        (msg: string, _meta?: object) => {
+          if (msg.includes("Successfully fetched")) {
+            throw new Error("Unexpected processing error");
+          }
+          return mockLogger;
+        },
+      );
+
+      await expect(
+        fetchTwitchUser(validAccessToken, validClientId),
+      ).rejects.toThrow(CustomError);
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        "Unexpected error while fetching Twitch user",
+        expect.objectContaining({
+          error: "Unexpected processing error",
+          stack: expect.any(String),
+        }),
+      );
+    });
   });
 });
