@@ -20,13 +20,17 @@ app.use(passport.initialize());
 
 app.use("/auth", authRoutes);
 
-app.get("/health", (req, res) => {
-  logger.debug("Health check", { path: req.path });
-  res.status(200).json({
-    status: "healthy",
-    timestamp: new Date().toISOString(),
-    environment: config.nodeEnv,
-  });
+app.get("/health", (req, res, next) => {
+  try {
+    logger.debug("Health check", { path: req.path });
+    res.status(200).json({
+      status: "healthy",
+      timestamp: new Date().toISOString(),
+      environment: config.nodeEnv,
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
 app.use(notFoundHandler);

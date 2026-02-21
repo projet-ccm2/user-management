@@ -24,10 +24,12 @@ const mockLogger = logger as jest.Mocked<typeof logger>;
 describe("authController", () => {
   let mockRequest: Partial<Request & { user?: TwitchPassportUser }>;
   let mockResponse: Partial<Response>;
+  let mockNext: jest.Mock;
   let mockJson: jest.Mock;
   let mockStatus: jest.Mock;
 
   beforeEach(() => {
+    mockNext = jest.fn();
     mockJson = jest.fn().mockReturnThis();
     mockStatus = jest.fn().mockReturnValue({ json: mockJson });
 
@@ -91,7 +93,11 @@ describe("authController", () => {
 
   describe("callbackConnexion", () => {
     it("should successfully process authentication callback", async () => {
-      await callbackConnexion(mockRequest as Request, mockResponse as Response);
+      await callbackConnexion(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext,
+      );
 
       expect(mockFetchTwitchUser).toHaveBeenCalledWith(
         "test-access-token",
@@ -106,13 +112,21 @@ describe("authController", () => {
       });
     });
 
-    it("should throw CustomError when user is missing", async () => {
+    it("should call next with CustomError when user is missing", async () => {
       mockRequest.user = undefined;
 
-      await expect(
-        callbackConnexion(mockRequest as Request, mockResponse as Response),
-      ).rejects.toThrow(CustomError);
+      await callbackConnexion(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext,
+      );
 
+      expect(mockNext).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: "Authentication failed: user context missing",
+          statusCode: 401,
+        }),
+      );
       expect(mockLogger.error).toHaveBeenCalledWith(
         "Authentication callback called without user in request context",
         expect.objectContaining({
@@ -121,13 +135,21 @@ describe("authController", () => {
       );
     });
 
-    it("should throw CustomError when accessToken is missing", async () => {
+    it("should call next with CustomError when accessToken is missing", async () => {
       mockRequest.user!.tokens.accessToken = undefined as any;
 
-      await expect(
-        callbackConnexion(mockRequest as Request, mockResponse as Response),
-      ).rejects.toThrow(CustomError);
+      await callbackConnexion(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext,
+      );
 
+      expect(mockNext).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: "Authentication failed: incomplete token data",
+          statusCode: 401,
+        }),
+      );
       expect(mockLogger.error).toHaveBeenCalledWith(
         "Authentication callback called with incomplete tokens",
         {
@@ -137,13 +159,21 @@ describe("authController", () => {
       );
     });
 
-    it("should throw CustomError when idToken is missing", async () => {
+    it("should call next with CustomError when idToken is missing", async () => {
       mockRequest.user!.tokens.idToken = undefined as any;
 
-      await expect(
-        callbackConnexion(mockRequest as Request, mockResponse as Response),
-      ).rejects.toThrow(CustomError);
+      await callbackConnexion(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext,
+      );
 
+      expect(mockNext).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: "Authentication failed: incomplete token data",
+          statusCode: 401,
+        }),
+      );
       expect(mockLogger.error).toHaveBeenCalledWith(
         "Authentication callback called with incomplete tokens",
         {
@@ -153,14 +183,22 @@ describe("authController", () => {
       );
     });
 
-    it("should handle fetchTwitchUser error", async () => {
+    it("should call next with CustomError when fetchTwitchUser fails", async () => {
       const error = new Error("Twitch API error");
       mockFetchTwitchUser.mockRejectedValueOnce(error);
 
-      await expect(
-        callbackConnexion(mockRequest as Request, mockResponse as Response),
-      ).rejects.toThrow(CustomError);
+      await callbackConnexion(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext,
+      );
 
+      expect(mockNext).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: "Authentication failed due to internal error",
+          statusCode: 500,
+        }),
+      );
       expect(mockLogger.error).toHaveBeenCalledWith(
         "Unexpected error in authentication callback",
         expect.objectContaining({
@@ -170,14 +208,22 @@ describe("authController", () => {
       );
     });
 
-    it("should handle dbGatewayService error", async () => {
+    it("should call next with CustomError when dbGatewayService fails", async () => {
       const error = new Error("Database error");
       mockDbGatewayService.saveUser.mockRejectedValueOnce(error);
 
-      await expect(
-        callbackConnexion(mockRequest as Request, mockResponse as Response),
-      ).rejects.toThrow(CustomError);
+      await callbackConnexion(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext,
+      );
 
+      expect(mockNext).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: "Authentication failed due to internal error",
+          statusCode: 500,
+        }),
+      );
       expect(mockLogger.error).toHaveBeenCalledWith(
         "Unexpected error in authentication callback",
         expect.objectContaining({
@@ -200,7 +246,11 @@ describe("authController", () => {
         created_at: "2020-01-01T00:00:00Z",
       });
 
-      await callbackConnexion(mockRequest as Request, mockResponse as Response);
+      await callbackConnexion(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext,
+      );
 
       expect(mockDbGatewayService.saveUser).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -222,7 +272,11 @@ describe("authController", () => {
         created_at: "2020-01-01T00:00:00Z",
       });
 
-      await callbackConnexion(mockRequest as Request, mockResponse as Response);
+      await callbackConnexion(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext,
+      );
 
       expect(mockDbGatewayService.saveUser).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -234,7 +288,11 @@ describe("authController", () => {
     it("should handle expiresIn as number", async () => {
       mockRequest.user!.tokens.expiresIn = 7200;
 
-      await callbackConnexion(mockRequest as Request, mockResponse as Response);
+      await callbackConnexion(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext,
+      );
 
       expect(mockDbGatewayService.saveUser).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -248,7 +306,11 @@ describe("authController", () => {
     it("should handle expiresIn as undefined", async () => {
       mockRequest.user!.tokens.expiresIn = undefined;
 
-      await callbackConnexion(mockRequest as Request, mockResponse as Response);
+      await callbackConnexion(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext,
+      );
 
       expect(mockDbGatewayService.saveUser).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -259,22 +321,34 @@ describe("authController", () => {
       );
     });
 
-    it("should rethrow CustomError instances", async () => {
+    it("should pass CustomError to next without wrapping", async () => {
       const customError = new CustomError("Custom error", 400);
       mockFetchTwitchUser.mockRejectedValueOnce(customError);
 
-      await expect(
-        callbackConnexion(mockRequest as Request, mockResponse as Response),
-      ).rejects.toThrow(customError);
+      await callbackConnexion(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext,
+      );
+
+      expect(mockNext).toHaveBeenCalledWith(customError);
     });
 
     it("should handle unknown error types", async () => {
       mockFetchTwitchUser.mockRejectedValueOnce("string error");
 
-      await expect(
-        callbackConnexion(mockRequest as Request, mockResponse as Response),
-      ).rejects.toThrow(CustomError);
+      await callbackConnexion(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext,
+      );
 
+      expect(mockNext).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: "Authentication failed due to internal error",
+          statusCode: 500,
+        }),
+      );
       expect(mockLogger.error).toHaveBeenCalledWith(
         "Unexpected error in authentication callback",
         {

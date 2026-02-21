@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import type { TwitchPassportUser } from "../strategies/twitchTokenStrategy";
 import User, { type UserAuthApproval } from "../models/user";
 import { fetchTwitchUser } from "../services/twitchUserService";
@@ -12,6 +12,7 @@ type AuthenticatedRequest = Request & { user?: TwitchPassportUser };
 export const callbackConnexion = async (
   req: Request,
   res: Response,
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const { user } = req as AuthenticatedRequest;
@@ -25,7 +26,8 @@ export const callbackConnexion = async (
           hasBody: !!req.body && Object.keys(req.body || {}).length > 0,
         },
       );
-      throw new CustomError("Authentication failed: user context missing", 401);
+      next(new CustomError("Authentication failed: user context missing", 401));
+      return;
     }
 
     const { tokens } = user;
@@ -35,10 +37,10 @@ export const callbackConnexion = async (
         hasAccessToken: !!tokens?.accessToken,
         hasIdToken: !!tokens?.idToken,
       });
-      throw new CustomError(
-        "Authentication failed: incomplete token data",
-        401,
+      next(
+        new CustomError("Authentication failed: incomplete token data", 401),
       );
+      return;
     }
 
     logger.info("Processing Twitch authentication callback", {
@@ -96,13 +98,14 @@ export const callbackConnexion = async (
     });
   } catch (error) {
     if (error instanceof CustomError) {
-      throw error;
+      next(error);
+      return;
     }
 
     logger.error("Unexpected error in authentication callback", {
       error: error instanceof Error ? error.message : "Unknown error",
       stack: error instanceof Error ? error.stack : undefined,
     });
-    throw new CustomError("Authentication failed due to internal error", 500);
+    next(new CustomError("Authentication failed due to internal error", 500));
   }
 };
