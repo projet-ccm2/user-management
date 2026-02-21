@@ -74,6 +74,13 @@ describe("Express App", () => {
       expect(response.status).toBe(400);
     });
 
+    it("should handle token routes", async () => {
+      const response = await request(app).post("/tokens").send({});
+
+      expect(response.status).toBe(401);
+      expect(response.body).toHaveProperty("error");
+    });
+
     it("should return 404 for unknown routes", async () => {
       const response = await request(app).get("/unknown-route").expect(404);
 

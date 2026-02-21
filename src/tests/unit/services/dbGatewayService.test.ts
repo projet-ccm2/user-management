@@ -4,6 +4,11 @@ import { CustomError } from "../../../middlewares/errorHandler";
 import User from "../../../models/user";
 
 jest.mock("../../../utils/logger");
+jest.mock("../../../services/tokenClient", () => ({
+  getVpcToken: jest.fn().mockResolvedValue("mock-vpc-jwt-for-tests"),
+}));
+
+const MOCK_VPC_JWT = "mock-vpc-jwt-for-tests";
 jest.mock("../../../config/environment", () => ({
   config: {
     dbGateway: {
@@ -71,10 +76,11 @@ describe("DbGatewayService", () => {
         "http://localhost:3001/users/123",
         expect.objectContaining({
           method: "GET",
-          headers: {
+          headers: expect.objectContaining({
             "Content-Type": "application/json",
             Accept: "application/json",
-          },
+            Authorization: `Bearer ${MOCK_VPC_JWT}`,
+          }),
         }),
       );
       expect(result).toEqual(mockDbResponse);
@@ -147,10 +153,11 @@ describe("DbGatewayService", () => {
         "http://localhost:3001/users/123",
         expect.objectContaining({
           method: "PUT",
-          headers: {
+          headers: expect.objectContaining({
             "Content-Type": "application/json",
             Accept: "application/json",
-          },
+            Authorization: `Bearer ${MOCK_VPC_JWT}`,
+          }),
           body: JSON.stringify({
             username: "testuser",
             profileImageUrl: "https://example.com/avatar.jpg",
@@ -226,10 +233,11 @@ describe("DbGatewayService", () => {
         "http://localhost:3001/users",
         expect.objectContaining({
           method: "POST",
-          headers: {
+          headers: expect.objectContaining({
             "Content-Type": "application/json",
             Accept: "application/json",
-          },
+            Authorization: `Bearer ${MOCK_VPC_JWT}`,
+          }),
           body: JSON.stringify({
             id: "123",
             username: "testuser",

@@ -7,6 +7,7 @@ import { logger } from "./utils/logger";
 import { errorHandler, notFoundHandler } from "./middlewares/errorHandler";
 import { securityHeaders, corsValidator } from "./middlewares/security";
 import authRoutes from "./routes/authRoute";
+import tokenRoutes from "./routes/tokenRoute";
 
 const app = express();
 app.disable("x-powered-by");
@@ -19,6 +20,7 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(passport.initialize());
 
 app.use("/auth", authRoutes);
+app.use("/tokens", tokenRoutes);
 
 app.get("/health", (req, res, next) => {
   try {

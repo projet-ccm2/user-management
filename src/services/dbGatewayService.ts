@@ -2,6 +2,7 @@ import { logger } from "../utils/logger";
 import { CustomError } from "../middlewares/errorHandler";
 import { config } from "../config/environment";
 import User from "../models/user";
+import { getVpcToken } from "./tokenClient";
 import type { DbGatewayResponse } from "./types/dbGatewayService/DbGatewayResponse";
 import type { ChannelResponse } from "./types/dbGatewayService/ChannelResponse";
 import type { AreResponse } from "./types/dbGatewayService/AreResponse";
@@ -10,10 +11,18 @@ export class DbGatewayService {
   private readonly dbGatewayUrl: string;
   private readonly timeout: number;
 
-  private readonly headers = {
+  private readonly baseHeaders = {
     "Content-Type": "application/json",
     Accept: "application/json",
   };
+
+  private async getHeaders(): Promise<Record<string, string>> {
+    const jwt = await getVpcToken();
+    return {
+      ...this.baseHeaders,
+      Authorization: `Bearer ${jwt}`,
+    };
+  }
 
   constructor() {
     this.dbGatewayUrl = config.dbGateway.url;
@@ -56,11 +65,12 @@ export class DbGatewayService {
 
   async getUserById(id: string): Promise<DbGatewayResponse | null> {
     try {
+      const headers = await this.getHeaders();
       const response = await fetch(
         `${this.dbGatewayUrl}/users/${encodeURIComponent(id)}`,
         {
           method: "GET",
-          headers: this.headers,
+          headers,
           signal: AbortSignal.timeout(this.timeout),
         },
       );
@@ -94,9 +104,10 @@ export class DbGatewayService {
         scope: this.getScopeString(user),
       };
 
+      const headers = await this.getHeaders();
       const response = await fetch(`${this.dbGatewayUrl}/users`, {
         method: "POST",
-        headers: this.headers,
+        headers,
         body: JSON.stringify(userData),
         signal: AbortSignal.timeout(this.timeout),
       });
@@ -134,11 +145,12 @@ export class DbGatewayService {
         scope: this.getScopeString(user),
       };
 
+      const headers = await this.getHeaders();
       const response = await fetch(
         `${this.dbGatewayUrl}/users/${encodeURIComponent(id)}`,
         {
           method: "PUT",
-          headers: this.headers,
+          headers,
           body: JSON.stringify(body),
           signal: AbortSignal.timeout(this.timeout),
         },
@@ -165,11 +177,12 @@ export class DbGatewayService {
 
   async getChannelById(id: string): Promise<ChannelResponse | null> {
     try {
+      const headers = await this.getHeaders();
       const response = await fetch(
         `${this.dbGatewayUrl}/channels/${encodeURIComponent(id)}`,
         {
           method: "GET",
-          headers: this.headers,
+          headers,
           signal: AbortSignal.timeout(this.timeout),
         },
       );
@@ -190,9 +203,10 @@ export class DbGatewayService {
 
   async createChannel(name: string): Promise<ChannelResponse> {
     try {
+      const headers = await this.getHeaders();
       const response = await fetch(`${this.dbGatewayUrl}/channels`, {
         method: "POST",
-        headers: this.headers,
+        headers,
         body: JSON.stringify({ name }),
         signal: AbortSignal.timeout(this.timeout),
       });
@@ -215,9 +229,10 @@ export class DbGatewayService {
       url.searchParams.set("userId", userId);
       url.searchParams.set("channelId", channelId);
 
+      const headers = await this.getHeaders();
       const response = await fetch(url.toString(), {
         method: "GET",
-        headers: this.headers,
+        headers,
         signal: AbortSignal.timeout(this.timeout),
       });
 
@@ -241,9 +256,10 @@ export class DbGatewayService {
     userType: string,
   ): Promise<AreResponse> {
     try {
+      const headers = await this.getHeaders();
       const response = await fetch(`${this.dbGatewayUrl}/are`, {
         method: "POST",
-        headers: this.headers,
+        headers,
         body: JSON.stringify({ userId, channelId, userType }),
         signal: AbortSignal.timeout(this.timeout),
       });

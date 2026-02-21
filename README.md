@@ -25,7 +25,7 @@ npm start
 1. **Copy the example file**:
 
    ```bash
-   cp env.example .env
+   cp .env.example .env
    ```
 
 2. **Configure your variables** in the `.env` file:
@@ -40,6 +40,13 @@ PORT=3000
 TWITCH_ISSUER=https://id.twitch.tv/oauth2
 ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001
 DB_SERVICE_URL=http://localhost:3001
+
+# VPC Token (bastion access to db gateway)
+USER_MANAGEMENT_URL=http://localhost:3000
+JWT_SECRET=dev-secret-change-in-production
+JWT_EXPIRES_IN_SECONDS=3600
+GCP_SERVICE_URL=http://localhost:3000
+SKIP_GCP_AUTH=true
 ```
 
 ### Get your TWITCH_CLIENT_ID
@@ -50,7 +57,7 @@ DB_SERVICE_URL=http://localhost:3001
 
 ### Configuration Files
 
-- `env.example`: Template with required variables
+- `.env.example`: Template with required variables
 - `ENVIRONMENT_VARIABLES.md`: Detailed variable documentation
 - `.env`: Your local configuration (do not commit)
 
@@ -130,6 +137,39 @@ User authentication via Twitch OAuth.
 }
 ```
 
+#### POST /tokens
+
+Obtains a JWT for VPC access (db gateway). Used by bastions (user-management via auto-call, or second BFF).
+
+**Authentication:** Requires `Authorization: Bearer <gcp-identity-token>` (GCP identity token). When `SKIP_GCP_AUTH=true` (local dev), auth is skipped.
+
+**Request:**
+
+```bash
+curl -X POST https://user-management.example.com/tokens \
+  -H "Authorization: Bearer <gcp-identity-token>"
+```
+
+**Response 200:**
+
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Response 401 - Authentication Error:**
+
+```json
+{
+  "error": "Missing or invalid Authorization header",
+  "status": 401,
+  "timestamp": "2024-01-15T10:30:00.000Z"
+}
+```
+
+Use the returned JWT in `Authorization: Bearer <jwt>` when calling the db gateway.
+
 #### GET /health
 
 API health check.
@@ -182,6 +222,30 @@ src/
 ├── strategies/      # Passport strategies
 └── utils/           # Utilities (logger)
 ```
+
+## Accès VPC (Bastion architecture)
+
+user-management and the second BFF act as **bastions** outside the VPC. The db gateway is private inside the VPC. To access it, both bastions obtain a JWT via `POST /tokens` on user-management.
+
+- **user-management** : auto-calls its own `POST /tokens` before each db gateway request
+- **Second BFF** : calls `POST /tokens` on user-management to get a JWT, then uses it for db gateway requests
+
+Both bastions send `Authorization: Bearer <jwt>` to the db gateway (no X-User-* headers).
+
+### Variables d'environnement VPC
+
+| Variable | Description |
+| -------- | ----------- |
+| `USER_MANAGEMENT_URL` | URL of user-management for POST /tokens (auto-call and second BFF) |
+| `JWT_SECRET` | Secret to sign VPC JWTs (required in production) |
+| `JWT_EXPIRES_IN_SECONDS` | JWT expiry (default: 3600) |
+| `GCP_SERVICE_URL` | GCP service URL for identity token audience (Cloud Run URL in prod) |
+| `SKIP_GCP_AUTH` | Set to `true` for local dev when not on GCP |
+
+### Second BFF integration
+
+1. Call `POST /tokens` on user-management with `Authorization: Bearer <gcp-identity-token>`
+2. Use the returned `token` in `Authorization: Bearer <jwt>` for all db gateway requests
 
 ## Authentication Flow
 

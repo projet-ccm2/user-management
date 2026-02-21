@@ -55,7 +55,7 @@ describe("ErrorHandler", () => {
     it("should handle CustomError", () => {
       const error = new CustomError("Test error", 400);
 
-      errorHandler(error, mockReq as Request, mockRes as Response, mockNext);
+      errorHandler(error, mockReq as Request, mockRes as Response, jest.fn());
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         "Test error",
@@ -78,7 +78,7 @@ describe("ErrorHandler", () => {
     it("should handle regular Error with default status code", () => {
       const error = new Error("Regular error");
 
-      errorHandler(error, mockReq as Request, mockRes as Response, mockNext);
+      errorHandler(error, mockReq as Request, mockRes as Response, jest.fn());
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         "Regular error",
@@ -101,7 +101,7 @@ describe("ErrorHandler", () => {
     it("should handle error without statusCode", () => {
       const error = { message: "Error without statusCode" } as any;
 
-      errorHandler(error, mockReq as Request, mockRes as Response, mockNext);
+      errorHandler(error, mockReq as Request, mockRes as Response, jest.fn());
 
       expect(mockRes.status).toHaveBeenCalledWith(500);
       expect(mockRes.json).toHaveBeenCalledWith({
@@ -114,7 +114,7 @@ describe("ErrorHandler", () => {
     it("should handle error without message", () => {
       const error = { statusCode: 400 } as any;
 
-      errorHandler(error, mockReq as Request, mockRes as Response, mockNext);
+      errorHandler(error, mockReq as Request, mockRes as Response, jest.fn());
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith({
