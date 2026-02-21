@@ -13,6 +13,7 @@ const mockLogger = logger as jest.Mocked<typeof logger>;
 describe("ErrorHandler", () => {
   let mockReq: Partial<Request>;
   let mockRes: Partial<Response>;
+  let mockNext: jest.Mock;
 
   beforeEach(() => {
     mockReq = {
@@ -23,7 +24,10 @@ describe("ErrorHandler", () => {
     mockRes = {
       status: jest.fn().mockReturnThis(),
       json: jest.fn().mockReturnThis(),
+      headersSent: false,
     };
+
+    mockNext = jest.fn();
 
     jest.clearAllMocks();
   });
@@ -51,7 +55,7 @@ describe("ErrorHandler", () => {
     it("should handle CustomError", () => {
       const error = new CustomError("Test error", 400);
 
-      errorHandler(error, mockReq as Request, mockRes as Response);
+      errorHandler(error, mockReq as Request, mockRes as Response, mockNext);
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         "Test error",
@@ -74,7 +78,7 @@ describe("ErrorHandler", () => {
     it("should handle regular Error with default status code", () => {
       const error = new Error("Regular error");
 
-      errorHandler(error, mockReq as Request, mockRes as Response);
+      errorHandler(error, mockReq as Request, mockRes as Response, mockNext);
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         "Regular error",
@@ -97,7 +101,7 @@ describe("ErrorHandler", () => {
     it("should handle error without statusCode", () => {
       const error = { message: "Error without statusCode" } as any;
 
-      errorHandler(error, mockReq as Request, mockRes as Response);
+      errorHandler(error, mockReq as Request, mockRes as Response, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(500);
       expect(mockRes.json).toHaveBeenCalledWith({
@@ -110,7 +114,7 @@ describe("ErrorHandler", () => {
     it("should handle error without message", () => {
       const error = { statusCode: 400 } as any;
 
-      errorHandler(error, mockReq as Request, mockRes as Response);
+      errorHandler(error, mockReq as Request, mockRes as Response, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith({
@@ -123,7 +127,7 @@ describe("ErrorHandler", () => {
 
   describe("notFoundHandler", () => {
     it("should return 404 for any route", () => {
-      notFoundHandler(mockReq as Request, mockRes as Response);
+      notFoundHandler(mockReq as Request, mockRes as Response, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(404);
       expect(mockRes.json).toHaveBeenCalledWith({
@@ -137,7 +141,7 @@ describe("ErrorHandler", () => {
       mockReq.method = "POST";
       mockReq.url = "/api/users";
 
-      notFoundHandler(mockReq as Request, mockRes as Response);
+      notFoundHandler(mockReq as Request, mockRes as Response, mockNext);
 
       expect(mockRes.json).toHaveBeenCalledWith({
         error: "Route POST /api/users not found",

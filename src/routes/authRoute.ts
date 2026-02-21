@@ -9,15 +9,21 @@ const router = Router();
 router.post(
   "/callback",
   (req: Request, _res: Response, next: NextFunction) => {
-    logger.debug("Auth callback route hit", {
-      method: req.method,
-      path: req.path,
-      hasBody: !!req.body && Object.keys(req.body || {}).length > 0,
-    });
-    next();
+    try {
+      logger.debug("Auth callback route hit", {
+        method: req.method,
+        path: req.path,
+        hasBody: !!req.body && Object.keys(req.body || {}).length > 0,
+      });
+      next();
+    } catch (error) {
+      next(error);
+    }
   },
   passport.authenticate(PASSPORT_TWITCH_STRATEGY, { session: false }),
-  callbackConnexion,
+  (req: Request, res: Response, next: NextFunction) => {
+    callbackConnexion(req, res, next).catch(next);
+  },
 );
 
 export default router;
