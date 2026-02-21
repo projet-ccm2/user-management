@@ -64,7 +64,10 @@ describe("TwitchUserService", () => {
 
       expect(result).toEqual(mockTwitchResponse.data[0]);
 
-      expect(mockLogger.info).toHaveBeenCalledWith("Fetching Twitch user data");
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        "Fetching Twitch user data",
+        expect.objectContaining({ clientId: expect.any(String) }),
+      );
       expect(mockLogger.debug).toHaveBeenCalledWith(
         "Making request to Twitch API",
         expect.objectContaining({
@@ -134,7 +137,10 @@ describe("TwitchUserService", () => {
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         "Network error when calling Twitch API",
-        { error: "Network error" },
+        expect.objectContaining({
+          error: "Network error",
+          url: "https://api.twitch.tv/helix/users",
+        }),
       );
     });
 
@@ -190,6 +196,7 @@ describe("TwitchUserService", () => {
 
       expect(mockLogger.warn).toHaveBeenCalledWith(
         "No user data returned from Twitch API",
+        expect.objectContaining({ responseKeys: expect.any(Array) }),
       );
     });
 
@@ -211,6 +218,7 @@ describe("TwitchUserService", () => {
 
       expect(mockLogger.warn).toHaveBeenCalledWith(
         "No user data returned from Twitch API",
+        expect.objectContaining({ responseKeys: expect.any(Array) }),
       );
     });
 
@@ -230,6 +238,7 @@ describe("TwitchUserService", () => {
 
       expect(mockLogger.warn).toHaveBeenCalledWith(
         "No user data returned from Twitch API",
+        expect.objectContaining({ responseKeys: expect.any(Array) }),
       );
     });
 
@@ -242,7 +251,10 @@ describe("TwitchUserService", () => {
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         "Network error when calling Twitch API",
-        { error: "Unknown error" },
+        expect.objectContaining({
+          error: "Unknown error",
+          url: "https://api.twitch.tv/helix/users",
+        }),
       );
     });
   });

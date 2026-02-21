@@ -115,6 +115,9 @@ describe("authController", () => {
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         "Authentication callback called without user in request context",
+        expect.objectContaining({
+          hasBody: false,
+        }),
       );
     });
 
@@ -160,9 +163,10 @@ describe("authController", () => {
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         "Unexpected error in authentication callback",
-        {
+        expect.objectContaining({
           error: "Twitch API error",
-        },
+          stack: expect.any(String),
+        }),
       );
     });
 
@@ -176,9 +180,10 @@ describe("authController", () => {
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         "Unexpected error in authentication callback",
-        {
+        expect.objectContaining({
           error: "Database error",
-        },
+          stack: expect.any(String),
+        }),
       );
     });
 

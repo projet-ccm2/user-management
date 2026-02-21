@@ -19,6 +19,11 @@ export const callbackConnexion = async (
     if (!user) {
       logger.error(
         "Authentication callback called without user in request context",
+        {
+          method: req.method,
+          path: req.path,
+          hasBody: !!req.body && Object.keys(req.body || {}).length > 0,
+        },
       );
       throw new CustomError("Authentication failed: user context missing", 401);
     }
@@ -96,6 +101,7 @@ export const callbackConnexion = async (
 
     logger.error("Unexpected error in authentication callback", {
       error: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
     });
     throw new CustomError("Authentication failed due to internal error", 500);
   }
