@@ -50,6 +50,8 @@ export class DbGatewayService {
           status: response.status,
           statusText: response.statusText,
           error: errorText.substring(0, 500),
+          url: `${this.dbGatewayUrl}/users`,
+          username: user.username,
         });
         throw new CustomError(
           `Database gateway error: ${response.status} ${response.statusText}`,
@@ -72,7 +74,9 @@ export class DbGatewayService {
 
       logger.error("Failed to save user to database gateway", {
         error: error instanceof Error ? error.message : "Unknown error",
+        stack: error instanceof Error ? error.stack : undefined,
         username: user.username,
+        channelId: user.channel.id,
       });
 
       throw new CustomError("Failed to save user data", 502);

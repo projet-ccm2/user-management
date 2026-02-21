@@ -57,6 +57,7 @@ async function requestWithFetch(
 
     logger.error("Network error when calling Twitch API", {
       error: error instanceof Error ? error.message : "Unknown error",
+      url: TWITCH_USERS_ENDPOINT,
     });
     throw new CustomError("Failed to connect to Twitch API", 502);
   }
@@ -94,7 +95,9 @@ export async function fetchTwitchUser(
     throw new CustomError("Client ID is required", 400);
   }
 
-  logger.info("Fetching Twitch user data");
+  logger.info("Fetching Twitch user data", {
+    clientId: clientId ? `${clientId.substring(0, 4)}...` : "missing",
+  });
 
   const headers = {
     Authorization: `Bearer ${accessToken}`,
@@ -106,7 +109,9 @@ export async function fetchTwitchUser(
     const payload = await requestTwitchUsers(TWITCH_USERS_ENDPOINT, headers);
 
     if (!payload.data || payload.data.length === 0) {
-      logger.warn("No user data returned from Twitch API");
+      logger.warn("No user data returned from Twitch API", {
+        responseKeys: Object.keys(payload),
+      });
       throw new CustomError("No user data found in Twitch response", 404);
     }
 
@@ -124,6 +129,7 @@ export async function fetchTwitchUser(
 
     logger.error("Unexpected error while fetching Twitch user", {
       error: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
     });
     throw new CustomError("Failed to fetch user data from Twitch", 502);
   }

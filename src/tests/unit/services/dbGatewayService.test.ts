@@ -145,6 +145,46 @@ describe("DbGatewayService", () => {
       );
     });
 
+    it("should send null scope when user has no scope", async () => {
+      const userWithoutScope = new User({
+        username: "noscope",
+        channel: {
+          id: "456",
+          name: "noscope",
+          description: "",
+          profileImageUrl: "",
+        },
+        channelsWhichIsMod: [],
+        auth: {
+          accessToken: "token",
+          idToken: "id",
+          tokenType: "Bearer",
+          scope: [],
+          expiresIn: 3600,
+          expiresAt: new Date(),
+          state: "state",
+          approvedAt: new Date(),
+        },
+      });
+
+      const mockResponse = {
+        ok: true,
+        json: jest
+          .fn()
+          .mockResolvedValue({ id: "db_456", username: "noscope" }),
+      };
+      mockFetch.mockResolvedValue(mockResponse as any);
+
+      await dbGatewayService.saveUser(userWithoutScope);
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://localhost:3001/users",
+        expect.objectContaining({
+          body: expect.stringContaining('"scope":null'),
+        }),
+      );
+    });
+
     it("should handle timeout", async () => {
       mockFetch.mockImplementation(
         () =>

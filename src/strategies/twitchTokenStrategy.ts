@@ -5,6 +5,7 @@ import {
   validateAndParseTwitchTokens,
   type TwitchIdTokenClaims,
 } from "../services/twitchAuthService";
+import { logger } from "../utils/logger";
 
 export type TwitchPassportUser = {
   userId?: string;
@@ -34,6 +35,10 @@ export class TwitchTokenStrategy extends passport.Strategy {
       req.body ?? {};
 
     if (!this.clientId) {
+      logger.error("TwitchTokenStrategy: missing TWITCH_CLIENT_ID", {
+        hasAccessToken: !!accessToken,
+        hasIdToken: !!idToken,
+      });
       this.error(
         new Error(
           "Missing env var TWITCH_CLIENT_ID. Configure it to validate id_token audience.",
@@ -43,6 +48,10 @@ export class TwitchTokenStrategy extends passport.Strategy {
     }
 
     if (!accessToken || !idToken) {
+      logger.warn("TwitchTokenStrategy: missing required tokens", {
+        hasAccessToken: !!accessToken,
+        hasIdToken: !!idToken,
+      });
       this.fail(
         {
           message:
@@ -74,12 +83,21 @@ export class TwitchTokenStrategy extends passport.Strategy {
         tokens: payload,
       };
 
+      logger.debug("TwitchTokenStrategy: token validation successful", {
+        userId: result.userId,
+        preferredUsername: result.claims.preferred_username,
+      });
       this.success(user);
     } catch (error: unknown) {
       const message =
         error instanceof Error
           ? error.message
           : "Unknown error during Twitch token validation";
+      logger.warn("TwitchTokenStrategy: token validation failed", {
+        error: message,
+        hasAccessToken: !!accessToken,
+        hasIdToken: !!idToken,
+      });
       this.fail({ message }, 400);
     }
   }

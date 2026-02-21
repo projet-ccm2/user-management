@@ -18,7 +18,7 @@ jobs:
     with:
       docker-image-name: user-management-api-prod
       docker-tag: ${{ github.event.inputs.image-tag || format('dev-{0}', github.sha) }}
-      artifact-registry-repository: 'user-management-docker-prod'
+      artifact-registry-repository: "user-management-docker-prod"
       environment: production
       cloud-run-service-name: user-management-prod
     secrets:
@@ -28,4 +28,3 @@ jobs:
       TWITCH_ISSUER: ${{ secrets.PROD_TWITCH_ISSUER }}
       ALLOWED_ORIGINS: ${{ secrets.PROD_ALLOWED_ORIGINS }}
       DB_SERVICE_URL: ${{ secrets.PROD_DB_SERVICE_URL }}
-

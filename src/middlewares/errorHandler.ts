@@ -28,8 +28,10 @@ export const errorHandler = (
   logger.error(message, {
     statusCode,
     url: req.url,
+    path: req.path,
     method: req.method,
     stack: error.stack,
+    isOperational: error.isOperational,
   });
 
   res.status(statusCode).json({
@@ -40,6 +42,11 @@ export const errorHandler = (
 };
 
 export const notFoundHandler = (req: Request, res: Response): void => {
+  logger.warn("Route not found", {
+    method: req.method,
+    url: req.url,
+    path: req.path,
+  });
   res.status(404).json({
     error: `Route ${req.method} ${req.url} not found`,
     status: 404,

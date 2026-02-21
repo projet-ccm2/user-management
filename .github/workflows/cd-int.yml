@@ -24,7 +24,7 @@ jobs:
     with:
       docker-image-name: user-management-api-int
       docker-tag: ${{ github.event.inputs.image-tag || format('dev-{0}', github.sha) }}
-      artifact-registry-repository: 'user-management-docker-int'
+      artifact-registry-repository: "user-management-docker-int"
       environment: integration
       cloud-run-service-name: user-management-int
     secrets:
