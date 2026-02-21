@@ -38,10 +38,7 @@ export const callbackConnexion = async (
         hasIdToken: !!tokens?.idToken,
       });
       next(
-        new CustomError(
-          "Authentication failed: incomplete token data",
-          401,
-        ),
+        new CustomError("Authentication failed: incomplete token data", 401),
       );
       return;
     }
