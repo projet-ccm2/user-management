@@ -66,7 +66,6 @@ describe("passport configuration", () => {
       expect(true).toBe(true);
     });
 
-
     it("should use correct config values", () => {
       Object.assign(config, {
         twitch: {
