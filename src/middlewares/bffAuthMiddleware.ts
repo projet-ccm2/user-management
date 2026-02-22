@@ -4,11 +4,6 @@ import { config } from "../config/environment";
 import { CustomError } from "./errorHandler";
 import { logger } from "../utils/logger";
 
-/**
- * Validates that the request comes from an authorized bastion (user-management or second BFF).
- * Expects Authorization: Bearer <gcp-identity-token>.
- * When NODE_ENV=development (local dev), skips validation.
- */
 export const bffAuthMiddleware = async (
   req: Request,
   _res: Response,
