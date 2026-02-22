@@ -230,17 +230,17 @@ user-management and the second BFF act as **bastions** outside the VPC. The db g
 - **user-management** : auto-calls its own `POST /tokens` before each db gateway request
 - **Second BFF** : calls `POST /tokens` on user-management to get a JWT, then uses it for db gateway requests
 
-Both bastions send `Authorization: Bearer <jwt>` to the db gateway (no X-User-* headers).
+Both bastions send `Authorization: Bearer <jwt>` to the db gateway (no X-User-\* headers).
 
 ### Variables d'environnement VPC
 
-| Variable | Description |
-| -------- | ----------- |
-| `USER_MANAGEMENT_URL` | URL of user-management for POST /tokens (auto-call and second BFF) |
-| `JWT_SECRET` | Secret to sign VPC JWTs (required in production) |
-| `JWT_EXPIRES_IN_SECONDS` | JWT expiry (default: 3600) |
-| `GCP_SERVICE_URL` | GCP service URL for identity token audience (Cloud Run URL in prod) |
-| `SKIP_GCP_AUTH` | Set to `true` for local dev when not on GCP |
+| Variable                 | Description                                                         |
+| ------------------------ | ------------------------------------------------------------------- |
+| `USER_MANAGEMENT_URL`    | URL of user-management for POST /tokens (auto-call and second BFF)  |
+| `JWT_SECRET`             | Secret to sign VPC JWTs (required in production)                    |
+| `JWT_EXPIRES_IN_SECONDS` | JWT expiry (default: 3600)                                          |
+| `GCP_SERVICE_URL`        | GCP service URL for identity token audience (Cloud Run URL in prod) |
+| `SKIP_GCP_AUTH`          | Set to `true` for local dev when not on GCP                         |
 
 ### Second BFF integration
 

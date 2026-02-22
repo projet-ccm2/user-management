@@ -23,10 +23,7 @@ describe("tokenRoute", () => {
   });
 
   it("POST / should return token when SKIP_GCP_AUTH is true", async () => {
-    const response = await request(app)
-      .post("/tokens")
-      .send({})
-      .expect(200);
+    const response = await request(app).post("/tokens").send({}).expect(200);
 
     expect(response.body).toHaveProperty("token");
     expect(typeof response.body.token).toBe("string");

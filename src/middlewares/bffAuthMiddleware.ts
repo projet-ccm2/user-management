@@ -21,7 +21,9 @@ export const bffAuthMiddleware = async (
 
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return next(new CustomError("Missing or invalid Authorization header", 401));
+    return next(
+      new CustomError("Missing or invalid Authorization header", 401),
+    );
   }
 
   const token = authHeader.slice(7);

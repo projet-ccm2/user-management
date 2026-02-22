@@ -53,13 +53,16 @@ export async function getVpcToken(): Promise<string> {
     });
 
     if (!res.data?.token) {
-      logger.error("Token response missing token field", { status: res.status });
+      logger.error("Token response missing token field", {
+        status: res.status,
+      });
       throw new Error("Invalid token response");
     }
     token = res.data.token;
   }
 
   cachedToken = token;
-  cachedExpiry = now + config.token.jwtExpiresInSeconds - REFRESH_BUFFER_SECONDS;
+  cachedExpiry =
+    now + config.token.jwtExpiresInSeconds - REFRESH_BUFFER_SECONDS;
   return token;
 }
