@@ -8,6 +8,7 @@ import { errorHandler, notFoundHandler } from "./middlewares/errorHandler";
 import { securityHeaders, corsValidator } from "./middlewares/security";
 import authRoutes from "./routes/authRoute";
 import tokenRoutes from "./routes/tokenRoute";
+import { dbGatewayService } from "./services/dbGatewayService";
 
 const app = express();
 app.disable("x-powered-by");
@@ -22,13 +23,18 @@ app.use(passport.initialize());
 app.use("/auth", authRoutes);
 app.use("/tokens", tokenRoutes);
 
-app.get("/health", (req, res, next) => {
+app.get("/health", async (req, res, next) => {
   try {
     logger.debug("Health check", { path: req.path });
+    const dbGateway = await dbGatewayService.checkHealth();
     res.status(200).json({
       status: "healthy",
       timestamp: new Date().toISOString(),
       environment: config.nodeEnv,
+      dbGateway:
+        dbGateway.status === "healthy"
+          ? { status: "healthy", response: dbGateway.data }
+          : { status: "unhealthy", error: dbGateway.error },
     });
   } catch (error) {
     next(error);

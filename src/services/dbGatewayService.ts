@@ -275,6 +275,43 @@ export class DbGatewayService {
       );
     }
   }
+
+  /**
+   * Checks connectivity with the db gateway by calling its health endpoint.
+   * Returns the db gateway health response on success, or an error object on failure.
+   */
+  async checkHealth(): Promise<
+    | { status: "healthy"; data: Record<string, unknown> }
+    | { status: "unhealthy"; error: string }
+  > {
+    try {
+      const headers = await this.getHeaders();
+      const response = await fetch(`${this.dbGatewayUrl}/health`, {
+        method: "GET",
+        headers,
+        signal: AbortSignal.timeout(this.timeout),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        logger.warn("Database gateway health check failed", {
+          status: response.status,
+          error: errorText.substring(0, 200),
+        });
+        return {
+          status: "unhealthy",
+          error: `Database gateway returned ${response.status}: ${errorText.substring(0, 100)}`,
+        };
+      }
+
+      const data = (await response.json()) as Record<string, unknown>;
+      return { status: "healthy", data };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      logger.warn("Database gateway health check failed", { error: message });
+      return { status: "unhealthy", error: message };
+    }
+  }
 }
 
 export const dbGatewayService = new DbGatewayService();

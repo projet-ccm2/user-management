@@ -2,9 +2,18 @@ import request from "supertest";
 import app from "../../index";
 import { config } from "../../config/environment";
 import { logger } from "../../utils/logger";
+import { dbGatewayService } from "../../services/dbGatewayService";
 
 jest.mock("../../config/environment");
 jest.mock("../../utils/logger");
+jest.mock("../../services/dbGatewayService", () => ({
+  dbGatewayService: {
+    checkHealth: jest.fn().mockResolvedValue({
+      status: "healthy",
+      data: { status: "healthy", timestamp: "2024-01-15T10:30:00.000Z" },
+    }),
+  },
+}));
 
 const mockConfig = config as jest.Mocked<typeof config>;
 const mockLogger = logger as jest.Mocked<typeof logger>;
@@ -25,6 +34,13 @@ describe("Express App", () => {
         status: "healthy",
         timestamp: expect.any(String),
         environment: "test",
+        dbGateway: expect.objectContaining({
+          status: "healthy",
+          response: expect.objectContaining({
+            status: "healthy",
+            timestamp: "2024-01-15T10:30:00.000Z",
+          }),
+        }),
       });
     });
 
@@ -34,6 +50,20 @@ describe("Express App", () => {
       const timestamp = new Date(response.body.timestamp);
       expect(timestamp).toBeInstanceOf(Date);
       expect(timestamp.getTime()).not.toBeNaN();
+    });
+
+    it("should include db gateway status when unhealthy", async () => {
+      (dbGatewayService.checkHealth as jest.Mock).mockResolvedValueOnce({
+        status: "unhealthy",
+        error: "Connection refused",
+      });
+
+      const response = await request(app).get("/health").expect(200);
+
+      expect(response.body.dbGateway).toEqual({
+        status: "unhealthy",
+        error: "Connection refused",
+      });
     });
   });
 

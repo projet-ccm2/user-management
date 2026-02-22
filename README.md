@@ -172,7 +172,7 @@ Use the returned JWT in `Authorization: Bearer <jwt>` when calling the db gatewa
 
 #### GET /health
 
-API health check.
+API health check. Probes the db gateway and includes its health response.
 
 **Response 200:**
 
@@ -180,7 +180,25 @@ API health check.
 {
   "status": "healthy",
   "timestamp": "2024-01-15T10:30:00.000Z",
-  "environment": "development"
+  "environment": "development",
+  "dbGateway": {
+    "status": "healthy",
+    "response": {
+      "status": "healthy",
+      "timestamp": "2024-01-15T10:30:00.000Z"
+    }
+  }
+}
+```
+
+`dbGateway.response` contient exactement ce que renvoie le db gateway sur son endpoint `/health`.
+
+When the db gateway is unreachable, `dbGateway` contains:
+
+```json
+{
+  "status": "unhealthy",
+  "error": "Connection refused"
 }
 ```
 

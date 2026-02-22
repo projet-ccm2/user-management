@@ -578,4 +578,61 @@ describe("DbGatewayService", () => {
       ).rejects.toThrow(CustomError);
     });
   });
+
+  describe("checkHealth", () => {
+    it("should return healthy with db gateway data when GET /health returns 200", async () => {
+      const mockHealthResponse = {
+        status: "healthy",
+        timestamp: "2024-01-15T10:30:00.000Z",
+        database: "connected",
+      };
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: jest.fn().mockResolvedValue(mockHealthResponse),
+      } as any);
+
+      const result = await dbGatewayService.checkHealth();
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://localhost:3001/health",
+        expect.objectContaining({
+          method: "GET",
+          headers: expect.objectContaining({
+            Authorization: `Bearer ${MOCK_VPC_JWT}`,
+          }),
+        }),
+      );
+      expect(result).toEqual({
+        status: "healthy",
+        data: mockHealthResponse,
+      });
+    });
+
+    it("should return unhealthy when GET /health returns 500", async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 500,
+        text: jest.fn().mockResolvedValue("Internal Server Error"),
+      } as any);
+
+      const result = await dbGatewayService.checkHealth();
+
+      expect(result).toEqual({
+        status: "unhealthy",
+        error: expect.stringContaining("500"),
+      });
+    });
+
+    it("should return unhealthy on network error", async () => {
+      mockFetch.mockRejectedValue(new Error("Connection refused"));
+
+      const result = await dbGatewayService.checkHealth();
+
+      expect(result).toEqual({
+        status: "unhealthy",
+        error: "Connection refused",
+      });
+    });
+  });
 });
