@@ -44,9 +44,6 @@ DB_SERVICE_URL=http://localhost:3001
 # VPC Token (bastion access to db gateway)
 USER_MANAGEMENT_URL=http://localhost:3000
 JWT_SECRET=dev-secret-change-in-production
-JWT_EXPIRES_IN_SECONDS=3600
-GCP_SERVICE_URL=http://localhost:3000
-SKIP_GCP_AUTH=true
 ```
 
 ### Get your TWITCH_CLIENT_ID
@@ -141,7 +138,7 @@ User authentication via Twitch OAuth.
 
 Obtains a JWT for VPC access (db gateway). Used by bastions (user-management via auto-call, or second BFF).
 
-**Authentication:** Requires `Authorization: Bearer <gcp-identity-token>` (GCP identity token). When `SKIP_GCP_AUTH=true` (local dev), auth is skipped.
+**Authentication:** Requires `Authorization: Bearer <gcp-identity-token>` (GCP identity token). When `NODE_ENV=development`, auth is skipped.
 
 **Request:**
 
@@ -252,18 +249,18 @@ Both bastions send `Authorization: Bearer <jwt>` to the db gateway (no X-User-\*
 
 ### Variables d'environnement VPC
 
-| Variable                 | Description                                                         |
-| ------------------------ | ------------------------------------------------------------------- |
-| `USER_MANAGEMENT_URL`    | URL of user-management for POST /tokens (auto-call and second BFF)  |
-| `JWT_SECRET`             | Secret to sign VPC JWTs (required in production)                    |
-| `JWT_EXPIRES_IN_SECONDS` | JWT expiry (default: 3600)                                          |
-| `GCP_SERVICE_URL`        | GCP service URL for identity token audience (Cloud Run URL in prod) |
-| `SKIP_GCP_AUTH`          | Set to `true` for local dev when not on GCP                         |
+| Variable              | Description                                                              |
+| --------------------- | ------------------------------------------------------------------------ |
+| `USER_MANAGEMENT_URL` | URL of user-management for POST /tokens and GCP identity token audience  |
+| `JWT_SECRET`          | Secret to sign VPC JWTs (required in production)                         |
+| `NODE_ENV`            | When `development`, GCP auth is skipped (local dev). Otherwise required. |
 
 ### Second BFF integration
 
 1. Call `POST /tokens` on user-management with `Authorization: Bearer <gcp-identity-token>`
 2. Use the returned `token` in `Authorization: Bearer <jwt>` for all db gateway requests
+
+For more information on how to implement the token flow and call other microservices, see [VPC Token Integration Guide](docs/VPC_TOKEN_INTEGRATION.md).
 
 ## Authentication Flow
 

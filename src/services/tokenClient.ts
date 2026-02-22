@@ -13,7 +13,7 @@ const REFRESH_BUFFER_SECONDS = 60;
 /**
  * Calls POST /tokens on user-management to obtain a JWT for VPC access.
  * Used by user-management (auto-call) and by the second BFF.
- * When SKIP_GCP_AUTH=true, calls without GCP identity token (local dev).
+ * When NODE_ENV=development, calls without GCP identity token (local dev).
  * Caches the token and refreshes when close to expiry.
  *
  * @returns JWT to use in Authorization header for db gateway requests

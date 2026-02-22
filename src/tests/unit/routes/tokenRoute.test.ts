@@ -22,7 +22,7 @@ describe("tokenRoute", () => {
     expect(typeof tokenRoutes).toBe("function");
   });
 
-  it("POST / should return token when SKIP_GCP_AUTH is true", async () => {
+  it("POST / should return token when NODE_ENV is development", async () => {
     const response = await request(app).post("/tokens").send({}).expect(200);
 
     expect(response.body).toHaveProperty("token");

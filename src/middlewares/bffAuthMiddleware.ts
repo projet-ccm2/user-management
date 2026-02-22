@@ -7,7 +7,7 @@ import { logger } from "../utils/logger";
 /**
  * Validates that the request comes from an authorized bastion (user-management or second BFF).
  * Expects Authorization: Bearer <gcp-identity-token>.
- * When SKIP_GCP_AUTH=true (local dev), skips validation.
+ * When NODE_ENV=development (local dev), skips validation.
  */
 export const bffAuthMiddleware = async (
   req: Request,
@@ -15,7 +15,7 @@ export const bffAuthMiddleware = async (
   next: NextFunction,
 ): Promise<void> => {
   if (config.gcp.skipAuth) {
-    logger.debug("Skipping GCP auth (SKIP_GCP_AUTH=true)");
+    logger.debug("Skipping GCP auth (NODE_ENV=development)");
     return next();
   }
 
