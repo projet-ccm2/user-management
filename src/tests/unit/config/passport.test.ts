@@ -66,6 +66,44 @@ describe("passport configuration", () => {
       expect(true).toBe(true);
     });
 
+    it("should handle configuration error", () => {
+      jest.isolateModules(() => {
+        const passport = require("passport");
+        passport.use = jest.fn().mockImplementation(() => {
+          throw new Error("Strategy configuration failed");
+        });
+        const {
+          configurePassport: configurePassportFresh,
+        } = require("../../../config/passport");
+
+        expect(() => configurePassportFresh()).toThrow(
+          "Strategy configuration failed",
+        );
+        expect(mockLogger.error).toHaveBeenCalledWith(
+          "Failed to configure Passport",
+          { error: "Strategy configuration failed" },
+        );
+      });
+    });
+
+    it("should handle unknown error type", () => {
+      jest.isolateModules(() => {
+        const passport = require("passport");
+        passport.use = jest.fn().mockImplementation(() => {
+          throw "string error";
+        });
+        const {
+          configurePassport: configurePassportFresh,
+        } = require("../../../config/passport");
+
+        expect(() => configurePassportFresh()).toThrow("string error");
+        expect(mockLogger.error).toHaveBeenCalledWith(
+          "Failed to configure Passport",
+          { error: "Unknown error" },
+        );
+      });
+    });
+
     it("should use correct config values", () => {
       Object.assign(config, {
         twitch: {

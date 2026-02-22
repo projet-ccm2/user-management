@@ -97,4 +97,50 @@ describe("Environment Configuration", () => {
 
     expect(testConfig.dbGateway.url).toBe("https://db-service.example.com");
   });
+
+  it("should set gcp.skipAuth true when NODE_ENV is development", () => {
+    process.env.TWITCH_CLIENT_ID = "test_client_id";
+    process.env.NODE_ENV = "development";
+
+    const { config: testConfig } = require("../../../config/environment");
+
+    expect(testConfig.gcp.skipAuth).toBe(true);
+  });
+
+  it("should set gcp.skipAuth false when NODE_ENV is production", () => {
+    process.env.TWITCH_CLIENT_ID = "test_client_id";
+    process.env.NODE_ENV = "production";
+
+    const { config: testConfig } = require("../../../config/environment");
+
+    expect(testConfig.gcp.skipAuth).toBe(false);
+  });
+
+  it("should set gcp.skipAuth true when NODE_ENV is unset (defaults to development)", () => {
+    process.env.TWITCH_CLIENT_ID = "test_client_id";
+    delete process.env.NODE_ENV;
+
+    const { config: testConfig } = require("../../../config/environment");
+
+    expect(testConfig.gcp.skipAuth).toBe(true);
+  });
+
+  it("should derive gcp.serviceUrl from USER_MANAGEMENT_URL", () => {
+    process.env.TWITCH_CLIENT_ID = "test_client_id";
+    process.env.USER_MANAGEMENT_URL = "https://user-mgmt.example.com";
+
+    const { config: testConfig } = require("../../../config/environment");
+
+    expect(testConfig.gcp.serviceUrl).toBe("https://user-mgmt.example.com");
+    expect(testConfig.userManagement.url).toBe("https://user-mgmt.example.com");
+  });
+
+  it("should strip trailing slash from USER_MANAGEMENT_URL for gcp.serviceUrl", () => {
+    process.env.TWITCH_CLIENT_ID = "test_client_id";
+    process.env.USER_MANAGEMENT_URL = "https://user-mgmt.example.com/";
+
+    const { config: testConfig } = require("../../../config/environment");
+
+    expect(testConfig.gcp.serviceUrl).toBe("https://user-mgmt.example.com");
+  });
 });

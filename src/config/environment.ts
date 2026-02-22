@@ -11,6 +11,17 @@ interface Config {
   dbGateway: {
     url: string;
   };
+  token: {
+    jwtSecret: string;
+    jwtExpiresInSeconds: number;
+  };
+  userManagement: {
+    url: string;
+  };
+  gcp: {
+    serviceUrl: string;
+    skipAuth: boolean;
+  };
 }
 
 function validateConfig(): Config {
@@ -23,6 +34,10 @@ function validateConfig(): Config {
       throw new Error(`Missing required environment variable: ${key}`);
     }
   }
+
+  const userManagementUrl = (
+    process.env.USER_MANAGEMENT_URL || "http://localhost:3000"
+  ).replace(/\/$/, "");
 
   return {
     port: Number.parseInt(process.env.PORT || "3000", 10),
@@ -38,6 +53,17 @@ function validateConfig(): Config {
     },
     dbGateway: {
       url: process.env.DB_SERVICE_URL || "http://localhost:3001",
+    },
+    token: {
+      jwtSecret: process.env.JWT_SECRET || "dev-secret-change-in-production",
+      jwtExpiresInSeconds: 3600, // 1 hour
+    },
+    userManagement: {
+      url: userManagementUrl,
+    },
+    gcp: {
+      serviceUrl: userManagementUrl,
+      skipAuth: (process.env.NODE_ENV || "development") === "development",
     },
   };
 }
