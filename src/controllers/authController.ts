@@ -86,10 +86,16 @@ export const callbackConnexion = async (
     });
 
     const existing = await dbGatewayService.getUserById(userModel.channel.id);
+    const isRecentlyUpdated =
+      existing !== null &&
+      Date.now() - new Date(existing.lastUpdateTimestamp).getTime() <
+        config.user.skipUpdateThresholdMs;
     const dbResult =
       existing === null
         ? await dbGatewayService.saveUser(userModel)
-        : await dbGatewayService.updateUser(userModel.channel.id, userModel);
+        : isRecentlyUpdated
+          ? existing
+          : await dbGatewayService.updateUser(userModel.channel.id, userModel);
 
     logger.info("User saved or updated in database", {
       userId: dbResult.id,

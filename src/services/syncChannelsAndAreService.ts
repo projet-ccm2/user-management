@@ -11,7 +11,10 @@ export async function syncChannelsAndAreAfterAuth(
 ): Promise<void> {
   let ownChannelId: string;
   try {
-    const ownChannel = await dbGatewayService.createChannel(userModel.username);
+    const ownChannel = await dbGatewayService.createChannel(
+      userModel.channel.id,
+      userModel.username,
+    );
     ownChannelId = ownChannel.id;
   } catch (err) {
     logger.warn(
