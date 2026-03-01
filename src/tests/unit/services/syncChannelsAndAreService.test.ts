@@ -68,7 +68,10 @@ describe("syncChannelsAndAreService", () => {
       "client-id",
     );
 
-    expect(mockDbGatewayService.createChannel).toHaveBeenCalledWith("TestUser");
+    expect(mockDbGatewayService.createChannel).toHaveBeenCalledWith(
+      "12345",
+      "TestUser",
+    );
     expect(mockDbGatewayService.getAre).toHaveBeenCalledWith(
       "12345",
       "channel-123",
@@ -147,7 +150,11 @@ describe("syncChannelsAndAreService", () => {
       .fn()
       .mockImplementation((id: string) => {
         if (id === "mod-123")
-          return Promise.resolve({ id: "mod-123", username: "ModUser" });
+          return Promise.resolve({
+            id: "mod-123",
+            username: "ModUser",
+            lastUpdateTimestamp: "2026-02-20T12:00:00.000Z",
+          });
         return Promise.resolve(null);
       });
     mockGetModerators.mockResolvedValue([
@@ -189,6 +196,7 @@ describe("syncChannelsAndAreService", () => {
     mockDbGatewayService.getUserById = jest.fn().mockResolvedValue({
       id: "mod-123",
       username: "ModUser",
+      lastUpdateTimestamp: "2026-02-20T12:00:00.000Z",
     });
     mockDbGatewayService.getAre = jest
       .fn()

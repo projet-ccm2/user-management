@@ -33,6 +33,7 @@ describe("Environment Configuration", () => {
     expect(testConfig.nodeEnv).toBe("test");
     expect(testConfig.twitch.issuer).toBe("https://id.twitch.tv/oauth2");
     expect(testConfig.dbGateway.url).toBe("http://localhost:3001");
+    expect(testConfig.user.skipUpdateThresholdMs).toBe(60 * 60 * 1000);
   });
 
   it("should throw error for missing required TWITCH_CLIENT_ID", () => {

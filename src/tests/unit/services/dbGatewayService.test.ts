@@ -14,6 +14,9 @@ jest.mock("../../../config/environment", () => ({
     dbGateway: {
       url: "http://localhost:3001",
     },
+    user: {
+      skipUpdateThresholdMs: 60 * 60 * 1000,
+    },
   },
 }));
 
@@ -63,6 +66,7 @@ describe("DbGatewayService", () => {
         profileImageUrl: "https://example.com/avatar.jpg",
         channelDescription: "Test user",
         scope: "user:read:email",
+        lastUpdateTimestamp: "2026-02-20T12:00:00.000Z",
       };
       mockFetch.mockResolvedValue({
         ok: true,
@@ -141,6 +145,7 @@ describe("DbGatewayService", () => {
         profileImageUrl: "https://example.com/avatar.jpg",
         channelDescription: "Test user",
         scope: "user:read:email",
+        lastUpdateTimestamp: "2026-02-20T12:00:00.000Z",
       };
       mockFetch.mockResolvedValue({
         ok: true,
@@ -158,12 +163,7 @@ describe("DbGatewayService", () => {
             Accept: "application/json",
             Authorization: `Bearer ${MOCK_VPC_JWT}`,
           }),
-          body: JSON.stringify({
-            username: "testuser",
-            profileImageUrl: "https://example.com/avatar.jpg",
-            channelDescription: "Test user",
-            scope: "user:read:email",
-          }),
+          body: expect.stringContaining('"lastUpdateTimestamp"'),
         }),
       );
       expect(result).toEqual(mockDbResponse);
@@ -219,6 +219,7 @@ describe("DbGatewayService", () => {
         profileImageUrl: "https://example.com/avatar.jpg",
         channelDescription: "Test user",
         scope: "user:read:email",
+        lastUpdateTimestamp: "2026-02-20T12:00:00.000Z",
       };
       const mockResponse = {
         ok: true,
@@ -238,15 +239,19 @@ describe("DbGatewayService", () => {
             Accept: "application/json",
             Authorization: `Bearer ${MOCK_VPC_JWT}`,
           }),
-          body: JSON.stringify({
-            id: "123",
-            username: "testuser",
-            profileImageUrl: "https://example.com/avatar.jpg",
-            channelDescription: "Test user",
-            scope: "user:read:email",
-          }),
+          body: expect.stringContaining('"lastUpdateTimestamp"'),
         }),
       );
+      const callBody = JSON.parse(
+        (mockFetch.mock.calls[0][1] as RequestInit).body as string,
+      );
+      expect(callBody).toMatchObject({
+        id: "123",
+        username: "testuser",
+        profileImageUrl: "https://example.com/avatar.jpg",
+        channelDescription: "Test user",
+        scope: "user:read:email",
+      });
 
       expect(result).toEqual(mockDbResponse);
 
@@ -447,13 +452,16 @@ describe("DbGatewayService", () => {
         json: jest.fn().mockResolvedValue(mockChannel),
       } as any);
 
-      const result = await dbGatewayService.createChannel("newchannel");
+      const result = await dbGatewayService.createChannel(
+        "channel-456",
+        "newchannel",
+      );
 
       expect(mockFetch).toHaveBeenCalledWith(
         "http://localhost:3001/channels",
         expect.objectContaining({
           method: "POST",
-          body: JSON.stringify({ name: "newchannel" }),
+          body: JSON.stringify({ id: "channel-456", name: "newchannel" }),
         }),
       );
       expect(result).toEqual(mockChannel);
@@ -468,7 +476,7 @@ describe("DbGatewayService", () => {
       } as any);
 
       await expect(
-        dbGatewayService.createChannel("newchannel"),
+        dbGatewayService.createChannel("channel-456", "newchannel"),
       ).rejects.toThrow(CustomError);
     });
 
@@ -476,7 +484,7 @@ describe("DbGatewayService", () => {
       mockFetch.mockRejectedValue(new Error("Network error"));
 
       await expect(
-        dbGatewayService.createChannel("newchannel"),
+        dbGatewayService.createChannel("channel-456", "newchannel"),
       ).rejects.toThrow(CustomError);
     });
   });

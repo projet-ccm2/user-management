@@ -22,6 +22,9 @@ interface Config {
     serviceUrl: string;
     skipAuth: boolean;
   };
+  user: {
+    skipUpdateThresholdMs: number;
+  };
 }
 
 function validateConfig(): Config {
@@ -64,6 +67,9 @@ function validateConfig(): Config {
     gcp: {
       serviceUrl: userManagementUrl,
       skipAuth: (process.env.NODE_ENV || "development") === "development",
+    },
+    user: {
+      skipUpdateThresholdMs: 60 * 60 * 1000,
     },
   };
 }

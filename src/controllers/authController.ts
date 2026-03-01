@@ -7,8 +7,47 @@ import { syncChannelsAndAreAfterAuth } from "../services/syncChannelsAndAreServi
 import { config } from "../config/environment";
 import { logger } from "../utils/logger";
 import { CustomError } from "../middlewares/errorHandler";
+import type { DbGatewayResponse } from "../services/types/dbGatewayService/DbGatewayResponse";
 
 type AuthenticatedRequest = Request & { user?: TwitchPassportUser };
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : "Unknown error";
+}
+
+function buildAuthInfo(tokens: TwitchPassportUser["tokens"]): UserAuthApproval {
+  return {
+    accessToken: tokens.accessToken,
+    idToken: tokens.idToken,
+    tokenType: tokens.tokenType,
+    scope: tokens.scope,
+    expiresIn: tokens.expiresIn,
+    expiresAt:
+      typeof tokens.expiresIn === "number"
+        ? new Date(Date.now() + tokens.expiresIn * 1000)
+        : undefined,
+    state: tokens.state,
+    approvedAt: new Date(),
+  };
+}
+
+async function saveOrUpdateUserInDb(
+  userModel: User,
+): Promise<DbGatewayResponse> {
+  const existing = await dbGatewayService.getUserById(userModel.channel.id);
+  const isRecentlyUpdated =
+    existing !== null &&
+    Date.now() - new Date(existing.lastUpdateTimestamp).getTime() <
+      config.user.skipUpdateThresholdMs;
+
+  if (existing === null) {
+    return dbGatewayService.saveUser(userModel);
+  }
+  if (isRecentlyUpdated) {
+    return existing;
+  }
+  return dbGatewayService.updateUser(userModel.channel.id, userModel);
+}
 
 export const callbackConnexion = async (
   req: Request,
@@ -48,19 +87,7 @@ export const callbackConnexion = async (
       userId: user.userId,
     });
 
-    const authInfo: UserAuthApproval = {
-      accessToken: tokens.accessToken,
-      idToken: tokens.idToken,
-      tokenType: tokens.tokenType,
-      scope: tokens.scope,
-      expiresIn: tokens.expiresIn,
-      expiresAt:
-        typeof tokens.expiresIn === "number"
-          ? new Date(Date.now() + tokens.expiresIn * 1000)
-          : undefined,
-      state: tokens.state,
-      approvedAt: new Date(),
-    };
+    const authInfo = buildAuthInfo(tokens);
 
     const twitchUser = await fetchTwitchUser(
       tokens.accessToken,
@@ -85,11 +112,7 @@ export const callbackConnexion = async (
       username: username,
     });
 
-    const existing = await dbGatewayService.getUserById(userModel.channel.id);
-    const dbResult =
-      existing === null
-        ? await dbGatewayService.saveUser(userModel)
-        : await dbGatewayService.updateUser(userModel.channel.id, userModel);
+    const dbResult = await saveOrUpdateUserInDb(userModel);
 
     logger.info("User saved or updated in database", {
       userId: dbResult.id,
@@ -105,7 +128,7 @@ export const callbackConnexion = async (
       );
     } catch (error_) {
       logger.error("Sync channels/ARE failed (auth still successful)", {
-        error: error_ instanceof Error ? error_.message : "Unknown error",
+        error: getErrorMessage(error_),
         userId: dbResult.id,
       });
     }
@@ -122,7 +145,7 @@ export const callbackConnexion = async (
     }
 
     logger.error("Unexpected error in authentication callback", {
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: getErrorMessage(error),
       stack: error instanceof Error ? error.stack : undefined,
     });
     next(new CustomError("Authentication failed due to internal error", 500));

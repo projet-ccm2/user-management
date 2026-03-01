@@ -102,6 +102,7 @@ export class DbGatewayService {
         profileImageUrl: user.channel.profileImageUrl || null,
         channelDescription: user.channel.description || null,
         scope: this.getScopeString(user),
+        lastUpdateTimestamp: new Date().toISOString(),
       };
 
       const headers = await this.getHeaders();
@@ -143,6 +144,7 @@ export class DbGatewayService {
         profileImageUrl: user.channel.profileImageUrl || null,
         channelDescription: user.channel.description || null,
         scope: this.getScopeString(user),
+        lastUpdateTimestamp: new Date().toISOString(),
       };
 
       const headers = await this.getHeaders();
@@ -201,13 +203,13 @@ export class DbGatewayService {
     }
   }
 
-  async createChannel(name: string): Promise<ChannelResponse> {
+  async createChannel(id: string, name: string): Promise<ChannelResponse> {
     try {
       const headers = await this.getHeaders();
       const response = await fetch(`${this.dbGatewayUrl}/channels`, {
         method: "POST",
         headers,
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ id, name }),
         signal: AbortSignal.timeout(this.timeout),
       });
 
@@ -217,7 +219,7 @@ export class DbGatewayService {
       this.handleFetchError(
         error,
         "Failed to create channel in database gateway",
-        { name },
+        { id, name },
         "Failed to create channel",
       );
     }

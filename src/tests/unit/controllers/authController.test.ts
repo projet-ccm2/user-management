@@ -67,6 +67,9 @@ describe("authController", () => {
       twitch: {
         clientId: "test-client-id",
       },
+      user: {
+        skipUpdateThresholdMs: 60 * 60 * 1000,
+      },
     });
     mockFetchTwitchUser.mockResolvedValue({
       id: "12345",
@@ -87,6 +90,7 @@ describe("authController", () => {
       profileImageUrl: "https://example.com/avatar.jpg",
       channelDescription: "Test description",
       scope: "user:read:email",
+      lastUpdateTimestamp: "2026-02-20T12:00:00.000Z",
     });
     mockDbGatewayService.updateUser = jest.fn().mockResolvedValue({
       id: "12345",
@@ -94,6 +98,7 @@ describe("authController", () => {
       profileImageUrl: "https://example.com/avatar.jpg",
       channelDescription: "Test description",
       scope: "user:read:email",
+      lastUpdateTimestamp: "2026-02-20T12:00:00.000Z",
     });
     mockLogger.info = jest.fn();
     mockLogger.error = jest.fn();
@@ -146,13 +151,17 @@ describe("authController", () => {
       expect(mockDbGatewayService.updateUser).not.toHaveBeenCalled();
     });
 
-    it("should update user when getUserById returns existing user", async () => {
+    it("should update user when getUserById returns existing user with old lastUpdateTimestamp", async () => {
+      const twoHoursAgo = new Date(
+        Date.now() - 2 * 60 * 60 * 1000,
+      ).toISOString();
       mockDbGatewayService.getUserById.mockResolvedValueOnce({
         id: "12345",
         username: "TestUser",
         profileImageUrl: "https://example.com/avatar.jpg",
         channelDescription: "Test description",
         scope: "user:read:email",
+        lastUpdateTimestamp: twoHoursAgo,
       });
 
       await callbackConnexion(
@@ -167,6 +176,37 @@ describe("authController", () => {
         expect.any(Object),
       );
       expect(mockDbGatewayService.saveUser).not.toHaveBeenCalled();
+    });
+
+    it("should skip update when existing user has lastUpdateTimestamp < 1h", async () => {
+      const thirtyMinutesAgo = new Date(
+        Date.now() - 30 * 60 * 1000,
+      ).toISOString();
+      const existingUser = {
+        id: "12345",
+        username: "TestUser",
+        profileImageUrl: "https://example.com/avatar.jpg",
+        channelDescription: "Test description",
+        scope: "user:read:email",
+        lastUpdateTimestamp: thirtyMinutesAgo,
+      };
+      mockDbGatewayService.getUserById.mockResolvedValueOnce(existingUser);
+
+      await callbackConnexion(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext,
+      );
+
+      expect(mockDbGatewayService.getUserById).toHaveBeenCalledWith("12345");
+      expect(mockDbGatewayService.updateUser).not.toHaveBeenCalled();
+      expect(mockDbGatewayService.saveUser).not.toHaveBeenCalled();
+      expect(syncChannelsAndAreAfterAuth).toHaveBeenCalledWith(
+        "12345",
+        expect.any(Object),
+        "test-access-token",
+        "test-client-id",
+      );
     });
 
     it("should call next with CustomError when user is missing", async () => {
