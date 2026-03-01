@@ -152,7 +152,9 @@ describe("authController", () => {
     });
 
     it("should update user when getUserById returns existing user with old lastUpdateTimestamp", async () => {
-      const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+      const twoHoursAgo = new Date(
+        Date.now() - 2 * 60 * 60 * 1000,
+      ).toISOString();
       mockDbGatewayService.getUserById.mockResolvedValueOnce({
         id: "12345",
         username: "TestUser",
