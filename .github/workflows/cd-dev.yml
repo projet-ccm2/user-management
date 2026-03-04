@@ -1,0 +1,38 @@
+name: Deploy to Development
+on:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+    inputs:
+      image-tag:
+        description: "Docker image tag to deploy (default: dev-{sha})"
+        required: false
+        type: string
+        default: ""
+      force-deploy:
+        description: "Force deployment even if no changes"
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  deploy-dev:
+    name: Deploy to Development
+    uses: projet-ccm2/shared-workflows/.github/workflows/nodejs-cd.yml@main
+    if: github.event_name != 'pull_request'
+    with:
+      docker-image-name: user-management-api-dev
+      docker-tag: ${{ github.event.inputs.image-tag || format('dev-{0}', github.sha) }}
+      artifact-registry-repository: "user-management-docker-dev"
+      environment: development
+      cloud-run-service-name: user-management-dev
+      required_env_vars: GCP_SA_KEY,GCP_PROJECT_ID,TWITCH_CLIENT_ID,TWITCH_ISSUER,ALLOWED_ORIGINS,DB_SERVICE_URL,AUTH_SERVICE_URL,JWT_SECRET
+    secrets:
+      GCP_SA_KEY: ${{ secrets.DEV_GCP_SA_KEY }}
+      GCP_PROJECT_ID: ${{ secrets.DEV_GCP_PROJECT_ID }}
+      TWITCH_CLIENT_ID: ${{ secrets.DEV_TWITCH_CLIENT_ID }}
+      TWITCH_ISSUER: ${{ secrets.DEV_TWITCH_ISSUER }}
+      ALLOWED_ORIGINS: ${{ secrets.DEV_ALLOWED_ORIGINS }}
+      DB_SERVICE_URL: ${{ secrets.DEV_DB_SERVICE_URL }}
+      AUTH_SERVICE_URL: ${{ secrets.DEV_AUTH_SERVICE_URL }}

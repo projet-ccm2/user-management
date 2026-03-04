@@ -1,0 +1,39 @@
+name: Deploy to Integration
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      image-tag:
+        description: "Docker image tag to deploy (default: int-{sha})"
+        required: false
+        type: string
+        default: ""
+      run-tests:
+        description: "Run integration tests after deployment"
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  deploy-int:
+    name: Deploy to Integration
+    uses: projet-ccm2/shared-workflows/.github/workflows/nodejs-cd.yml@main
+    if: github.event_name != 'pull_request'
+    with:
+      docker-image-name: user-management-api-int
+      docker-tag: ${{ github.event.inputs.image-tag || format('dev-{0}', github.sha) }}
+      artifact-registry-repository: "user-management-docker-int"
+      environment: integration
+      cloud-run-service-name: user-management-int
+      required_env_vars: GCP_SA_KEY,GCP_PROJECT_ID,TWITCH_CLIENT_ID,TWITCH_ISSUER,ALLOWED_ORIGINS,DB_SERVICE_URL,AUTH_SERVICE_URL,JWT_SECRET
+    secrets:
+      GCP_SA_KEY: ${{ secrets.INT_GCP_SA_KEY }}
+      GCP_PROJECT_ID: ${{ secrets.INT_GCP_PROJECT_ID }}
+      TWITCH_CLIENT_ID: ${{ secrets.INT_TWITCH_CLIENT_ID }}
+      TWITCH_ISSUER: ${{ secrets.INT_TWITCH_ISSUER }}
+      ALLOWED_ORIGINS: ${{ secrets.INT_ALLOWED_ORIGINS }}
+      DB_SERVICE_URL: ${{ secrets.INT_DB_SERVICE_URL }}
+      AUTH_SERVICE_URL: ${{ secrets.INT_AUTH_SERVICE_URL }}
+      JWT_SECRET: ${{ secrets.INT_JWT_SECRET }}
