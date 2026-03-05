@@ -240,27 +240,37 @@ src/
 
 ## Accès VPC (Bastion architecture)
 
-user-management and the second BFF act as **bastions** outside the VPC. The db gateway is private inside the VPC. To access it, both bastions obtain a JWT via `POST /tokens` on user-management.
+user-management and the second BFF act as **bastions** outside the VPC. The db gateway is a private Cloud Run service deployed with `--no-allow-unauthenticated`. To access it, bastions use the **double header pattern**:
 
 - **user-management** : auto-calls its own `POST /tokens` before each db gateway request
 - **Second BFF** : calls `POST /tokens` on user-management to get a JWT, then uses it for db gateway requests
 
-Both bastions send `Authorization: Bearer <jwt>` to the db gateway (no X-User-\* headers).
+### Double header pattern
+
+The db gateway's Cloud Run ingress requires a GCP identity token in `Authorization`. The app JWT is sent in `X-VPC-Token`:
+
+| Environment          | `Authorization`                           | `X-VPC-Token`            |
+| -------------------- | ----------------------------------------- | ------------------------ |
+| **Development**      | `Bearer <app-jwt>` (comme avant)          | Non utilisé              |
+| **Int / Production** | `Bearer <gcp-identity-token>` (Cloud Run) | `<app-jwt>` (db-gateway) |
+
+In development, the app JWT is sent in `Authorization` as before (no GCP token, local service has no auth).
 
 ### Variables d'environnement VPC
 
 | Variable              | Description                                                              |
 | --------------------- | ------------------------------------------------------------------------ |
 | `USER_MANAGEMENT_URL` | URL of user-management for POST /tokens and GCP identity token audience  |
+| `DB_SERVICE_URL`      | URL of the db gateway (also used as GCP identity token audience)         |
 | `JWT_SECRET`          | Secret to sign VPC JWTs (required in production)                         |
 | `NODE_ENV`            | When `development`, GCP auth is skipped (local dev). Otherwise required. |
 
 ### Second BFF integration
 
 1. Call `POST /tokens` on user-management with `Authorization: Bearer <gcp-identity-token>`
-2. Use the returned `token` in `Authorization: Bearer <jwt>` for all db gateway requests
+2. Use the returned `token` with the double header pattern to call the db gateway
 
-For more information on how to implement the token flow and call other microservices, see [VPC Token Integration Guide](docs/VPC_TOKEN_INTEGRATION.md).
+For more information on the double header pattern, implementation examples, and checklists for new services, see [VPC Token Integration Guide](docs/VPC_TOKEN_INTEGRATION.md).
 
 ## Authentication Flow
 

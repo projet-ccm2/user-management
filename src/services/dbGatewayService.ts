@@ -3,6 +3,7 @@ import { CustomError } from "../middlewares/errorHandler";
 import { config } from "../config/environment";
 import User from "../models/user";
 import { getVpcToken } from "./tokenClient";
+import { getGcpIdToken } from "./gcpAuth";
 import type { DbGatewayResponse } from "./types/dbGatewayService/DbGatewayResponse";
 import type { ChannelResponse } from "./types/dbGatewayService/ChannelResponse";
 import type { AreResponse } from "./types/dbGatewayService/AreResponse";
@@ -17,10 +18,20 @@ export class DbGatewayService {
   };
 
   private async getHeaders(): Promise<Record<string, string>> {
-    const jwt = await getVpcToken();
+    const appJwt = await getVpcToken();
+    const gcpIdToken = await getGcpIdToken(this.dbGatewayUrl);
+
+    if (gcpIdToken) {
+      return {
+        ...this.baseHeaders,
+        Authorization: gcpIdToken,
+        "X-VPC-Token": appJwt,
+      };
+    }
+
     return {
       ...this.baseHeaders,
-      Authorization: `Bearer ${jwt}`,
+      Authorization: `Bearer ${appJwt}`,
     };
   }
 
