@@ -249,10 +249,10 @@ user-management and the second BFF act as **bastions** outside the VPC. The db g
 
 The db gateway's Cloud Run ingress requires a GCP identity token in `Authorization`. The app JWT is sent in `X-VPC-Token`:
 
-| Environment          | `Authorization`                            | `X-VPC-Token`           |
-| -------------------- | ------------------------------------------ | ----------------------- |
-| **Development**      | `Bearer <app-jwt>` (comme avant)           | Non utilisé             |
-| **Int / Production** | `Bearer <gcp-identity-token>` (Cloud Run)  | `<app-jwt>` (db-gateway)|
+| Environment          | `Authorization`                           | `X-VPC-Token`            |
+| -------------------- | ----------------------------------------- | ------------------------ |
+| **Development**      | `Bearer <app-jwt>` (comme avant)          | Non utilisé              |
+| **Int / Production** | `Bearer <gcp-identity-token>` (Cloud Run) | `<app-jwt>` (db-gateway) |
 
 In development, the app JWT is sent in `Authorization` as before (no GCP token, local service has no auth).
 

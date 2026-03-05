@@ -6,11 +6,11 @@ This guide explains how to integrate with the user-management token flow and how
 
 Three tokens are involved:
 
-| Token                                  | Issuer          | Purpose                                                                   |
-| -------------------------------------- | --------------- | ------------------------------------------------------------------------- |
-| **GCP Identity Token (user-mgmt)**     | Google Cloud    | Authenticate the caller to user-management (`POST /tokens`)               |
-| **GCP Identity Token (private service)** | Google Cloud  | Pass Cloud Run ingress on the private service (e.g. db-gateway)           |
-| **VPC JWT (app token)**                | user-management | Application-level authorization on the private service                    |
+| Token                                    | Issuer          | Purpose                                                         |
+| ---------------------------------------- | --------------- | --------------------------------------------------------------- |
+| **GCP Identity Token (user-mgmt)**       | Google Cloud    | Authenticate the caller to user-management (`POST /tokens`)     |
+| **GCP Identity Token (private service)** | Google Cloud    | Pass Cloud Run ingress on the private service (e.g. db-gateway) |
+| **VPC JWT (app token)**                  | user-management | Application-level authorization on the private service          |
 
 ---
 
@@ -20,9 +20,9 @@ Private Cloud Run services are deployed with `--no-allow-unauthenticated`. Cloud
 
 ### Headers by environment
 
-| Environment          | `Authorization`                     | `X-VPC-Token`                |
-| -------------------- | ----------------------------------- | ---------------------------- |
-| **Development**      | `Bearer <app-jwt>` (comme avant)    | Non utilisé                  |
+| Environment          | `Authorization`                           | `X-VPC-Token`                |
+| -------------------- | ----------------------------------------- | ---------------------------- |
+| **Development**      | `Bearer <app-jwt>` (comme avant)          | Non utilisé                  |
 | **Int / Production** | `Bearer <gcp-identity-token>` (Cloud Run) | `<app-jwt>` (db-gateway app) |
 
 In development, the app JWT is sent in `Authorization` as before. This works because the local service has no authentication requirement.
@@ -34,7 +34,7 @@ In development, the app JWT is sent in `Authorization` as before. This works bec
 | Environment                  | Tokens required                                                                                                                                                                                                                                                          |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **NODE_ENV=development**     | **None.** Everything is open: no GCP token for `POST /tokens`, and the db gateway typically accepts unauthenticated requests when running locally. If your db gateway still requires the JWT in dev, call `POST /tokens` (no GCP token needed) and use the returned JWT. |
-| **Production / Integration** | Full chain: GCP identity token → `POST /tokens` → VPC JWT + GCP identity token → db gateway (double header).                                                                                                                                                           |
+| **Production / Integration** | Full chain: GCP identity token → `POST /tokens` → VPC JWT + GCP identity token → db gateway (double header).                                                                                                                                                             |
 
 In development, the entire auth chain is bypassed—not just `POST /tokens`.
 
@@ -249,7 +249,7 @@ async function getVpcToken(): Promise<string> {
 | Variable              | Description                                                                                                                      |
 | --------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | `USER_MANAGEMENT_URL` | URL of user-management (e.g. `https://user-management.example.com`). Used for `POST /tokens` and as GCP identity token audience. |
-| `DB_SERVICE_URL`      | URL of the private microservice (e.g. db gateway). Also used as GCP identity token audience for the double header.                |
+| `DB_SERVICE_URL`      | URL of the private microservice (e.g. db gateway). Also used as GCP identity token audience for the double header.               |
 | `NODE_ENV`            | When `development`, no tokens required anywhere (local dev). Otherwise, full token chain applies.                                |
 
 ---

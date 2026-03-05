@@ -7,9 +7,7 @@ const clientCache = new Map<
   Awaited<ReturnType<GoogleAuth["getIdTokenClient"]>>
 >();
 
-export async function getGcpIdToken(
-  targetUrl: string,
-): Promise<string | null> {
+export async function getGcpIdToken(targetUrl: string): Promise<string | null> {
   if (config.gcp.skipAuth) return null;
 
   let client = clientCache.get(targetUrl);
@@ -21,5 +19,7 @@ export async function getGcpIdToken(
   }
 
   const headers = await client.getRequestHeaders(targetUrl);
-  return (headers as unknown as Record<string, string>)["Authorization"] ?? null;
+  return (
+    (headers as unknown as Record<string, string>)["Authorization"] ?? null
+  );
 }
