@@ -1,15 +1,31 @@
 # VPC Token Integration Guide
 
-This guide explains how to integrate with the user-management token flow: obtaining a GCP identity token, calling `POST /tokens`.
+This guide explains how to integrate with the user-management token flow and how to call private Cloud Run services using the **double header pattern**.
 
 ## Overview
 
-Two tokens are involved:
+Three tokens are involved:
 
-| Token                  | Issuer          | Purpose                                                    |
-| ---------------------- | --------------- | ---------------------------------------------------------- |
-| **GCP Identity Token** | Google Cloud    | Authenticate the caller to user-management                 |
-| **VPC JWT**            | user-management | Authenticate to the private microservice (e.g. db gateway) |
+| Token                                  | Issuer          | Purpose                                                                   |
+| -------------------------------------- | --------------- | ------------------------------------------------------------------------- |
+| **GCP Identity Token (user-mgmt)**     | Google Cloud    | Authenticate the caller to user-management (`POST /tokens`)               |
+| **GCP Identity Token (private service)** | Google Cloud  | Pass Cloud Run ingress on the private service (e.g. db-gateway)           |
+| **VPC JWT (app token)**                | user-management | Application-level authorization on the private service                    |
+
+---
+
+## Double Header Pattern
+
+Private Cloud Run services are deployed with `--no-allow-unauthenticated`. Cloud Run requires a GCP identity token in `Authorization` to let the request through. The app JWT (VPC JWT) must therefore be sent in a separate header: `X-VPC-Token`.
+
+### Headers by environment
+
+| Environment          | `Authorization`                     | `X-VPC-Token`                |
+| -------------------- | ----------------------------------- | ---------------------------- |
+| **Development**      | `Bearer <app-jwt>` (comme avant)    | Non utilisé                  |
+| **Int / Production** | `Bearer <gcp-identity-token>` (Cloud Run) | `<app-jwt>` (db-gateway app) |
+
+In development, the app JWT is sent in `Authorization` as before. This works because the local service has no authentication requirement.
 
 ---
 
@@ -18,7 +34,7 @@ Two tokens are involved:
 | Environment                  | Tokens required                                                                                                                                                                                                                                                          |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **NODE_ENV=development**     | **None.** Everything is open: no GCP token for `POST /tokens`, and the db gateway typically accepts unauthenticated requests when running locally. If your db gateway still requires the JWT in dev, call `POST /tokens` (no GCP token needed) and use the returned JWT. |
-| **Production / Integration** | Full chain: GCP identity token → `POST /tokens` → VPC JWT → db gateway.                                                                                                                                                                                                  |
+| **Production / Integration** | Full chain: GCP identity token → `POST /tokens` → VPC JWT + GCP identity token → db gateway (double header).                                                                                                                                                           |
 
 In development, the entire auth chain is bypassed—not just `POST /tokens`.
 
@@ -77,29 +93,107 @@ Content-Type: application/json
 
 ---
 
-## Step 3: Use the VPC JWT to Call Another Microservice
+## Step 3: Use the VPC JWT to Call a Private Service (Double Header)
 
-Use the returned `token` in the `Authorization` header for all requests to the private microservice (e.g. db gateway).
+In **production/integration**, the private service (e.g. db-gateway) runs on Cloud Run with `--no-allow-unauthenticated`. You need **two headers**:
 
 ```http
 GET /users/123 HTTP/1.1
 Host: https://db-gateway.example.com
+Authorization: Bearer <gcp-identity-token>
+X-VPC-Token: <vpc-jwt>
+Content-Type: application/json
+```
+
+- `Authorization`: GCP identity token targeting the private service URL (Cloud Run lets the request through)
+- `X-VPC-Token`: App JWT returned by `POST /tokens` (the private service validates this for application-level auth)
+
+In **development**, send the app JWT in `Authorization` as before (no GCP token needed):
+
+```http
+GET /users/123 HTTP/1.1
+Host: http://localhost:3001
 Authorization: Bearer <vpc-jwt>
 Content-Type: application/json
 ```
 
 ---
 
-## Implementation Example
+## Implementation Examples
 
-### Example: Second BFF (Node.js / TypeScript)
+### Example BFF (caller) — how to call a private service
+
+```typescript
+import { GoogleAuth } from "google-auth-library";
+
+const clientCache = new Map<string, any>();
+
+class VpcClient {
+  async getGcpIdToken(targetUrl: string): Promise<string | null> {
+    if (process.env.NODE_ENV === "development") return null;
+
+    let client = clientCache.get(targetUrl);
+    if (!client) {
+      const auth = new GoogleAuth();
+      client = await auth.getIdTokenClient(targetUrl);
+      clientCache.set(targetUrl, client);
+    }
+
+    const headers = await client.getRequestHeaders(targetUrl);
+    return headers["Authorization"] ?? null;
+  }
+
+  async callPrivateService(
+    serviceUrl: string,
+    path: string,
+    appJwt: string,
+    options?: RequestInit,
+  ): Promise<Response> {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+
+    const gcpIdToken = await this.getGcpIdToken(serviceUrl);
+
+    if (gcpIdToken) {
+      headers["Authorization"] = gcpIdToken;
+      headers["X-VPC-Token"] = appJwt;
+    } else {
+      headers["Authorization"] = `Bearer ${appJwt}`;
+    }
+
+    return fetch(`${serviceUrl}${path}`, {
+      ...options,
+      headers: { ...headers, ...options?.headers },
+    });
+  }
+}
+```
+
+### Example private service (receiver) — how to read the JWT
+
+```typescript
+function extractVpcToken(req: Request): string | null {
+  // Production: JWT in X-VPC-Token (Authorization = GCP identity token)
+  // Development: JWT in Authorization (no GCP token)
+  const vpcToken = req.headers["x-vpc-token"] as string;
+  if (vpcToken) return vpcToken;
+
+  const authHeader = req.headers.authorization;
+  if (authHeader?.startsWith("Bearer "))
+    return authHeader.replace("Bearer ", "");
+
+  return null;
+}
+```
+
+### Getting the app JWT (VPC token)
 
 ```typescript
 import { GoogleAuth } from "google-auth-library";
 
 const USER_MANAGEMENT_URL =
   process.env.USER_MANAGEMENT_URL || "http://localhost:3000";
-const DB_GATEWAY_URL = process.env.DB_SERVICE_URL || "http://localhost:3001";
 const NODE_ENV = process.env.NODE_ENV || "development";
 
 interface TokenResponse {
@@ -148,29 +242,6 @@ async function getVpcToken(): Promise<string> {
   cachedExpiry = now + 3600 - REFRESH_BUFFER_SECONDS;
   return token;
 }
-
-async function callDbGateway(path: string): Promise<unknown> {
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    Accept: "application/json",
-  };
-
-  if (NODE_ENV === "development") {
-    // No token needed—db gateway accepts unauthenticated requests in dev
-  } else {
-    const jwt = await getVpcToken();
-    headers.Authorization = `Bearer ${jwt}`;
-  }
-
-  const response = await fetch(`${DB_GATEWAY_URL}${path}`, { headers });
-  if (!response.ok) {
-    throw new Error(`DB gateway error: ${response.status}`);
-  }
-  return response.json();
-}
-
-// Usage
-const user = await callDbGateway("/users/123");
 ```
 
 ### Environment variables
@@ -178,7 +249,7 @@ const user = await callDbGateway("/users/123");
 | Variable              | Description                                                                                                                      |
 | --------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | `USER_MANAGEMENT_URL` | URL of user-management (e.g. `https://user-management.example.com`). Used for `POST /tokens` and as GCP identity token audience. |
-| `PRIVATE_SERVICE_URL` | URL of the private microservice (e.g. db gateway).                                                                               |
+| `DB_SERVICE_URL`      | URL of the private microservice (e.g. db gateway). Also used as GCP identity token audience for the double header.                |
 | `NODE_ENV`            | When `development`, no tokens required anywhere (local dev). Otherwise, full token chain applies.                                |
 
 ---
@@ -188,12 +259,12 @@ const user = await callDbGateway("/users/123");
 ```
 ┌─────────────────┐    1. Get GCP Identity Token      ┌──────────────┐
 │                 │    (from metadata / ADC)           │   Google     │
-│  Second BFF /    │◄─────────────────────────────────│   Cloud      │
-│  Bastion        │                                   └──────────────┘
+│  BFF / Bastion  │◄──────────────────────────────────│   Cloud      │
+│                 │                                   └──────────────┘
 └────────┬────────┘
          │
          │ 2. POST /tokens
-         │    Authorization: Bearer <gcp-identity-token>
+         │    Authorization: Bearer <gcp-identity-token for user-mgmt>
          ▼
 ┌─────────────────┐
 │ user-management │
@@ -201,11 +272,28 @@ const user = await callDbGateway("/users/123");
          │
          │ 3. Returns { "token": "<vpc-jwt>" }
          ▼
-┌─────────────────┐    4. GET /users/123               ┌──────────────┐
-│  Second BFF /    │    Authorization: Bearer <vpc-jwt> │  db gateway  │
-│  Bastion        │───────────────────────────────────►│  (private)   │
-└─────────────────┘                                   └──────────────┘
+┌─────────────────┐    4. GET /users/123                    ┌──────────────┐
+│                 │    Authorization: Bearer <gcp-id-token>  │              │
+│  BFF / Bastion  │    X-VPC-Token: <vpc-jwt>               │  db gateway  │
+│                 │────────────────────────────────────────►│  (private)   │
+└─────────────────┘                                        └──────────────┘
 ```
+
+---
+
+## Checklist for new BFF or private service
+
+### BFF (caller)
+
+- [ ] `npm install google-auth-library`
+- [ ] Use `VpcClient` (or `getGcpIdToken`) to call private services with the double header pattern
+- [ ] IAM: grant `roles/run.invoker` on each private service to the BFF's Service Account
+
+### Private service (receiver)
+
+- [ ] Read the JWT from `X-VPC-Token` header (fallback to `Authorization` for dev compatibility)
+- [ ] Do NOT validate or modify the `Authorization` header (managed by Cloud Run)
+- [ ] Deploy with `--no-allow-unauthenticated`
 
 ---
 

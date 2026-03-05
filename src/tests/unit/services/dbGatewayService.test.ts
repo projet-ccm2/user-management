@@ -9,6 +9,11 @@ jest.mock("../../../services/tokenClient", () => ({
 }));
 
 const MOCK_VPC_JWT = "mock-vpc-jwt-for-tests";
+const mockGetGcpIdToken = jest.fn().mockResolvedValue(null);
+jest.mock("../../../services/gcpAuth", () => ({
+  getGcpIdToken: (...args: unknown[]) => mockGetGcpIdToken(...args),
+}));
+
 jest.mock("../../../config/environment", () => ({
   config: {
     dbGateway: {
@@ -641,6 +646,90 @@ describe("DbGatewayService", () => {
         status: "unhealthy",
         error: "Connection refused",
       });
+    });
+  });
+
+  describe("double header (production mode)", () => {
+    const MOCK_GCP_TOKEN = "Bearer gcp-identity-token-for-tests";
+
+    beforeEach(() => {
+      mockGetGcpIdToken.mockResolvedValue(MOCK_GCP_TOKEN);
+    });
+
+    afterEach(() => {
+      mockGetGcpIdToken.mockResolvedValue(null);
+    });
+
+    it("should send GCP identity token in Authorization and app JWT in X-VPC-Token", async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: jest.fn().mockResolvedValue({ id: "123", username: "testuser" }),
+      } as any);
+
+      await dbGatewayService.getUserById("123");
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://localhost:3001/users/123",
+        expect.objectContaining({
+          method: "GET",
+          headers: expect.objectContaining({
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: MOCK_GCP_TOKEN,
+            "X-VPC-Token": MOCK_VPC_JWT,
+          }),
+        }),
+      );
+    });
+
+    it("should not include app JWT in Authorization header", async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: jest.fn().mockResolvedValue({ id: "123", username: "testuser" }),
+      } as any);
+
+      await dbGatewayService.getUserById("123");
+
+      const headers = (mockFetch.mock.calls[0][1] as RequestInit)
+        .headers as Record<string, string>;
+      expect(headers.Authorization).toBe(MOCK_GCP_TOKEN);
+      expect(headers.Authorization).not.toContain(MOCK_VPC_JWT);
+    });
+
+    it("should call getGcpIdToken with the db-gateway URL", async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: jest.fn().mockResolvedValue({ id: "123", username: "testuser" }),
+      } as any);
+
+      await dbGatewayService.getUserById("123");
+
+      expect(mockGetGcpIdToken).toHaveBeenCalledWith("http://localhost:3001");
+    });
+
+    it("should use double headers for health check", async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: jest
+          .fn()
+          .mockResolvedValue({ status: "healthy", timestamp: "2026-01-01" }),
+      } as any);
+
+      await dbGatewayService.checkHealth();
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://localhost:3001/health",
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: MOCK_GCP_TOKEN,
+            "X-VPC-Token": MOCK_VPC_JWT,
+          }),
+        }),
+      );
     });
   });
 });
