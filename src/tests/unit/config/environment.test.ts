@@ -126,9 +126,9 @@ describe("Environment Configuration", () => {
     expect(testConfig.gcp.skipAuth).toBe(true);
   });
 
-  it("should derive gcp.serviceUrl from USER_MANAGEMENT_URL", () => {
+  it("should derive gcp.serviceUrl from AUTH_SERVICE_URL", () => {
     process.env.TWITCH_CLIENT_ID = "test_client_id";
-    process.env.USER_MANAGEMENT_URL = "https://user-mgmt.example.com";
+    process.env.AUTH_SERVICE_URL = "https://user-mgmt.example.com";
 
     const { config: testConfig } = require("../../../config/environment");
 
@@ -136,9 +136,9 @@ describe("Environment Configuration", () => {
     expect(testConfig.userManagement.url).toBe("https://user-mgmt.example.com");
   });
 
-  it("should strip trailing slash from USER_MANAGEMENT_URL for gcp.serviceUrl", () => {
+  it("should strip trailing slash from AUTH_SERVICE_URL for gcp.serviceUrl", () => {
     process.env.TWITCH_CLIENT_ID = "test_client_id";
-    process.env.USER_MANAGEMENT_URL = "https://user-mgmt.example.com/";
+    process.env.AUTH_SERVICE_URL = "https://user-mgmt.example.com/";
 
     const { config: testConfig } = require("../../../config/environment");
 
