@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { GoogleAuth } from "google-auth-library";
+import { OAuth2Client } from "google-auth-library";
 import { config } from "../config/environment";
 import { CustomError } from "./errorHandler";
 import { logger } from "../utils/logger";
@@ -24,8 +24,7 @@ export const bffAuthMiddleware = async (
   const token = authHeader.slice(7);
 
   try {
-    const auth = new GoogleAuth();
-    const client = await auth.getIdTokenClient(config.gcp.serviceUrl);
+    const client = new OAuth2Client();
     const ticket = await client.verifyIdToken({
       idToken: token,
       audience: config.gcp.serviceUrl,

@@ -39,7 +39,7 @@ function validateConfig(): Config {
   }
 
   const userManagementUrl = (
-    process.env.USER_MANAGEMENT_URL || "http://localhost:3000"
+    process.env.AUTH_SERVICE_URL || "http://localhost:3000"
   ).replace(/\/$/, "");
 
   return {
@@ -55,7 +55,7 @@ function validateConfig(): Config {
         : ["http://localhost:3000", "http://localhost:8080", "null"],
     },
     dbGateway: {
-      url: process.env.DB_SERVICE_URL || "http://localhost:3001",
+      url: (process.env.DB_SERVICE_URL || "http://localhost:3001").replace(/\/$/, ""),
     },
     token: {
       jwtSecret: process.env.JWT_SECRET || "dev-secret-change-in-production",
