@@ -55,7 +55,10 @@ function validateConfig(): Config {
         : ["http://localhost:3000", "http://localhost:8080", "null"],
     },
     dbGateway: {
-      url: (process.env.DB_SERVICE_URL || "http://localhost:3001").replace(/\/$/, ""),
+      url: (process.env.DB_SERVICE_URL || "http://localhost:3001").replace(
+        /\/$/,
+        "",
+      ),
     },
     token: {
       jwtSecret: process.env.JWT_SECRET || "dev-secret-change-in-production",
