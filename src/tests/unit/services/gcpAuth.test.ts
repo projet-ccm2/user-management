@@ -61,7 +61,9 @@ describe("gcpAuth", () => {
   });
 
   it("should return GCP identity token when headers is a Fetch API Headers object (google-auth-library v10)", async () => {
-    const fetchHeaders = new Headers({ authorization: "Bearer gcp-fetch-token" });
+    const fetchHeaders = new Headers({
+      authorization: "Bearer gcp-fetch-token",
+    });
     mockGetRequestHeaders.mockResolvedValue(fetchHeaders);
 
     const result = await getGcpIdToken("https://db-gateway.run.app");
@@ -70,7 +72,9 @@ describe("gcpAuth", () => {
   });
 
   it("should return GCP identity token when headers uses lowercase authorization key", async () => {
-    mockGetRequestHeaders.mockResolvedValue({ authorization: "Bearer gcp-lowercase-token" });
+    mockGetRequestHeaders.mockResolvedValue({
+      authorization: "Bearer gcp-lowercase-token",
+    });
 
     const result = await getGcpIdToken("https://db-gateway.run.app");
 

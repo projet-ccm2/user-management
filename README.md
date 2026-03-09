@@ -258,12 +258,12 @@ In development, the app JWT is sent in `Authorization` as before (no GCP token, 
 
 ### VPC Environment Variables
 
-| Variable              | Description                                                              |
-| --------------------- | ------------------------------------------------------------------------ |
-| `AUTH_SERVICE_URL`    | URL of user-management for POST /tokens and GCP identity token audience  |
-| `DB_SERVICE_URL`      | URL of the db gateway (also used as GCP identity token audience)         |
-| `JWT_SECRET`          | Secret to sign VPC JWTs (required in production)                         |
-| `NODE_ENV`            | When `development`, GCP auth is skipped (local dev). Otherwise required. |
+| Variable           | Description                                                              |
+| ------------------ | ------------------------------------------------------------------------ |
+| `AUTH_SERVICE_URL` | URL of user-management for POST /tokens and GCP identity token audience  |
+| `DB_SERVICE_URL`   | URL of the db gateway (also used as GCP identity token audience)         |
+| `JWT_SECRET`       | Secret to sign VPC JWTs (required in production)                         |
+| `NODE_ENV`         | When `development`, GCP auth is skipped (local dev). Otherwise required. |
 
 ### Second BFF integration
 
