@@ -19,7 +19,13 @@ export async function getGcpIdToken(targetUrl: string): Promise<string | null> {
   }
 
   const headers = await client.getRequestHeaders(targetUrl);
+  const h = headers as unknown as {
+    get?: (key: string) => string | null;
+  } & Record<string, string>;
   return (
-    (headers as unknown as Record<string, string>)["Authorization"] ?? null
+    (typeof h.get === "function" ? h.get("authorization") : null) ??
+    h["Authorization"] ??
+    h["authorization"] ??
+    null
   );
 }

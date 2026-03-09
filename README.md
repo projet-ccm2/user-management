@@ -42,7 +42,7 @@ ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001
 DB_SERVICE_URL=http://localhost:3001
 
 # VPC Token (bastion access to db gateway)
-USER_MANAGEMENT_URL=http://localhost:3000
+AUTH_SERVICE_URL=http://localhost:3000
 JWT_SECRET=dev-secret-change-in-production
 ```
 
@@ -188,7 +188,7 @@ API health check. Probes the db gateway and includes its health response.
 }
 ```
 
-`dbGateway.response` contient exactement ce que renvoie le db gateway sur son endpoint `/health`.
+`dbGateway.response` contains exactly what the db gateway returns on its `/health` endpoint.
 
 When the db gateway is unreachable, `dbGateway` contains:
 
@@ -238,7 +238,7 @@ src/
 └── utils/           # Utilities (logger)
 ```
 
-## Accès VPC (Bastion architecture)
+## VPC Access (Bastion architecture)
 
 user-management and the second BFF act as **bastions** outside the VPC. The db gateway is a private Cloud Run service deployed with `--no-allow-unauthenticated`. To access it, bastions use the **double header pattern**:
 
@@ -251,19 +251,19 @@ The db gateway's Cloud Run ingress requires a GCP identity token in `Authorizati
 
 | Environment          | `Authorization`                           | `X-VPC-Token`            |
 | -------------------- | ----------------------------------------- | ------------------------ |
-| **Development**      | `Bearer <app-jwt>` (comme avant)          | Non utilisé              |
+| **Development**      | `Bearer <app-jwt>` (as before)            | Not used                 |
 | **Int / Production** | `Bearer <gcp-identity-token>` (Cloud Run) | `<app-jwt>` (db-gateway) |
 
 In development, the app JWT is sent in `Authorization` as before (no GCP token, local service has no auth).
 
-### Variables d'environnement VPC
+### VPC Environment Variables
 
-| Variable              | Description                                                              |
-| --------------------- | ------------------------------------------------------------------------ |
-| `USER_MANAGEMENT_URL` | URL of user-management for POST /tokens and GCP identity token audience  |
-| `DB_SERVICE_URL`      | URL of the db gateway (also used as GCP identity token audience)         |
-| `JWT_SECRET`          | Secret to sign VPC JWTs (required in production)                         |
-| `NODE_ENV`            | When `development`, GCP auth is skipped (local dev). Otherwise required. |
+| Variable           | Description                                                              |
+| ------------------ | ------------------------------------------------------------------------ |
+| `AUTH_SERVICE_URL` | URL of user-management for POST /tokens and GCP identity token audience  |
+| `DB_SERVICE_URL`   | URL of the db gateway (also used as GCP identity token audience)         |
+| `JWT_SECRET`       | Secret to sign VPC JWTs (required in production)                         |
+| `NODE_ENV`         | When `development`, GCP auth is skipped (local dev). Otherwise required. |
 
 ### Second BFF integration
 
