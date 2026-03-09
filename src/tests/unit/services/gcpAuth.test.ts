@@ -48,7 +48,7 @@ describe("gcpAuth", () => {
     expect(mockGetIdTokenClient).not.toHaveBeenCalled();
   });
 
-  it("should return GCP identity token for a given target URL", async () => {
+  it("should return GCP identity token for a given target URL (plain object)", async () => {
     const result = await getGcpIdToken("https://db-gateway.run.app");
 
     expect(result).toBe("Bearer gcp-mock-token");
@@ -58,6 +58,27 @@ describe("gcpAuth", () => {
     expect(mockGetRequestHeaders).toHaveBeenCalledWith(
       "https://db-gateway.run.app",
     );
+  });
+
+  it("should return GCP identity token when headers is a Fetch API Headers object (google-auth-library v10)", async () => {
+    const fetchHeaders = new Headers({
+      authorization: "Bearer gcp-fetch-token",
+    });
+    mockGetRequestHeaders.mockResolvedValue(fetchHeaders);
+
+    const result = await getGcpIdToken("https://db-gateway.run.app");
+
+    expect(result).toBe("Bearer gcp-fetch-token");
+  });
+
+  it("should return GCP identity token when headers uses lowercase authorization key", async () => {
+    mockGetRequestHeaders.mockResolvedValue({
+      authorization: "Bearer gcp-lowercase-token",
+    });
+
+    const result = await getGcpIdToken("https://db-gateway.run.app");
+
+    expect(result).toBe("Bearer gcp-lowercase-token");
   });
 
   it("should cache the client and reuse it on subsequent calls", async () => {
