@@ -46,11 +46,7 @@ async function saveOrUpdateUserInDb(
   if (isRecentlyUpdated) {
     return existing;
   }
-  return dbGatewayService.updateUser(
-    userModel.channel.id,
-    userModel,
-    existing,
-  );
+  return dbGatewayService.updateUser(userModel.channel.id, userModel, existing);
 }
 
 export const callbackConnexion = async (

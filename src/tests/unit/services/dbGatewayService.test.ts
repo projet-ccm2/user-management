@@ -761,17 +761,15 @@ describe("DbGatewayService", () => {
       mockFetch.mockResolvedValue({
         ok: true,
         status: 200,
-        json: jest
-          .fn()
-          .mockResolvedValue({
-            id: "123",
-            username: "testuser",
-            profileImageUrl: null,
-            channelDescription: null,
-            scope: null,
-            lastUpdateTimestamp: "2026-02-20T12:00:00.000Z",
-            xp: 0,
-          }),
+        json: jest.fn().mockResolvedValue({
+          id: "123",
+          username: "testuser",
+          profileImageUrl: null,
+          channelDescription: null,
+          scope: null,
+          lastUpdateTimestamp: "2026-02-20T12:00:00.000Z",
+          xp: 0,
+        }),
       } as any);
 
       await dbGatewayService.getUserById("123");
@@ -794,17 +792,15 @@ describe("DbGatewayService", () => {
       mockFetch.mockResolvedValue({
         ok: true,
         status: 200,
-        json: jest
-          .fn()
-          .mockResolvedValue({
-            id: "123",
-            username: "testuser",
-            profileImageUrl: null,
-            channelDescription: null,
-            scope: null,
-            lastUpdateTimestamp: "2026-02-20T12:00:00.000Z",
-            xp: 0,
-          }),
+        json: jest.fn().mockResolvedValue({
+          id: "123",
+          username: "testuser",
+          profileImageUrl: null,
+          channelDescription: null,
+          scope: null,
+          lastUpdateTimestamp: "2026-02-20T12:00:00.000Z",
+          xp: 0,
+        }),
       } as any);
 
       await dbGatewayService.getUserById("123");
@@ -819,17 +815,15 @@ describe("DbGatewayService", () => {
       mockFetch.mockResolvedValue({
         ok: true,
         status: 200,
-        json: jest
-          .fn()
-          .mockResolvedValue({
-            id: "123",
-            username: "testuser",
-            profileImageUrl: null,
-            channelDescription: null,
-            scope: null,
-            lastUpdateTimestamp: "2026-02-20T12:00:00.000Z",
-            xp: 0,
-          }),
+        json: jest.fn().mockResolvedValue({
+          id: "123",
+          username: "testuser",
+          profileImageUrl: null,
+          channelDescription: null,
+          scope: null,
+          lastUpdateTimestamp: "2026-02-20T12:00:00.000Z",
+          xp: 0,
+        }),
       } as any);
 
       await dbGatewayService.getUserById("123");
