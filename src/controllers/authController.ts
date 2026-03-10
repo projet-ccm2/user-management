@@ -169,6 +169,28 @@ export const deleteAccount = async (
       return;
     }
 
+    if (!user.tokens?.accessToken) {
+      logger.error("Delete account called without access token", {
+        userId: user.userId,
+      });
+      next(new CustomError("Access token required", 401));
+      return;
+    }
+
+    const twitchUser = await fetchTwitchUser(
+      user.tokens.accessToken,
+      config.twitch.clientId,
+    );
+
+    if (twitchUser.id !== user.userId) {
+      logger.warn("Token user mismatch on delete account", {
+        idTokenUserId: user.userId,
+        accessTokenUserId: twitchUser.id,
+      });
+      next(new CustomError("Token does not match user", 403));
+      return;
+    }
+
     await dbGatewayService.deleteUserAllData(user.userId);
 
     res.status(204).send();

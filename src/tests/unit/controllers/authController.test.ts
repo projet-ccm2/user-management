@@ -462,7 +462,21 @@ describe("authController", () => {
   });
 
   describe("deleteAccount", () => {
-    it("should call deleteUserAllData and return 204", async () => {
+    beforeEach(() => {
+      mockFetchTwitchUser.mockResolvedValue({
+        id: "12345",
+        login: "testuser",
+        display_name: "TestUser",
+        type: "user",
+        broadcaster_type: "",
+        description: "",
+        profile_image_url: "",
+        offline_image_url: "",
+        created_at: "2020-01-01T00:00:00Z",
+      });
+    });
+
+    it("should verify token matches user, then call deleteUserAllData and return 204", async () => {
       mockDbGatewayService.deleteUserAllData = jest
         .fn()
         .mockResolvedValue(undefined);
@@ -473,6 +487,10 @@ describe("authController", () => {
         mockNext,
       );
 
+      expect(mockFetchTwitchUser).toHaveBeenCalledWith(
+        "test-access-token",
+        "test-client-id",
+      );
       expect(mockDbGatewayService.deleteUserAllData).toHaveBeenCalledWith(
         "12345",
       );
@@ -546,6 +564,53 @@ describe("authController", () => {
         expect.objectContaining({
           message: "Account deletion failed",
           statusCode: 500,
+        }),
+      );
+    });
+
+    it("should call next with 403 when accessToken user does not match idToken user", async () => {
+      mockFetchTwitchUser.mockResolvedValueOnce({
+        id: "99999",
+        login: "otheruser",
+        display_name: "OtherUser",
+        type: "user",
+        broadcaster_type: "",
+        description: "",
+        profile_image_url: "",
+        offline_image_url: "",
+        created_at: "2020-01-01T00:00:00Z",
+      });
+
+      await deleteAccount(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext,
+      );
+
+      expect(mockDbGatewayService.deleteUserAllData).not.toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: "Token does not match user",
+          statusCode: 403,
+        }),
+      );
+    });
+
+    it("should call next with 401 when accessToken is missing", async () => {
+      mockRequest.user!.tokens.accessToken = undefined as any;
+
+      await deleteAccount(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext,
+      );
+
+      expect(mockFetchTwitchUser).not.toHaveBeenCalled();
+      expect(mockDbGatewayService.deleteUserAllData).not.toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: "Access token required",
+          statusCode: 401,
         }),
       );
     });
