@@ -114,6 +114,7 @@ export class DbGatewayService {
         channelDescription: user.channel.description || null,
         scope: this.getScopeString(user),
         lastUpdateTimestamp: new Date().toISOString(),
+        xp: 0,
       };
 
       const headers = await this.getHeaders();
@@ -143,7 +144,11 @@ export class DbGatewayService {
     }
   }
 
-  async updateUser(id: string, user: User): Promise<DbGatewayResponse> {
+  async updateUser(
+    id: string,
+    user: User,
+    existing?: DbGatewayResponse | null,
+  ): Promise<DbGatewayResponse> {
     try {
       logger.info("Updating user in database gateway", {
         username: user.username,
@@ -156,6 +161,7 @@ export class DbGatewayService {
         channelDescription: user.channel.description || null,
         scope: this.getScopeString(user),
         lastUpdateTimestamp: new Date().toISOString(),
+        xp: existing?.xp ?? 0,
       };
 
       const headers = await this.getHeaders();
