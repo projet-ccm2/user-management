@@ -96,6 +96,7 @@ describe("authController", () => {
       channelDescription: "Test description",
       scope: "user:read:email",
       lastUpdateTimestamp: "2026-02-20T12:00:00.000Z",
+      xp: 0,
     });
     mockDbGatewayService.updateUser = jest.fn().mockResolvedValue({
       id: "12345",
@@ -104,6 +105,7 @@ describe("authController", () => {
       channelDescription: "Test description",
       scope: "user:read:email",
       lastUpdateTimestamp: "2026-02-20T12:00:00.000Z",
+      xp: 0,
     });
     mockLogger.info = jest.fn();
     mockLogger.error = jest.fn();
@@ -160,14 +162,16 @@ describe("authController", () => {
       const twoHoursAgo = new Date(
         Date.now() - 2 * 60 * 60 * 1000,
       ).toISOString();
-      mockDbGatewayService.getUserById.mockResolvedValueOnce({
+      const existingUser = {
         id: "12345",
         username: "TestUser",
         profileImageUrl: "https://example.com/avatar.jpg",
         channelDescription: "Test description",
         scope: "user:read:email",
         lastUpdateTimestamp: twoHoursAgo,
-      });
+        xp: 10,
+      };
+      mockDbGatewayService.getUserById.mockResolvedValueOnce(existingUser);
 
       await callbackConnexion(
         mockRequest as Request,
@@ -179,6 +183,7 @@ describe("authController", () => {
       expect(mockDbGatewayService.updateUser).toHaveBeenCalledWith(
         "12345",
         expect.any(Object),
+        existingUser,
       );
       expect(mockDbGatewayService.saveUser).not.toHaveBeenCalled();
     });
@@ -194,6 +199,7 @@ describe("authController", () => {
         channelDescription: "Test description",
         scope: "user:read:email",
         lastUpdateTimestamp: thirtyMinutesAgo,
+        xp: 0,
       };
       mockDbGatewayService.getUserById.mockResolvedValueOnce(existingUser);
 

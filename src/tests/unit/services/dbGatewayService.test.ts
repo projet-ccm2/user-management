@@ -72,6 +72,7 @@ describe("DbGatewayService", () => {
         channelDescription: "Test user",
         scope: "user:read:email",
         lastUpdateTimestamp: "2026-02-20T12:00:00.000Z",
+        xp: 0,
       };
       mockFetch.mockResolvedValue({
         ok: true,
@@ -151,6 +152,7 @@ describe("DbGatewayService", () => {
         channelDescription: "Test user",
         scope: "user:read:email",
         lastUpdateTimestamp: "2026-02-20T12:00:00.000Z",
+        xp: 0,
       };
       mockFetch.mockResolvedValue({
         ok: true,
@@ -214,6 +216,29 @@ describe("DbGatewayService", () => {
         dbGatewayService.updateUser("123", mockUser),
       ).rejects.toThrow(CustomError);
     });
+
+    it("should pass existing xp when updating user", async () => {
+      const existingUser = {
+        id: "123",
+        username: "testuser",
+        profileImageUrl: "https://example.com/avatar.jpg",
+        channelDescription: "Test user",
+        scope: "user:read:email",
+        lastUpdateTimestamp: "2026-02-20T12:00:00.000Z",
+        xp: 42,
+      };
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue(existingUser),
+      } as any);
+
+      await dbGatewayService.updateUser("123", mockUser, existingUser);
+
+      const callBody = JSON.parse(
+        (mockFetch.mock.calls[0][1] as RequestInit).body as string,
+      );
+      expect(callBody.xp).toBe(42);
+    });
   });
 
   describe("saveUser", () => {
@@ -225,6 +250,7 @@ describe("DbGatewayService", () => {
         channelDescription: "Test user",
         scope: "user:read:email",
         lastUpdateTimestamp: "2026-02-20T12:00:00.000Z",
+        xp: 0,
       };
       const mockResponse = {
         ok: true,
@@ -256,6 +282,7 @@ describe("DbGatewayService", () => {
         profileImageUrl: "https://example.com/avatar.jpg",
         channelDescription: "Test user",
         scope: "user:read:email",
+        xp: 0,
       });
 
       expect(result).toEqual(mockDbResponse);
@@ -734,7 +761,15 @@ describe("DbGatewayService", () => {
       mockFetch.mockResolvedValue({
         ok: true,
         status: 200,
-        json: jest.fn().mockResolvedValue({ id: "123", username: "testuser" }),
+        json: jest.fn().mockResolvedValue({
+          id: "123",
+          username: "testuser",
+          profileImageUrl: null,
+          channelDescription: null,
+          scope: null,
+          lastUpdateTimestamp: "2026-02-20T12:00:00.000Z",
+          xp: 0,
+        }),
       } as any);
 
       await dbGatewayService.getUserById("123");
@@ -757,7 +792,15 @@ describe("DbGatewayService", () => {
       mockFetch.mockResolvedValue({
         ok: true,
         status: 200,
-        json: jest.fn().mockResolvedValue({ id: "123", username: "testuser" }),
+        json: jest.fn().mockResolvedValue({
+          id: "123",
+          username: "testuser",
+          profileImageUrl: null,
+          channelDescription: null,
+          scope: null,
+          lastUpdateTimestamp: "2026-02-20T12:00:00.000Z",
+          xp: 0,
+        }),
       } as any);
 
       await dbGatewayService.getUserById("123");
@@ -772,7 +815,15 @@ describe("DbGatewayService", () => {
       mockFetch.mockResolvedValue({
         ok: true,
         status: 200,
-        json: jest.fn().mockResolvedValue({ id: "123", username: "testuser" }),
+        json: jest.fn().mockResolvedValue({
+          id: "123",
+          username: "testuser",
+          profileImageUrl: null,
+          channelDescription: null,
+          scope: null,
+          lastUpdateTimestamp: "2026-02-20T12:00:00.000Z",
+          xp: 0,
+        }),
       } as any);
 
       await dbGatewayService.getUserById("123");

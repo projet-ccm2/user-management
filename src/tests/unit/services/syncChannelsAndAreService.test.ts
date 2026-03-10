@@ -154,6 +154,7 @@ describe("syncChannelsAndAreService", () => {
             id: "mod-123",
             username: "ModUser",
             lastUpdateTimestamp: "2026-02-20T12:00:00.000Z",
+            xp: 0,
           });
         return Promise.resolve(null);
       });
@@ -197,6 +198,7 @@ describe("syncChannelsAndAreService", () => {
       id: "mod-123",
       username: "ModUser",
       lastUpdateTimestamp: "2026-02-20T12:00:00.000Z",
+      xp: 0,
     });
     mockDbGatewayService.getAre = jest
       .fn()
