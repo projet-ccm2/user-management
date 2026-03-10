@@ -289,6 +289,36 @@ export class DbGatewayService {
     }
   }
 
+  async deleteUserAllData(id: string): Promise<void> {
+    try {
+      const headers = await this.getHeaders();
+      const response = await fetch(
+        `${this.dbGatewayUrl}/users/${encodeURIComponent(id)}/all-data`,
+        {
+          method: "DELETE",
+          headers,
+          signal: AbortSignal.timeout(this.timeout),
+        },
+      );
+
+      if (response.status === 404) {
+        throw new CustomError("User not found", 404);
+      }
+
+      await this.throwIfNotOk(response);
+
+      logger.info("User data successfully deleted", { userId: id });
+    } catch (error) {
+      if (error instanceof CustomError) throw error;
+      this.handleFetchError(
+        error,
+        "Failed to delete user data from database gateway",
+        { userId: id },
+        "Failed to delete user data",
+      );
+    }
+  }
+
   async checkHealth(): Promise<
     | { status: "healthy"; data: Record<string, unknown> }
     | { status: "unhealthy"; error: string }

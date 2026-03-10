@@ -1,6 +1,9 @@
 /* eslint-disable camelcase */
 import { Request, Response } from "express";
-import { callbackConnexion } from "../../../controllers/authController";
+import {
+  callbackConnexion,
+  deleteAccount,
+} from "../../../controllers/authController";
 import { fetchTwitchUser } from "../../../services/twitchUserService";
 import { dbGatewayService } from "../../../services/dbGatewayService";
 import { syncChannelsAndAreAfterAuth } from "../../../services/syncChannelsAndAreService";
@@ -31,11 +34,13 @@ describe("authController", () => {
   let mockNext: jest.Mock;
   let mockJson: jest.Mock;
   let mockStatus: jest.Mock;
+  let mockSend: jest.Mock;
 
   beforeEach(() => {
     mockNext = jest.fn();
     mockJson = jest.fn().mockReturnThis();
-    mockStatus = jest.fn().mockReturnValue({ json: mockJson });
+    mockSend = jest.fn().mockReturnThis();
+    mockStatus = jest.fn().mockReturnValue({ json: mockJson, send: mockSend });
 
     mockRequest = {
       user: {
@@ -452,6 +457,96 @@ describe("authController", () => {
         {
           error: "Unknown error",
         },
+      );
+    });
+  });
+
+  describe("deleteAccount", () => {
+    it("should call deleteUserAllData and return 204", async () => {
+      mockDbGatewayService.deleteUserAllData = jest
+        .fn()
+        .mockResolvedValue(undefined);
+
+      await deleteAccount(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext,
+      );
+
+      expect(mockDbGatewayService.deleteUserAllData).toHaveBeenCalledWith(
+        "12345",
+      );
+      expect(mockStatus).toHaveBeenCalledWith(204);
+      expect(mockSend).toHaveBeenCalled();
+    });
+
+    it("should call next with CustomError when user is missing", async () => {
+      mockRequest.user = undefined;
+
+      await deleteAccount(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext,
+      );
+
+      expect(mockDbGatewayService.deleteUserAllData).not.toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: "Authentication required",
+          statusCode: 401,
+        }),
+      );
+    });
+
+    it("should call next with CustomError when userId is missing", async () => {
+      mockRequest.user = { ...mockRequest.user!, userId: undefined };
+
+      await deleteAccount(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext,
+      );
+
+      expect(mockDbGatewayService.deleteUserAllData).not.toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: "Authentication required",
+          statusCode: 401,
+        }),
+      );
+    });
+
+    it("should pass CustomError from deleteUserAllData to next", async () => {
+      const customError = new CustomError("User not found", 404);
+      mockDbGatewayService.deleteUserAllData = jest
+        .fn()
+        .mockRejectedValue(customError);
+
+      await deleteAccount(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext,
+      );
+
+      expect(mockNext).toHaveBeenCalledWith(customError);
+    });
+
+    it("should call next with 500 when deleteUserAllData throws unknown error", async () => {
+      mockDbGatewayService.deleteUserAllData = jest
+        .fn()
+        .mockRejectedValue(new Error("Database error"));
+
+      await deleteAccount(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext,
+      );
+
+      expect(mockNext).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: "Account deletion failed",
+          statusCode: 500,
+        }),
       );
     });
   });

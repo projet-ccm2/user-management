@@ -151,3 +151,37 @@ export const callbackConnexion = async (
     next(new CustomError("Authentication failed due to internal error", 500));
   }
 };
+
+export const deleteAccount = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const { user } = req as AuthenticatedRequest;
+
+    if (!user?.userId) {
+      logger.error("Delete account called without authenticated user", {
+        method: req.method,
+        path: req.path,
+      });
+      next(new CustomError("Authentication required", 401));
+      return;
+    }
+
+    await dbGatewayService.deleteUserAllData(user.userId);
+
+    res.status(204).send();
+  } catch (error) {
+    if (error instanceof CustomError) {
+      next(error);
+      return;
+    }
+
+    logger.error("Unexpected error during account deletion", {
+      error: getErrorMessage(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    next(new CustomError("Account deletion failed", 500));
+  }
+};
