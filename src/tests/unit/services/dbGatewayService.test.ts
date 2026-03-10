@@ -592,6 +592,76 @@ describe("DbGatewayService", () => {
     });
   });
 
+  describe("deleteUserAllData", () => {
+    it("should call DELETE /users/:id/all-data and return void on 204", async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 204,
+      } as any);
+
+      await dbGatewayService.deleteUserAllData("user-123");
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://localhost:3001/users/user-123/all-data",
+        expect.objectContaining({
+          method: "DELETE",
+          headers: expect.objectContaining({
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: `Bearer ${MOCK_VPC_JWT}`,
+          }),
+        }),
+      );
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        "User data successfully deleted",
+        { userId: "user-123" },
+      );
+    });
+
+    it("should throw CustomError when DELETE returns 404", async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: jest.fn().mockResolvedValue("not found"),
+      } as any);
+
+      const error = await dbGatewayService
+        .deleteUserAllData("user-123")
+        .catch((e) => e);
+
+      expect(error).toBeInstanceOf(CustomError);
+      expect((error as CustomError).statusCode).toBe(404);
+      expect((error as CustomError).message).toBe("User not found");
+    });
+
+    it("should throw CustomError when DELETE returns 500", async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: "Internal Server Error",
+        text: jest.fn().mockResolvedValue("Database error"),
+      } as any);
+
+      await expect(
+        dbGatewayService.deleteUserAllData("user-123"),
+      ).rejects.toThrow(CustomError);
+    });
+
+    it("should throw CustomError on network error", async () => {
+      mockFetch.mockRejectedValue(new Error("Network error"));
+
+      await expect(
+        dbGatewayService.deleteUserAllData("user-123"),
+      ).rejects.toThrow(CustomError);
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        "Failed to delete user data from database gateway",
+        expect.objectContaining({ userId: "user-123" }),
+      );
+    });
+  });
+
   describe("checkHealth", () => {
     it("should return healthy with db gateway data when GET /health returns 200", async () => {
       const mockHealthResponse = {
