@@ -22,7 +22,7 @@ Private Cloud Run services are deployed with `--no-allow-unauthenticated`. Cloud
 
 | Environment          | `Authorization`                           | `X-VPC-Token`                |
 | -------------------- | ----------------------------------------- | ---------------------------- |
-| **Development**      | `Bearer <app-jwt>` (comme avant)          | Non utilisé                  |
+| **Development**      | `Bearer <app-jwt>` (as before)            | Not used                     |
 | **Int / Production** | `Bearer <gcp-identity-token>` (Cloud Run) | `<app-jwt>` (db-gateway app) |
 
 In development, the app JWT is sent in `Authorization` as before. This works because the local service has no authentication requirement.
