@@ -521,6 +521,85 @@ describe("DbGatewayService", () => {
     });
   });
 
+  describe("updateChannel", () => {
+    it("should successfully update channel with discordWebhookUrl", async () => {
+      const mockChannel = {
+        id: "channel-456",
+        name: "mychannel",
+        discordWebhookUrl: "https://discord.com/api/webhooks/123/abc",
+      };
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockChannel),
+      } as any);
+
+      const result = await dbGatewayService.updateChannel("channel-456", {
+        discordWebhookUrl: "https://discord.com/api/webhooks/123/abc",
+      });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://localhost:3001/channels/channel-456",
+        expect.objectContaining({
+          method: "PUT",
+          body: JSON.stringify({
+            discordWebhookUrl: "https://discord.com/api/webhooks/123/abc",
+          }),
+        }),
+      );
+      expect(result).toEqual(mockChannel);
+    });
+
+    it("should successfully update channel with null to remove webhook", async () => {
+      const mockChannel = {
+        id: "channel-456",
+        name: "mychannel",
+        discordWebhookUrl: null,
+      };
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockChannel),
+      } as any);
+
+      const result = await dbGatewayService.updateChannel("channel-456", {
+        discordWebhookUrl: null,
+      });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://localhost:3001/channels/channel-456",
+        expect.objectContaining({
+          method: "PUT",
+          body: JSON.stringify({ discordWebhookUrl: null }),
+        }),
+      );
+      expect(result).toEqual(mockChannel);
+    });
+
+    it("should throw CustomError when PUT returns 404", async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: jest.fn().mockResolvedValue("not found"),
+      } as any);
+
+      await expect(
+        dbGatewayService.updateChannel("channel-456", {
+          discordWebhookUrl: "https://example.com/webhook",
+        }),
+      ).rejects.toThrow(CustomError);
+    });
+
+    it("should throw CustomError on network error", async () => {
+      mockFetch.mockRejectedValue(new Error("Network error"));
+
+      await expect(
+        dbGatewayService.updateChannel("channel-456", {
+          discordWebhookUrl: null,
+        }),
+      ).rejects.toThrow(CustomError);
+    });
+  });
+
   describe("getAre", () => {
     it("should return ARE when GET returns 200", async () => {
       const mockAre = {

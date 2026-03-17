@@ -242,6 +242,34 @@ export class DbGatewayService {
     }
   }
 
+  async updateChannel(
+    channelId: string,
+    payload: { discordWebhookUrl?: string | null },
+  ): Promise<ChannelResponse> {
+    try {
+      const headers = await this.getHeaders();
+      const response = await fetch(
+        `${this.dbGatewayUrl}/channels/${encodeURIComponent(channelId)}`,
+        {
+          method: "PUT",
+          headers,
+          body: JSON.stringify(payload),
+          signal: AbortSignal.timeout(this.timeout),
+        },
+      );
+
+      await this.throwIfNotOk(response);
+      return (await response.json()) as ChannelResponse;
+    } catch (error) {
+      this.handleFetchError(
+        error,
+        "Failed to update channel in database gateway",
+        { channelId },
+        "Failed to update channel",
+      );
+    }
+  }
+
   async getAre(userId: string, channelId: string): Promise<AreResponse | null> {
     try {
       const url = new URL(`${this.dbGatewayUrl}/are`);
