@@ -111,6 +111,14 @@ describe("Express App", () => {
       expect(response.body).toHaveProperty("error");
     });
 
+    it("should handle channel routes", async () => {
+      const response = await request(app)
+        .put("/channels/me")
+        .send({ accessToken: "token", idToken: "id" });
+
+      expect([400, 401]).toContain(response.status);
+    });
+
     it("should return 404 for unknown routes", async () => {
       const response = await request(app).get("/unknown-route").expect(404);
 

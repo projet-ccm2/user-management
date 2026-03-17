@@ -7,6 +7,7 @@ import { logger } from "./utils/logger";
 import { errorHandler, notFoundHandler } from "./middlewares/errorHandler";
 import { securityHeaders, corsValidator } from "./middlewares/security";
 import authRoutes from "./routes/authRoute";
+import channelRoutes from "./routes/channelRoute";
 import tokenRoutes from "./routes/tokenRoute";
 import { dbGatewayService } from "./services/dbGatewayService";
 
@@ -21,6 +22,7 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(passport.initialize());
 
 app.use("/auth", authRoutes);
+app.use("/channels", channelRoutes);
 app.use("/tokens", tokenRoutes);
 
 app.get("/health", async (req, res, next) => {
