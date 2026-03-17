@@ -71,10 +71,9 @@ describe("channelController", () => {
         mockNext,
       );
 
-      expect(mockDbGatewayService.updateChannel).toHaveBeenCalledWith(
-        "12345",
-        { discordWebhookUrl: "https://discord.com/api/webhooks/123/abc" },
-      );
+      expect(mockDbGatewayService.updateChannel).toHaveBeenCalledWith("12345", {
+        discordWebhookUrl: "https://discord.com/api/webhooks/123/abc",
+      });
       expect(mockStatus).toHaveBeenCalledWith(200);
       expect(mockJson).toHaveBeenCalledWith({
         success: true,
@@ -100,10 +99,9 @@ describe("channelController", () => {
         mockNext,
       );
 
-      expect(mockDbGatewayService.updateChannel).toHaveBeenCalledWith(
-        "12345",
-        { discordWebhookUrl: null },
-      );
+      expect(mockDbGatewayService.updateChannel).toHaveBeenCalledWith("12345", {
+        discordWebhookUrl: null,
+      });
       expect(mockStatus).toHaveBeenCalledWith(200);
       expect(mockJson).toHaveBeenCalledWith({
         success: true,
@@ -144,8 +142,7 @@ describe("channelController", () => {
 
       expect(mockNext).toHaveBeenCalledWith(
         expect.objectContaining({
-          message:
-            "Validation failed: Field 'discordWebhookUrl' is required",
+          message: "Validation failed: Field 'discordWebhookUrl' is required",
           statusCode: 400,
         }),
       );
@@ -184,8 +181,7 @@ describe("channelController", () => {
 
       expect(mockNext).toHaveBeenCalledWith(
         expect.objectContaining({
-          message:
-            "Validation failed: 'discordWebhookUrl' must be a valid URL",
+          message: "Validation failed: 'discordWebhookUrl' must be a valid URL",
           statusCode: 400,
         }),
       );
