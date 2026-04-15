@@ -1,7 +1,6 @@
 import { Router, Request, Response, NextFunction } from "express";
-import passport from "passport";
-import { PASSPORT_TWITCH_STRATEGY } from "../config/passport";
 import { getUserById } from "../controllers/userController";
+import { twitchExtensionAuth } from "../middlewares/twitchExtensionAuth";
 import { logger } from "../utils/logger";
 
 const router = Router();
@@ -19,7 +18,7 @@ router.get(
       next(error);
     }
   },
-  passport.authenticate(PASSPORT_TWITCH_STRATEGY, { session: false }),
+  twitchExtensionAuth,
   (req: Request, res: Response, next: NextFunction) => {
     getUserById(req, res, next).catch(next);
   },

@@ -22,7 +22,7 @@ jobs:
       environment: production
       service_type: bff
       cloud-run-service-name: user-management-prod
-      required_env_vars: GCP_SA_KEY,GCP_PROJECT_ID,TWITCH_CLIENT_ID,TWITCH_ISSUER,ALLOWED_ORIGINS,DB_SERVICE_URL,AUTH_SERVICE_URL,JWT_SECRET
+      required_env_vars: GCP_SA_KEY,GCP_PROJECT_ID,TWITCH_CLIENT_ID,TWITCH_ISSUER,TWITCH_EXTENSION_SECRET,ALLOWED_ORIGINS,DB_SERVICE_URL,AUTH_SERVICE_URL,JWT_SECRET
     secrets:
       GCP_SA_KEY: ${{ secrets.PROD_GCP_SA_KEY }}
       GCP_PROJECT_ID: ${{ secrets.PROD_GCP_PROJECT_ID }}
@@ -32,3 +32,4 @@ jobs:
       DB_SERVICE_URL: ${{ secrets.PROD_DB_SERVICE_URL }}
       AUTH_SERVICE_URL: ${{ secrets.PROD_AUTH_SERVICE_URL }}
       JWT_SECRET: ${{ secrets.PROD_JWT_SECRET }}
+      TWITCH_EXTENSION_SECRET: ${{ secrets.PROD_TWITCH_EXTENSION_SECRET }}
