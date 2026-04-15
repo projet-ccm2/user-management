@@ -31,23 +31,8 @@ export const twitchExtensionAuth = (
       algorithms: ["HS256"],
     }) as TwitchExtensionPayload;
 
-    if (!decoded.user_id) {
-      logger.warn("Twitch Extension JWT: user identity not shared");
-      next(new CustomError("User identity not shared", 401));
-      return;
-    }
-
-    if (decoded.user_id !== req.params.id) {
-      logger.warn("Extension JWT user_id does not match route param", {
-        tokenUserId: decoded.user_id,
-        paramId: req.params.id,
-      });
-      next(new CustomError("Forbidden: user ID mismatch", 403));
-      return;
-    }
-
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (req as any).user = { userId: decoded.user_id };
+    (req as any).user = { opaqueUserId: decoded.opaque_user_id };
     next();
   } catch (error) {
     logger.warn("Twitch Extension JWT validation failed", {
