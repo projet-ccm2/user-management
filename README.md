@@ -134,6 +134,62 @@ User authentication via Twitch OAuth.
 }
 ```
 
+#### GET /users/:id
+
+Retrieves a user by their Twitch user ID. Used by the Twitch Panel to check if a user exists in the system.
+
+**Authentication:** Twitch OAuth (same pattern as `/auth/callback`). Send `accessToken` and `idToken` in the request body.
+
+**Request Body:**
+
+```json
+{
+  "accessToken": "string",
+  "idToken": "string",
+  "tokenType": "string",
+  "expiresIn": "number",
+  "scope": ["string"],
+  "state": "string"
+}
+```
+
+**Response 200 - User found:**
+
+```json
+{
+  "success": true,
+  "user": {
+    "id": "string",
+    "username": "string",
+    "profileImageUrl": "string | null",
+    "channelDescription": "string | null",
+    "scope": "string | null",
+    "lastUpdateTimestamp": "2024-01-15T10:30:00.000Z",
+    "xp": 0
+  }
+}
+```
+
+**Response 401 - Authentication Error:**
+
+```json
+{
+  "error": "Authentication required",
+  "status": 401,
+  "timestamp": "2024-01-15T10:30:00.000Z"
+}
+```
+
+**Response 404 - User not found:**
+
+```json
+{
+  "error": "User not found",
+  "status": 404,
+  "timestamp": "2024-01-15T10:30:00.000Z"
+}
+```
+
 #### PUT /channels/me
 
 Updates the Discord webhook URL of the authenticated user's channel.
