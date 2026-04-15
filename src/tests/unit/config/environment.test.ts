@@ -52,7 +52,9 @@ describe("Environment Configuration", () => {
 
     expect(() => {
       require("../../../config/environment");
-    }).toThrow("Missing required environment variable: TWITCH_EXTENSION_SECRET");
+    }).toThrow(
+      "Missing required environment variable: TWITCH_EXTENSION_SECRET",
+    );
   });
 
   it("should parse ALLOWED_ORIGINS correctly", () => {
