@@ -4,6 +4,7 @@ interface Config {
   twitch: {
     clientId: string;
     issuer: string;
+    extensionSecret: string;
   };
   cors: {
     allowedOrigins: string[];
@@ -30,6 +31,7 @@ interface Config {
 function validateConfig(): Config {
   const requiredEnvVars = {
     TWITCH_CLIENT_ID: process.env.TWITCH_CLIENT_ID,
+    TWITCH_EXTENSION_SECRET: process.env.TWITCH_EXTENSION_SECRET,
   };
 
   for (const [key, value] of Object.entries(requiredEnvVars)) {
@@ -48,6 +50,7 @@ function validateConfig(): Config {
     twitch: {
       clientId: process.env.TWITCH_CLIENT_ID!,
       issuer: process.env.TWITCH_ISSUER || "https://id.twitch.tv/oauth2",
+      extensionSecret: process.env.TWITCH_EXTENSION_SECRET!,
     },
     cors: {
       allowedOrigins: process.env.ALLOWED_ORIGINS
