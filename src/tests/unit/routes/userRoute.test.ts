@@ -26,8 +26,7 @@ describe("userRoute", () => {
   it("should log debug when get user route is hit", async () => {
     await request(app)
       .get("/users/12345")
-      .send({ accessToken: "token", idToken: "id" })
-      .expect(400);
+      .expect(401);
 
     expect(mockLogger.debug).toHaveBeenCalledWith(
       "Get user route hit",
