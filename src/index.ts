@@ -9,6 +9,7 @@ import { securityHeaders, corsValidator } from "./middlewares/security";
 import authRoutes from "./routes/authRoute";
 import channelRoutes from "./routes/channelRoute";
 import tokenRoutes from "./routes/tokenRoute";
+import userRoutes from "./routes/userRoute";
 import { dbGatewayService } from "./services/dbGatewayService";
 
 const app = express();
@@ -24,6 +25,7 @@ app.use(passport.initialize());
 app.use("/auth", authRoutes);
 app.use("/channels", channelRoutes);
 app.use("/tokens", tokenRoutes);
+app.use("/users", userRoutes);
 
 app.get("/health", async (req, res, next) => {
   try {
