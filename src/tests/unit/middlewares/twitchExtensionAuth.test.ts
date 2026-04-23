@@ -1,3 +1,4 @@
+/* eslint-disable camelcase -- Twitch JWT payload uses snake_case */
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { twitchExtensionAuth } from "../../../middlewares/twitchExtensionAuth";
@@ -76,7 +77,6 @@ describe("twitchExtensionAuth", () => {
     twitchExtensionAuth(req, mockRes as Response, mockNext);
 
     expect(mockNext).toHaveBeenCalledWith();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect((req as any).user).toEqual({
       opaqueUserId: "UABCD1234",
       userId: "123456789",
@@ -101,7 +101,6 @@ describe("twitchExtensionAuth", () => {
     twitchExtensionAuth(req, mockRes as Response, mockNext);
 
     expect(mockNext).toHaveBeenCalledWith();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect((req as any).user).toEqual({
       opaqueUserId: "AABCD1234",
       userId: "",
