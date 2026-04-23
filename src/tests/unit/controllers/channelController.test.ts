@@ -1,5 +1,8 @@
 import { Request, Response } from "express";
-import { updateChannelDiscordWebhook, registerDiscordWebhook } from "../../../controllers/channelController";
+import {
+  updateChannelDiscordWebhook,
+  registerDiscordWebhook,
+} from "../../../controllers/channelController";
 import { dbGatewayService } from "../../../services/dbGatewayService";
 import type { TwitchPassportUser } from "../../../strategies/twitchTokenStrategy";
 
@@ -60,7 +63,16 @@ describe("channelController", () => {
   });
 
   describe("registerDiscordWebhook", () => {
-    let mockExtensionRequest: Partial<Request & { user?: { opaqueUserId: string; userId: string; channelId: string; role: string } }>;
+    let mockExtensionRequest: Partial<
+      Request & {
+        user?: {
+          opaqueUserId: string;
+          userId: string;
+          channelId: string;
+          role: string;
+        };
+      }
+    >;
 
     beforeEach(() => {
       mockExtensionRequest = {
@@ -133,7 +145,10 @@ describe("channelController", () => {
       );
 
       expect(mockNext).toHaveBeenCalledWith(
-        expect.objectContaining({ message: "Authentication required", statusCode: 401 }),
+        expect.objectContaining({
+          message: "Authentication required",
+          statusCode: 401,
+        }),
       );
       expect(mockDbGatewayService.updateChannel).not.toHaveBeenCalled();
     });
@@ -193,7 +208,8 @@ describe("channelController", () => {
 
       expect(mockNext).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: "Validation failed: 'discordWebhookUrl' must be a string or null",
+          message:
+            "Validation failed: 'discordWebhookUrl' must be a string or null",
           statusCode: 400,
         }),
       );

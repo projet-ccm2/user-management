@@ -6,7 +6,12 @@ import { CustomError } from "../middlewares/errorHandler";
 type AuthenticatedRequest = Request & { user?: TwitchPassportUser };
 
 type ExtensionAuthenticatedRequest = Request & {
-  user?: { opaqueUserId: string; userId: string; channelId: string; role: string };
+  user?: {
+    opaqueUserId: string;
+    userId: string;
+    channelId: string;
+    role: string;
+  };
 };
 
 function isValidUrl(value: string): boolean {
@@ -18,17 +23,35 @@ function isValidUrl(value: string): boolean {
   }
 }
 
-function validateDiscordWebhookUrl(value: unknown, next: NextFunction): value is string | null {
+function validateDiscordWebhookUrl(
+  value: unknown,
+  next: NextFunction,
+): value is string | null {
   if (value === undefined) {
-    next(new CustomError("Validation failed: Field 'discordWebhookUrl' is required", 400));
+    next(
+      new CustomError(
+        "Validation failed: Field 'discordWebhookUrl' is required",
+        400,
+      ),
+    );
     return false;
   }
   if (value !== null && typeof value !== "string") {
-    next(new CustomError("Validation failed: 'discordWebhookUrl' must be a string or null", 400));
+    next(
+      new CustomError(
+        "Validation failed: 'discordWebhookUrl' must be a string or null",
+        400,
+      ),
+    );
     return false;
   }
   if (typeof value === "string" && value.length > 0 && !isValidUrl(value)) {
-    next(new CustomError("Validation failed: 'discordWebhookUrl' must be a valid URL", 400));
+    next(
+      new CustomError(
+        "Validation failed: 'discordWebhookUrl' must be a valid URL",
+        400,
+      ),
+    );
     return false;
   }
   return true;
@@ -48,7 +71,12 @@ export const registerDiscordWebhook = async (
     }
 
     if (user.role !== "broadcaster") {
-      next(new CustomError("Only broadcasters can register a Discord webhook", 403));
+      next(
+        new CustomError(
+          "Only broadcasters can register a Discord webhook",
+          403,
+        ),
+      );
       return;
     }
 
