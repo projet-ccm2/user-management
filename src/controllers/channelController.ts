@@ -18,6 +18,22 @@ function isValidUrl(value: string): boolean {
   }
 }
 
+function validateDiscordWebhookUrl(value: unknown, next: NextFunction): value is string | null {
+  if (value === undefined) {
+    next(new CustomError("Validation failed: Field 'discordWebhookUrl' is required", 400));
+    return false;
+  }
+  if (value !== null && typeof value !== "string") {
+    next(new CustomError("Validation failed: 'discordWebhookUrl' must be a string or null", 400));
+    return false;
+  }
+  if (typeof value === "string" && value.length > 0 && !isValidUrl(value)) {
+    next(new CustomError("Validation failed: 'discordWebhookUrl' must be a valid URL", 400));
+    return false;
+  }
+  return true;
+}
+
 export const registerDiscordWebhook = async (
   req: Request,
   res: Response,
@@ -37,40 +53,7 @@ export const registerDiscordWebhook = async (
     }
 
     const { discordWebhookUrl } = req.body ?? {};
-
-    if (discordWebhookUrl === undefined) {
-      next(
-        new CustomError(
-          "Validation failed: Field 'discordWebhookUrl' is required",
-          400,
-        ),
-      );
-      return;
-    }
-
-    if (discordWebhookUrl !== null && typeof discordWebhookUrl !== "string") {
-      next(
-        new CustomError(
-          "Validation failed: 'discordWebhookUrl' must be a string or null",
-          400,
-        ),
-      );
-      return;
-    }
-
-    if (
-      typeof discordWebhookUrl === "string" &&
-      discordWebhookUrl.length > 0 &&
-      !isValidUrl(discordWebhookUrl)
-    ) {
-      next(
-        new CustomError(
-          "Validation failed: 'discordWebhookUrl' must be a valid URL",
-          400,
-        ),
-      );
-      return;
-    }
+    if (!validateDiscordWebhookUrl(discordWebhookUrl, next)) return;
 
     const channel = await dbGatewayService.updateChannel(user.channelId, {
       discordWebhookUrl: discordWebhookUrl ?? null,
@@ -103,40 +86,7 @@ export const updateChannelDiscordWebhook = async (
     }
 
     const { discordWebhookUrl } = req.body ?? {};
-
-    if (discordWebhookUrl === undefined) {
-      next(
-        new CustomError(
-          "Validation failed: Field 'discordWebhookUrl' is required",
-          400,
-        ),
-      );
-      return;
-    }
-
-    if (discordWebhookUrl !== null && typeof discordWebhookUrl !== "string") {
-      next(
-        new CustomError(
-          "Validation failed: 'discordWebhookUrl' must be a string or null",
-          400,
-        ),
-      );
-      return;
-    }
-
-    if (
-      typeof discordWebhookUrl === "string" &&
-      discordWebhookUrl.length > 0 &&
-      !isValidUrl(discordWebhookUrl)
-    ) {
-      next(
-        new CustomError(
-          "Validation failed: 'discordWebhookUrl' must be a valid URL",
-          400,
-        ),
-      );
-      return;
-    }
+    if (!validateDiscordWebhookUrl(discordWebhookUrl, next)) return;
 
     const channel = await dbGatewayService.updateChannel(user.userId, {
       discordWebhookUrl: discordWebhookUrl ?? null,
@@ -151,10 +101,6 @@ export const updateChannelDiscordWebhook = async (
       },
     });
   } catch (error) {
-    if (error instanceof CustomError) {
-      next(error);
-      return;
-    }
     next(error);
   }
 };
