@@ -32,7 +32,12 @@ export const twitchExtensionAuth = (
     }) as TwitchExtensionPayload;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (req as any).user = { opaqueUserId: decoded.opaque_user_id };
+    (req as any).user = {
+      opaqueUserId: decoded.opaque_user_id,
+      userId: decoded.user_id,
+      channelId: decoded.channel_id,
+      role: decoded.role,
+    };
     next();
   } catch (error) {
     logger.warn("Twitch Extension JWT validation failed", {

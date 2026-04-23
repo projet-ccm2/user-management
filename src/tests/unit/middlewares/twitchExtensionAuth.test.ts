@@ -78,7 +78,12 @@ describe("twitchExtensionAuth", () => {
 
     expect(mockNext).toHaveBeenCalledWith();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    expect((req as any).user).toEqual({ opaqueUserId: "UABCD1234" });
+    expect((req as any).user).toEqual({
+      opaqueUserId: "UABCD1234",
+      userId: "123456789",
+      channelId: "987654321",
+      role: "viewer",
+    });
   });
 
   it("should call next and set req.user when JWT is valid (identity not shared)", () => {
@@ -98,7 +103,12 @@ describe("twitchExtensionAuth", () => {
 
     expect(mockNext).toHaveBeenCalledWith();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    expect((req as any).user).toEqual({ opaqueUserId: "AABCD1234" });
+    expect((req as any).user).toEqual({
+      opaqueUserId: "AABCD1234",
+      userId: "",
+      channelId: "987654321",
+      role: "viewer",
+    });
   });
 
   it("should call next with 401 when token is signed with wrong secret", () => {

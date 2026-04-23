@@ -41,4 +41,19 @@ describe("channelRoute", () => {
       }),
     );
   });
+
+  it("should log debug when PUT /channels/me/discord-webhook route is hit", async () => {
+    await request(app)
+      .put("/channels/me/discord-webhook")
+      .send({ discordWebhookUrl: "https://discord.com/api/webhooks/123/abc" })
+      .expect(401);
+
+    expect(mockLogger.debug).toHaveBeenCalledWith(
+      "Register discord webhook route hit",
+      expect.objectContaining({
+        method: "PUT",
+        path: "/me/discord-webhook",
+      }),
+    );
+  });
 });

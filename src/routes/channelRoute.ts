@@ -1,7 +1,8 @@
 import { Router, Request, Response, NextFunction } from "express";
 import passport from "passport";
 import { PASSPORT_TWITCH_STRATEGY } from "../config/passport";
-import { updateChannelDiscordWebhook } from "../controllers/channelController";
+import { updateChannelDiscordWebhook, registerDiscordWebhook } from "../controllers/channelController";
+import { twitchExtensionAuth } from "../middlewares/twitchExtensionAuth";
 import { logger } from "../utils/logger";
 
 const router = Router();
@@ -22,6 +23,25 @@ router.put(
   passport.authenticate(PASSPORT_TWITCH_STRATEGY, { session: false }),
   (req: Request, res: Response, next: NextFunction) => {
     updateChannelDiscordWebhook(req, res, next).catch(next);
+  },
+);
+
+router.put(
+  "/me/discord-webhook",
+  (req: Request, _res: Response, next: NextFunction) => {
+    try {
+      logger.debug("Register discord webhook route hit", {
+        method: req.method,
+        path: req.path,
+      });
+      next();
+    } catch (error) {
+      next(error);
+    }
+  },
+  twitchExtensionAuth,
+  (req: Request, res: Response, next: NextFunction) => {
+    registerDiscordWebhook(req, res, next).catch(next);
   },
 );
 
