@@ -3,9 +3,8 @@ import jwt from "jsonwebtoken";
 import { twitchExtensionAuth } from "../../../middlewares/twitchExtensionAuth";
 
 const EXTENSION_SECRET_RAW = "mysecret";
-const EXTENSION_SECRET_B64 = Buffer.from(EXTENSION_SECRET_RAW).toString(
-  "base64",
-);
+const EXTENSION_SECRET_B64 =
+  Buffer.from(EXTENSION_SECRET_RAW).toString("base64");
 
 jest.mock("../../../config/environment", () => ({
   config: {

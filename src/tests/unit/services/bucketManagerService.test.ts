@@ -34,11 +34,9 @@ describe("BucketManagerService", () => {
     it("should return APK URL on success", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: jest
-          .fn()
-          .mockResolvedValueOnce({
-            url: "https://storage.googleapis.com/bucket/apk/app.apk?token=abc",
-          }),
+        json: jest.fn().mockResolvedValueOnce({
+          url: "https://storage.googleapis.com/bucket/apk/app.apk?token=abc",
+        }),
       });
 
       const result = await service.getApkUrl();
@@ -75,7 +73,10 @@ describe("BucketManagerService", () => {
     });
 
     it("should throw 502 CustomError on timeout", async () => {
-      const abortError = new DOMException("The operation was aborted", "AbortError");
+      const abortError = new DOMException(
+        "The operation was aborted",
+        "AbortError",
+      );
       mockFetch.mockRejectedValueOnce(abortError);
 
       await expect(service.getApkUrl()).rejects.toMatchObject({
@@ -86,7 +87,9 @@ describe("BucketManagerService", () => {
     it("should include VPC token in Authorization header in dev mode", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: jest.fn().mockResolvedValueOnce({ url: "https://example.com/apk" }),
+        json: jest
+          .fn()
+          .mockResolvedValueOnce({ url: "https://example.com/apk" }),
       });
 
       await service.getApkUrl();

@@ -10,7 +10,12 @@ export const getApkDownloadUrl = async (
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const user = (req as any).user as
-      | { opaqueUserId: string; userId: string; channelId: string; role: string }
+      | {
+          opaqueUserId: string;
+          userId: string;
+          channelId: string;
+          role: string;
+        }
       | undefined;
 
     if (!user) {

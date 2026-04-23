@@ -3,6 +3,42 @@ import User from "../models/user";
 import { dbGatewayService } from "./dbGatewayService";
 import { getModeratedChannels, getModerators } from "./twitchModerationService";
 
+async function syncModeratedChannelAre(
+  dbUserId: string,
+  modChannel: Awaited<ReturnType<typeof getModeratedChannels>>[number],
+): Promise<void> {
+  const channelInDb = await dbGatewayService.getChannelById(
+    modChannel.broadcaster_id,
+  );
+  if (!channelInDb) return;
+
+  const existing = await dbGatewayService.getAre(dbUserId, channelInDb.id);
+  if (!existing) {
+    await dbGatewayService.createAre(dbUserId, channelInDb.id, "moderator");
+    logger.info("Created moderator ARE link (channel which I moderate)", {
+      userId: dbUserId,
+      channelId: channelInDb.id,
+    });
+  }
+}
+
+async function syncModeratorAre(
+  mod: Awaited<ReturnType<typeof getModerators>>[number],
+  ownChannelId: string,
+): Promise<void> {
+  const modDbUser = await dbGatewayService.getUserById(mod.user_id);
+  if (!modDbUser) return;
+
+  const existing = await dbGatewayService.getAre(modDbUser.id, ownChannelId);
+  if (!existing) {
+    await dbGatewayService.createAre(modDbUser.id, ownChannelId, "moderator");
+    logger.info("Created moderator ARE link (mod of my channel)", {
+      userId: modDbUser.id,
+      channelId: ownChannelId,
+    });
+  }
+}
+
 export async function syncChannelsAndAreAfterAuth(
   dbUserId: string,
   userModel: User,
@@ -58,23 +94,10 @@ export async function syncChannelsAndAreAfterAuth(
   }
 
   for (const modChannel of moderatedChannels) {
-    const channelInDb = await dbGatewayService.getChannelById(
-      modChannel.broadcaster_id,
-    );
-    if (!channelInDb) continue;
-
-    const existing = await dbGatewayService.getAre(dbUserId, channelInDb.id);
-    if (!existing) {
-      await dbGatewayService.createAre(dbUserId, channelInDb.id, "moderator");
-      logger.info("Created moderator ARE link (channel which I moderate)", {
-        userId: dbUserId,
-        channelId: channelInDb.id,
-      });
-    }
+    await syncModeratedChannelAre(dbUserId, modChannel);
   }
 
   let myModerators: Awaited<ReturnType<typeof getModerators>> = [];
-
   try {
     myModerators = await getModerators(
       accessToken,
@@ -91,16 +114,6 @@ export async function syncChannelsAndAreAfterAuth(
   }
 
   for (const mod of myModerators) {
-    const modDbUser = await dbGatewayService.getUserById(mod.user_id);
-    if (!modDbUser) continue;
-
-    const existing = await dbGatewayService.getAre(modDbUser.id, ownChannelId);
-    if (!existing) {
-      await dbGatewayService.createAre(modDbUser.id, ownChannelId, "moderator");
-      logger.info("Created moderator ARE link (mod of my channel)", {
-        userId: modDbUser.id,
-        channelId: ownChannelId,
-      });
-    }
+    await syncModeratorAre(mod, ownChannelId);
   }
 }

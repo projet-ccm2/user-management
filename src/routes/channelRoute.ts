@@ -1,7 +1,10 @@
 import { Router, Request, Response, NextFunction } from "express";
 import passport from "passport";
 import { PASSPORT_TWITCH_STRATEGY } from "../config/passport";
-import { updateChannelDiscordWebhook, registerDiscordWebhook } from "../controllers/channelController";
+import {
+  updateChannelDiscordWebhook,
+  registerDiscordWebhook,
+} from "../controllers/channelController";
 import { twitchExtensionAuth } from "../middlewares/twitchExtensionAuth";
 import { logger } from "../utils/logger";
 
