@@ -12,6 +12,9 @@ interface Config {
   dbGateway: {
     url: string;
   };
+  bucketManager: {
+    url: string;
+  };
   token: {
     jwtSecret: string;
     jwtExpiresInSeconds: number;
@@ -59,6 +62,12 @@ function validateConfig(): Config {
     },
     dbGateway: {
       url: (process.env.DB_SERVICE_URL || "http://localhost:3001").replace(
+        /\/$/,
+        "",
+      ),
+    },
+    bucketManager: {
+      url: (process.env.BUCKET_MANAGER_URL || "http://localhost:3002").replace(
         /\/$/,
         "",
       ),

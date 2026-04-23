@@ -167,4 +167,26 @@ describe("Environment Configuration", () => {
 
     expect(testConfig.gcp.serviceUrl).toBe("https://user-mgmt.example.com");
   });
+
+  it("should use default BUCKET_MANAGER_URL when not set", () => {
+    process.env.TWITCH_CLIENT_ID = "test_client_id";
+    process.env.TWITCH_EXTENSION_SECRET = "dGVzdF9leHRlbnNpb25fc2VjcmV0";
+    delete process.env.BUCKET_MANAGER_URL;
+
+    const { config: testConfig } = require("../../../config/environment");
+
+    expect(testConfig.bucketManager.url).toBe("http://localhost:3002");
+  });
+
+  it("should handle custom BUCKET_MANAGER_URL", () => {
+    process.env.TWITCH_CLIENT_ID = "test_client_id";
+    process.env.TWITCH_EXTENSION_SECRET = "dGVzdF9leHRlbnNpb25fc2VjcmV0";
+    process.env.BUCKET_MANAGER_URL = "https://bucket-manager.example.com/";
+
+    const { config: testConfig } = require("../../../config/environment");
+
+    expect(testConfig.bucketManager.url).toBe(
+      "https://bucket-manager.example.com",
+    );
+  });
 });

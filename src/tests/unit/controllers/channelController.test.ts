@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { updateChannelDiscordWebhook } from "../../../controllers/channelController";
+import { updateChannelDiscordWebhook, registerDiscordWebhook } from "../../../controllers/channelController";
 import { dbGatewayService } from "../../../services/dbGatewayService";
 import type { TwitchPassportUser } from "../../../strategies/twitchTokenStrategy";
 
@@ -57,6 +57,166 @@ describe("channelController", () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  describe("registerDiscordWebhook", () => {
+    let mockExtensionRequest: Partial<Request & { user?: { opaqueUserId: string; userId: string; channelId: string; role: string } }>;
+
+    beforeEach(() => {
+      mockExtensionRequest = {
+        user: {
+          opaqueUserId: "UABCD1234",
+          userId: "12345",
+          channelId: "12345",
+          role: "broadcaster",
+        },
+        body: {},
+      };
+    });
+
+    it("should successfully register webhook with valid URL for broadcaster", async () => {
+      mockExtensionRequest.body = {
+        discordWebhookUrl: "https://discord.com/api/webhooks/123/abc",
+      };
+
+      await registerDiscordWebhook(
+        mockExtensionRequest as Request,
+        mockResponse as Response,
+        mockNext,
+      );
+
+      expect(mockDbGatewayService.updateChannel).toHaveBeenCalledWith("12345", {
+        discordWebhookUrl: "https://discord.com/api/webhooks/123/abc",
+      });
+      expect(mockStatus).toHaveBeenCalledWith(200);
+      expect(mockJson).toHaveBeenCalledWith({
+        success: true,
+        channel: {
+          id: "12345",
+          name: "TestUser",
+          discordWebhookUrl: "https://discord.com/api/webhooks/123/abc",
+        },
+      });
+    });
+
+    it("should successfully register with null to remove webhook", async () => {
+      mockExtensionRequest.body = { discordWebhookUrl: null };
+      mockDbGatewayService.updateChannel.mockResolvedValueOnce({
+        id: "12345",
+        name: "TestUser",
+        discordWebhookUrl: null,
+      });
+
+      await registerDiscordWebhook(
+        mockExtensionRequest as Request,
+        mockResponse as Response,
+        mockNext,
+      );
+
+      expect(mockDbGatewayService.updateChannel).toHaveBeenCalledWith("12345", {
+        discordWebhookUrl: null,
+      });
+      expect(mockStatus).toHaveBeenCalledWith(200);
+      expect(mockJson).toHaveBeenCalledWith({
+        success: true,
+        channel: { id: "12345", name: "TestUser", discordWebhookUrl: null },
+      });
+    });
+
+    it("should call next with CustomError 401 when channelId is missing", async () => {
+      mockExtensionRequest.user = undefined;
+
+      await registerDiscordWebhook(
+        mockExtensionRequest as Request,
+        mockResponse as Response,
+        mockNext,
+      );
+
+      expect(mockNext).toHaveBeenCalledWith(
+        expect.objectContaining({ message: "Authentication required", statusCode: 401 }),
+      );
+      expect(mockDbGatewayService.updateChannel).not.toHaveBeenCalled();
+    });
+
+    it("should call next with CustomError 403 when role is not broadcaster", async () => {
+      mockExtensionRequest.user = {
+        opaqueUserId: "UABCD1234",
+        userId: "12345",
+        channelId: "12345",
+        role: "viewer",
+      };
+      mockExtensionRequest.body = {
+        discordWebhookUrl: "https://discord.com/api/webhooks/123/abc",
+      };
+
+      await registerDiscordWebhook(
+        mockExtensionRequest as Request,
+        mockResponse as Response,
+        mockNext,
+      );
+
+      expect(mockNext).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: "Only broadcasters can register a Discord webhook",
+          statusCode: 403,
+        }),
+      );
+      expect(mockDbGatewayService.updateChannel).not.toHaveBeenCalled();
+    });
+
+    it("should call next with CustomError 400 when discordWebhookUrl is absent", async () => {
+      mockExtensionRequest.body = {};
+
+      await registerDiscordWebhook(
+        mockExtensionRequest as Request,
+        mockResponse as Response,
+        mockNext,
+      );
+
+      expect(mockNext).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: "Validation failed: Field 'discordWebhookUrl' is required",
+          statusCode: 400,
+        }),
+      );
+      expect(mockDbGatewayService.updateChannel).not.toHaveBeenCalled();
+    });
+
+    it("should call next with CustomError 400 when discordWebhookUrl is not string or null", async () => {
+      mockExtensionRequest.body = { discordWebhookUrl: 123 };
+
+      await registerDiscordWebhook(
+        mockExtensionRequest as Request,
+        mockResponse as Response,
+        mockNext,
+      );
+
+      expect(mockNext).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: "Validation failed: 'discordWebhookUrl' must be a string or null",
+          statusCode: 400,
+        }),
+      );
+      expect(mockDbGatewayService.updateChannel).not.toHaveBeenCalled();
+    });
+
+    it("should call next with CustomError 400 when discordWebhookUrl is invalid URL", async () => {
+      mockExtensionRequest.body = { discordWebhookUrl: "not-a-valid-url" };
+
+      await registerDiscordWebhook(
+        mockExtensionRequest as Request,
+        mockResponse as Response,
+        mockNext,
+      );
+
+      expect(mockNext).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: "Validation failed: 'discordWebhookUrl' must be a valid URL",
+          statusCode: 400,
+        }),
+      );
+      expect(mockDbGatewayService.updateChannel).not.toHaveBeenCalled();
+    });
   });
 
   describe("updateChannelDiscordWebhook", () => {
