@@ -11,19 +11,21 @@ export async function syncChannelsAndAreAfterAuth(
 ): Promise<void> {
   let ownChannelId: string;
   try {
-    const ownChannel = await dbGatewayService.createChannel(
+    const existingChannel = await dbGatewayService.getChannelById(
       userModel.channel.id,
-      userModel.username,
     );
+    const ownChannel =
+      existingChannel ??
+      (await dbGatewayService.createChannel(
+        userModel.channel.id,
+        userModel.username,
+      ));
     ownChannelId = ownChannel.id;
   } catch (err) {
-    logger.warn(
-      "Could not ensure owner channel (create may have failed for duplicate name)",
-      {
-        username: userModel.username,
-        error: err instanceof Error ? err.message : "Unknown error",
-      },
-    );
+    logger.warn("Could not ensure owner channel", {
+      username: userModel.username,
+      error: err instanceof Error ? err.message : "Unknown error",
+    });
     return;
   }
 
@@ -39,10 +41,13 @@ export async function syncChannelsAndAreAfterAuth(
     });
   }
 
-  let myModerators: Awaited<ReturnType<typeof getModerators>> = [];
-
+  let moderatedChannels: Awaited<ReturnType<typeof getModeratedChannels>> = [];
   try {
-    await getModeratedChannels(accessToken, clientId, userModel.channel.id);
+    moderatedChannels = await getModeratedChannels(
+      accessToken,
+      clientId,
+      userModel.channel.id,
+    );
   } catch (err) {
     logger.warn(
       "Could not fetch moderated channels from Twitch (scope or token)",
@@ -51,6 +56,24 @@ export async function syncChannelsAndAreAfterAuth(
       },
     );
   }
+
+  for (const modChannel of moderatedChannels) {
+    const channelInDb = await dbGatewayService.getChannelById(
+      modChannel.broadcaster_id,
+    );
+    if (!channelInDb) continue;
+
+    const existing = await dbGatewayService.getAre(dbUserId, channelInDb.id);
+    if (!existing) {
+      await dbGatewayService.createAre(dbUserId, channelInDb.id, "moderator");
+      logger.info("Created moderator ARE link (channel which I moderate)", {
+        userId: dbUserId,
+        channelId: channelInDb.id,
+      });
+    }
+  }
+
+  let myModerators: Awaited<ReturnType<typeof getModerators>> = [];
 
   try {
     myModerators = await getModerators(
