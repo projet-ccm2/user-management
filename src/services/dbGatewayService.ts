@@ -297,6 +297,31 @@ export class DbGatewayService {
     }
   }
 
+  async getAreByUser(userId: string, userType: string): Promise<AreResponse[]> {
+    try {
+      const url = new URL(`${this.dbGatewayUrl}/are`);
+      url.searchParams.set("userId", userId);
+      url.searchParams.set("userType", userType);
+
+      const headers = await this.getHeaders();
+      const response = await fetch(url.toString(), {
+        method: "GET",
+        headers,
+        signal: AbortSignal.timeout(this.timeout),
+      });
+
+      await this.throwIfNotOk(response);
+      return (await response.json()) as AreResponse[];
+    } catch (error) {
+      this.handleFetchError(
+        error,
+        "Failed to get AREs from database gateway",
+        { userId, userType },
+        "Failed to get ARE data",
+      );
+    }
+  }
+
   async createAre(
     userId: string,
     channelId: string,

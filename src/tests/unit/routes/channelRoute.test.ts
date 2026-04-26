@@ -56,4 +56,16 @@ describe("channelRoute", () => {
       }),
     );
   });
+
+  it("should log debug and return 401 when GET /channels/me/moderated route is hit without auth", async () => {
+    await request(app).get("/channels/me/moderated").expect(401);
+
+    expect(mockLogger.debug).toHaveBeenCalledWith(
+      "Get moderated channels route hit",
+      expect.objectContaining({
+        method: "GET",
+        path: "/me/moderated",
+      }),
+    );
+  });
 });

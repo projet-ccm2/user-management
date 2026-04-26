@@ -652,6 +652,49 @@ describe("DbGatewayService", () => {
     });
   });
 
+  describe("getAreByUser", () => {
+    it("should return ARE array when GET returns 200", async () => {
+      const mockAres = [
+        { userId: "user-1", channelId: "channel-1", userType: "moderator" },
+        { userId: "user-1", channelId: "channel-2", userType: "moderator" },
+      ];
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: jest.fn().mockResolvedValue(mockAres),
+      } as any);
+
+      const result = await dbGatewayService.getAreByUser("user-1", "moderator");
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("/are?userId=user-1&userType=moderator"),
+        expect.objectContaining({ method: "GET" }),
+      );
+      expect(result).toEqual(mockAres);
+    });
+
+    it("should throw CustomError when GET returns 500", async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: "Internal Server Error",
+        text: jest.fn().mockResolvedValue("Database error"),
+      } as any);
+
+      await expect(
+        dbGatewayService.getAreByUser("user-1", "moderator"),
+      ).rejects.toThrow(CustomError);
+    });
+
+    it("should throw CustomError on network error", async () => {
+      mockFetch.mockRejectedValue(new Error("Network error"));
+
+      await expect(
+        dbGatewayService.getAreByUser("user-1", "moderator"),
+      ).rejects.toThrow(CustomError);
+    });
+  });
+
   describe("createAre", () => {
     it("should successfully create ARE", async () => {
       const mockAre = {

@@ -4,8 +4,10 @@ import { PASSPORT_TWITCH_STRATEGY } from "../config/passport";
 import {
   updateChannelDiscordWebhook,
   registerDiscordWebhook,
+  getModeratedChannels,
 } from "../controllers/channelController";
 import { twitchExtensionAuth } from "../middlewares/twitchExtensionAuth";
+import { bffAuthMiddleware } from "../middlewares/bffAuthMiddleware";
 import { logger } from "../utils/logger";
 
 const router = Router();
@@ -42,9 +44,28 @@ router.put(
       next(error);
     }
   },
-  twitchExtensionAuth,
+  bffAuthMiddleware,
   (req: Request, res: Response, next: NextFunction) => {
     registerDiscordWebhook(req, res, next).catch(next);
+  },
+);
+
+router.get(
+  "/me/moderated",
+  (req: Request, _res: Response, next: NextFunction) => {
+    try {
+      logger.debug("Get moderated channels route hit", {
+        method: req.method,
+        path: req.path,
+      });
+      next();
+    } catch (error) {
+      next(error);
+    }
+  },
+  twitchExtensionAuth,
+  (req: Request, res: Response, next: NextFunction) => {
+    getModeratedChannels(req, res, next).catch(next);
   },
 );
 

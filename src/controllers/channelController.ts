@@ -63,27 +63,21 @@ export const registerDiscordWebhook = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const { user } = req as ExtensionAuthenticatedRequest;
+    const { channelId, discordWebhookUrl } = req.body ?? {};
 
-    if (!user?.channelId) {
-      next(new CustomError("Authentication required", 401));
-      return;
-    }
-
-    if (user.role !== "broadcaster") {
+    if (!channelId || typeof channelId !== "string") {
       next(
         new CustomError(
-          "Only broadcasters can register a Discord webhook",
-          403,
+          "Validation failed: Field 'channelId' is required",
+          400,
         ),
       );
       return;
     }
 
-    const { discordWebhookUrl } = req.body ?? {};
     if (!validateDiscordWebhookUrl(discordWebhookUrl, next)) return;
 
-    const channel = await dbGatewayService.updateChannel(user.channelId, {
+    const channel = await dbGatewayService.updateChannel(channelId, {
       discordWebhookUrl: discordWebhookUrl ?? null,
     });
 
@@ -94,6 +88,29 @@ export const registerDiscordWebhook = async (
         name: channel.name,
         discordWebhookUrl: channel.discordWebhookUrl ?? null,
       },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getModeratedChannels = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const { user } = req as ExtensionAuthenticatedRequest;
+
+    if (!user?.userId) {
+      next(new CustomError("Authentication required", 401));
+      return;
+    }
+
+    const ares = await dbGatewayService.getAreByUser(user.userId, "moderator");
+
+    res.status(200).json({
+      moderatedChannels: ares.map((are) => are.channelId),
     });
   } catch (error) {
     next(error);
