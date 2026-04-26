@@ -653,10 +653,10 @@ describe("DbGatewayService", () => {
   });
 
   describe("getAreByUser", () => {
-    it("should return ARE array when GET returns 200", async () => {
+    it("should call GET /are/user/:userId and return filtered array", async () => {
       const mockAres = [
         { userId: "user-1", channelId: "channel-1", userType: "moderator" },
-        { userId: "user-1", channelId: "channel-2", userType: "moderator" },
+        { userId: "user-1", channelId: "channel-2", userType: "owner" },
       ];
       mockFetch.mockResolvedValue({
         ok: true,
@@ -667,10 +667,26 @@ describe("DbGatewayService", () => {
       const result = await dbGatewayService.getAreByUser("user-1", "moderator");
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining("/are?userId=user-1&userType=moderator"),
+        "http://localhost:3001/are/user/user-1",
         expect.objectContaining({ method: "GET" }),
       );
-      expect(result).toEqual(mockAres);
+      expect(result).toEqual([
+        { userId: "user-1", channelId: "channel-1", userType: "moderator" },
+      ]);
+    });
+
+    it("should return empty array when no entries match userType", async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: jest.fn().mockResolvedValue([
+          { userId: "user-1", channelId: "channel-1", userType: "owner" },
+        ]),
+      } as any);
+
+      const result = await dbGatewayService.getAreByUser("user-1", "moderator");
+
+      expect(result).toEqual([]);
     });
 
     it("should throw CustomError when GET returns 500", async () => {

@@ -299,19 +299,19 @@ export class DbGatewayService {
 
   async getAreByUser(userId: string, userType: string): Promise<AreResponse[]> {
     try {
-      const url = new URL(`${this.dbGatewayUrl}/are`);
-      url.searchParams.set("userId", userId);
-      url.searchParams.set("userType", userType);
-
       const headers = await this.getHeaders();
-      const response = await fetch(url.toString(), {
-        method: "GET",
-        headers,
-        signal: AbortSignal.timeout(this.timeout),
-      });
+      const response = await fetch(
+        `${this.dbGatewayUrl}/are/user/${encodeURIComponent(userId)}`,
+        {
+          method: "GET",
+          headers,
+          signal: AbortSignal.timeout(this.timeout),
+        },
+      );
 
       await this.throwIfNotOk(response);
-      return (await response.json()) as AreResponse[];
+      const all = (await response.json()) as AreResponse[];
+      return all.filter((are) => are.userType === userType);
     } catch (error) {
       this.handleFetchError(
         error,
