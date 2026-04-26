@@ -114,6 +114,7 @@ export class DbGatewayService {
         channelDescription: user.channel.description || null,
         scope: this.getScopeString(user),
         lastUpdateTimestamp: new Date().toISOString(),
+        xp: 0,
       };
 
       const headers = await this.getHeaders();
@@ -143,7 +144,11 @@ export class DbGatewayService {
     }
   }
 
-  async updateUser(id: string, user: User): Promise<DbGatewayResponse> {
+  async updateUser(
+    id: string,
+    user: User,
+    existing?: DbGatewayResponse | null,
+  ): Promise<DbGatewayResponse> {
     try {
       logger.info("Updating user in database gateway", {
         username: user.username,
@@ -156,6 +161,7 @@ export class DbGatewayService {
         channelDescription: user.channel.description || null,
         scope: this.getScopeString(user),
         lastUpdateTimestamp: new Date().toISOString(),
+        xp: existing?.xp ?? 0,
       };
 
       const headers = await this.getHeaders();
@@ -236,6 +242,34 @@ export class DbGatewayService {
     }
   }
 
+  async updateChannel(
+    channelId: string,
+    payload: { discordWebhookUrl?: string | null },
+  ): Promise<ChannelResponse> {
+    try {
+      const headers = await this.getHeaders();
+      const response = await fetch(
+        `${this.dbGatewayUrl}/channels/${encodeURIComponent(channelId)}`,
+        {
+          method: "PUT",
+          headers,
+          body: JSON.stringify(payload),
+          signal: AbortSignal.timeout(this.timeout),
+        },
+      );
+
+      await this.throwIfNotOk(response);
+      return (await response.json()) as ChannelResponse;
+    } catch (error) {
+      this.handleFetchError(
+        error,
+        "Failed to update channel in database gateway",
+        { channelId },
+        "Failed to update channel",
+      );
+    }
+  }
+
   async getAre(userId: string, channelId: string): Promise<AreResponse | null> {
     try {
       const url = new URL(`${this.dbGatewayUrl}/are`);
@@ -263,6 +297,31 @@ export class DbGatewayService {
     }
   }
 
+  async getAreByUser(userId: string, userType: string): Promise<AreResponse[]> {
+    try {
+      const headers = await this.getHeaders();
+      const response = await fetch(
+        `${this.dbGatewayUrl}/are/user/${encodeURIComponent(userId)}`,
+        {
+          method: "GET",
+          headers,
+          signal: AbortSignal.timeout(this.timeout),
+        },
+      );
+
+      await this.throwIfNotOk(response);
+      const all = (await response.json()) as AreResponse[];
+      return all.filter((are) => are.userType === userType);
+    } catch (error) {
+      this.handleFetchError(
+        error,
+        "Failed to get AREs from database gateway",
+        { userId, userType },
+        "Failed to get ARE data",
+      );
+    }
+  }
+
   async createAre(
     userId: string,
     channelId: string,
@@ -285,6 +344,36 @@ export class DbGatewayService {
         "Failed to create ARE in database gateway",
         { userId, channelId },
         "Failed to create ARE",
+      );
+    }
+  }
+
+  async deleteUserAllData(id: string): Promise<void> {
+    try {
+      const headers = await this.getHeaders();
+      const response = await fetch(
+        `${this.dbGatewayUrl}/users/${encodeURIComponent(id)}/all-data`,
+        {
+          method: "DELETE",
+          headers,
+          signal: AbortSignal.timeout(this.timeout),
+        },
+      );
+
+      if (response.status === 404) {
+        throw new CustomError("User not found", 404);
+      }
+
+      await this.throwIfNotOk(response);
+
+      logger.info("User data successfully deleted", { userId: id });
+    } catch (error) {
+      if (error instanceof CustomError) throw error;
+      this.handleFetchError(
+        error,
+        "Failed to delete user data from database gateway",
+        { userId: id },
+        "Failed to delete user data",
       );
     }
   }

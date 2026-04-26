@@ -72,6 +72,7 @@ describe("DbGatewayService", () => {
         channelDescription: "Test user",
         scope: "user:read:email",
         lastUpdateTimestamp: "2026-02-20T12:00:00.000Z",
+        xp: 0,
       };
       mockFetch.mockResolvedValue({
         ok: true,
@@ -151,6 +152,7 @@ describe("DbGatewayService", () => {
         channelDescription: "Test user",
         scope: "user:read:email",
         lastUpdateTimestamp: "2026-02-20T12:00:00.000Z",
+        xp: 0,
       };
       mockFetch.mockResolvedValue({
         ok: true,
@@ -214,6 +216,29 @@ describe("DbGatewayService", () => {
         dbGatewayService.updateUser("123", mockUser),
       ).rejects.toThrow(CustomError);
     });
+
+    it("should pass existing xp when updating user", async () => {
+      const existingUser = {
+        id: "123",
+        username: "testuser",
+        profileImageUrl: "https://example.com/avatar.jpg",
+        channelDescription: "Test user",
+        scope: "user:read:email",
+        lastUpdateTimestamp: "2026-02-20T12:00:00.000Z",
+        xp: 42,
+      };
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue(existingUser),
+      } as any);
+
+      await dbGatewayService.updateUser("123", mockUser, existingUser);
+
+      const callBody = JSON.parse(
+        (mockFetch.mock.calls[0][1] as RequestInit).body as string,
+      );
+      expect(callBody.xp).toBe(42);
+    });
   });
 
   describe("saveUser", () => {
@@ -225,6 +250,7 @@ describe("DbGatewayService", () => {
         channelDescription: "Test user",
         scope: "user:read:email",
         lastUpdateTimestamp: "2026-02-20T12:00:00.000Z",
+        xp: 0,
       };
       const mockResponse = {
         ok: true,
@@ -256,6 +282,7 @@ describe("DbGatewayService", () => {
         profileImageUrl: "https://example.com/avatar.jpg",
         channelDescription: "Test user",
         scope: "user:read:email",
+        xp: 0,
       });
 
       expect(result).toEqual(mockDbResponse);
@@ -494,6 +521,85 @@ describe("DbGatewayService", () => {
     });
   });
 
+  describe("updateChannel", () => {
+    it("should successfully update channel with discordWebhookUrl", async () => {
+      const mockChannel = {
+        id: "channel-456",
+        name: "mychannel",
+        discordWebhookUrl: "https://discord.com/api/webhooks/123/abc",
+      };
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockChannel),
+      } as any);
+
+      const result = await dbGatewayService.updateChannel("channel-456", {
+        discordWebhookUrl: "https://discord.com/api/webhooks/123/abc",
+      });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://localhost:3001/channels/channel-456",
+        expect.objectContaining({
+          method: "PUT",
+          body: JSON.stringify({
+            discordWebhookUrl: "https://discord.com/api/webhooks/123/abc",
+          }),
+        }),
+      );
+      expect(result).toEqual(mockChannel);
+    });
+
+    it("should successfully update channel with null to remove webhook", async () => {
+      const mockChannel = {
+        id: "channel-456",
+        name: "mychannel",
+        discordWebhookUrl: null,
+      };
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockChannel),
+      } as any);
+
+      const result = await dbGatewayService.updateChannel("channel-456", {
+        discordWebhookUrl: null,
+      });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://localhost:3001/channels/channel-456",
+        expect.objectContaining({
+          method: "PUT",
+          body: JSON.stringify({ discordWebhookUrl: null }),
+        }),
+      );
+      expect(result).toEqual(mockChannel);
+    });
+
+    it("should throw CustomError when PUT returns 404", async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: jest.fn().mockResolvedValue("not found"),
+      } as any);
+
+      await expect(
+        dbGatewayService.updateChannel("channel-456", {
+          discordWebhookUrl: "https://example.com/webhook",
+        }),
+      ).rejects.toThrow(CustomError);
+    });
+
+    it("should throw CustomError on network error", async () => {
+      mockFetch.mockRejectedValue(new Error("Network error"));
+
+      await expect(
+        dbGatewayService.updateChannel("channel-456", {
+          discordWebhookUrl: null,
+        }),
+      ).rejects.toThrow(CustomError);
+    });
+  });
+
   describe("getAre", () => {
     it("should return ARE when GET returns 200", async () => {
       const mockAre = {
@@ -546,6 +652,65 @@ describe("DbGatewayService", () => {
     });
   });
 
+  describe("getAreByUser", () => {
+    it("should call GET /are/user/:userId and return filtered array", async () => {
+      const mockAres = [
+        { userId: "user-1", channelId: "channel-1", userType: "moderator" },
+        { userId: "user-1", channelId: "channel-2", userType: "owner" },
+      ];
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: jest.fn().mockResolvedValue(mockAres),
+      } as any);
+
+      const result = await dbGatewayService.getAreByUser("user-1", "moderator");
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://localhost:3001/are/user/user-1",
+        expect.objectContaining({ method: "GET" }),
+      );
+      expect(result).toEqual([
+        { userId: "user-1", channelId: "channel-1", userType: "moderator" },
+      ]);
+    });
+
+    it("should return empty array when no entries match userType", async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: jest.fn().mockResolvedValue([
+          { userId: "user-1", channelId: "channel-1", userType: "owner" },
+        ]),
+      } as any);
+
+      const result = await dbGatewayService.getAreByUser("user-1", "moderator");
+
+      expect(result).toEqual([]);
+    });
+
+    it("should throw CustomError when GET returns 500", async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: "Internal Server Error",
+        text: jest.fn().mockResolvedValue("Database error"),
+      } as any);
+
+      await expect(
+        dbGatewayService.getAreByUser("user-1", "moderator"),
+      ).rejects.toThrow(CustomError);
+    });
+
+    it("should throw CustomError on network error", async () => {
+      mockFetch.mockRejectedValue(new Error("Network error"));
+
+      await expect(
+        dbGatewayService.getAreByUser("user-1", "moderator"),
+      ).rejects.toThrow(CustomError);
+    });
+  });
+
   describe("createAre", () => {
     it("should successfully create ARE", async () => {
       const mockAre = {
@@ -589,6 +754,76 @@ describe("DbGatewayService", () => {
       await expect(
         dbGatewayService.createAre("user-1", "channel-1", "owner"),
       ).rejects.toThrow(CustomError);
+    });
+  });
+
+  describe("deleteUserAllData", () => {
+    it("should call DELETE /users/:id/all-data and return void on 204", async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 204,
+      } as any);
+
+      await dbGatewayService.deleteUserAllData("user-123");
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://localhost:3001/users/user-123/all-data",
+        expect.objectContaining({
+          method: "DELETE",
+          headers: expect.objectContaining({
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: `Bearer ${MOCK_VPC_JWT}`,
+          }),
+        }),
+      );
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        "User data successfully deleted",
+        { userId: "user-123" },
+      );
+    });
+
+    it("should throw CustomError when DELETE returns 404", async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: jest.fn().mockResolvedValue("not found"),
+      } as any);
+
+      const error = await dbGatewayService
+        .deleteUserAllData("user-123")
+        .catch((e) => e);
+
+      expect(error).toBeInstanceOf(CustomError);
+      expect((error as CustomError).statusCode).toBe(404);
+      expect((error as CustomError).message).toBe("User not found");
+    });
+
+    it("should throw CustomError when DELETE returns 500", async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: "Internal Server Error",
+        text: jest.fn().mockResolvedValue("Database error"),
+      } as any);
+
+      await expect(
+        dbGatewayService.deleteUserAllData("user-123"),
+      ).rejects.toThrow(CustomError);
+    });
+
+    it("should throw CustomError on network error", async () => {
+      mockFetch.mockRejectedValue(new Error("Network error"));
+
+      await expect(
+        dbGatewayService.deleteUserAllData("user-123"),
+      ).rejects.toThrow(CustomError);
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        "Failed to delete user data from database gateway",
+        expect.objectContaining({ userId: "user-123" }),
+      );
     });
   });
 
@@ -664,7 +899,15 @@ describe("DbGatewayService", () => {
       mockFetch.mockResolvedValue({
         ok: true,
         status: 200,
-        json: jest.fn().mockResolvedValue({ id: "123", username: "testuser" }),
+        json: jest.fn().mockResolvedValue({
+          id: "123",
+          username: "testuser",
+          profileImageUrl: null,
+          channelDescription: null,
+          scope: null,
+          lastUpdateTimestamp: "2026-02-20T12:00:00.000Z",
+          xp: 0,
+        }),
       } as any);
 
       await dbGatewayService.getUserById("123");
@@ -687,7 +930,15 @@ describe("DbGatewayService", () => {
       mockFetch.mockResolvedValue({
         ok: true,
         status: 200,
-        json: jest.fn().mockResolvedValue({ id: "123", username: "testuser" }),
+        json: jest.fn().mockResolvedValue({
+          id: "123",
+          username: "testuser",
+          profileImageUrl: null,
+          channelDescription: null,
+          scope: null,
+          lastUpdateTimestamp: "2026-02-20T12:00:00.000Z",
+          xp: 0,
+        }),
       } as any);
 
       await dbGatewayService.getUserById("123");
@@ -702,7 +953,15 @@ describe("DbGatewayService", () => {
       mockFetch.mockResolvedValue({
         ok: true,
         status: 200,
-        json: jest.fn().mockResolvedValue({ id: "123", username: "testuser" }),
+        json: jest.fn().mockResolvedValue({
+          id: "123",
+          username: "testuser",
+          profileImageUrl: null,
+          channelDescription: null,
+          scope: null,
+          lastUpdateTimestamp: "2026-02-20T12:00:00.000Z",
+          xp: 0,
+        }),
       } as any);
 
       await dbGatewayService.getUserById("123");

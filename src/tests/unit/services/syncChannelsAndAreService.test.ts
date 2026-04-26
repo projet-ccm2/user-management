@@ -47,6 +47,7 @@ describe("syncChannelsAndAreService", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockDbGatewayService.getChannelById = jest.fn().mockResolvedValue(null);
     mockDbGatewayService.createChannel = jest.fn().mockResolvedValue({
       id: "channel-123",
       name: "TestUser",
@@ -68,6 +69,7 @@ describe("syncChannelsAndAreService", () => {
       "client-id",
     );
 
+    expect(mockDbGatewayService.getChannelById).toHaveBeenCalledWith("12345");
     expect(mockDbGatewayService.createChannel).toHaveBeenCalledWith(
       "12345",
       "TestUser",
@@ -84,6 +86,27 @@ describe("syncChannelsAndAreService", () => {
     expect(mockLogger.info).toHaveBeenCalledWith(
       "Created owner ARE link",
       expect.objectContaining({ userId: "12345", channelId: "channel-123" }),
+    );
+  });
+
+  it("should use existing channel when channel already exists in DB", async () => {
+    mockDbGatewayService.getChannelById = jest.fn().mockResolvedValue({
+      id: "channel-123",
+      name: "TestUser",
+    });
+
+    await syncChannelsAndAreAfterAuth(
+      "12345",
+      mockUser,
+      "access-token",
+      "client-id",
+    );
+
+    expect(mockDbGatewayService.createChannel).not.toHaveBeenCalled();
+    expect(mockDbGatewayService.createAre).toHaveBeenCalledWith(
+      "12345",
+      "channel-123",
+      "owner",
     );
   });
 
@@ -108,10 +131,10 @@ describe("syncChannelsAndAreService", () => {
     );
   });
 
-  it("should return early when createChannel fails", async () => {
-    mockDbGatewayService.createChannel = jest
+  it("should return early when both getChannelById and createChannel fail", async () => {
+    mockDbGatewayService.getChannelById = jest
       .fn()
-      .mockRejectedValue(new Error("Duplicate name"));
+      .mockRejectedValue(new Error("Network error"));
 
     await syncChannelsAndAreAfterAuth(
       "12345",
@@ -121,13 +144,13 @@ describe("syncChannelsAndAreService", () => {
     );
 
     expect(mockLogger.warn).toHaveBeenCalledWith(
-      "Could not ensure owner channel (create may have failed for duplicate name)",
+      "Could not ensure owner channel",
       expect.any(Object),
     );
     expect(mockDbGatewayService.getAre).not.toHaveBeenCalled();
   });
 
-  it("should handle non-Error rejection from createChannel", async () => {
+  it("should return early when getChannelById returns null and createChannel fails", async () => {
     mockDbGatewayService.createChannel = jest
       .fn()
       .mockRejectedValue("string error");
@@ -140,9 +163,10 @@ describe("syncChannelsAndAreService", () => {
     );
 
     expect(mockLogger.warn).toHaveBeenCalledWith(
-      "Could not ensure owner channel (create may have failed for duplicate name)",
+      "Could not ensure owner channel",
       expect.objectContaining({ error: "Unknown error" }),
     );
+    expect(mockDbGatewayService.getAre).not.toHaveBeenCalled();
   });
 
   it("should create moderator ARE for mods that exist in DB", async () => {
@@ -154,6 +178,7 @@ describe("syncChannelsAndAreService", () => {
             id: "mod-123",
             username: "ModUser",
             lastUpdateTimestamp: "2026-02-20T12:00:00.000Z",
+            xp: 0,
           });
         return Promise.resolve(null);
       });
@@ -197,6 +222,7 @@ describe("syncChannelsAndAreService", () => {
       id: "mod-123",
       username: "ModUser",
       lastUpdateTimestamp: "2026-02-20T12:00:00.000Z",
+      xp: 0,
     });
     mockDbGatewayService.getAre = jest
       .fn()
@@ -220,6 +246,112 @@ describe("syncChannelsAndAreService", () => {
     );
 
     expect(mockDbGatewayService.createAre).toHaveBeenCalledTimes(1); // only owner
+  });
+
+  it("should create moderator ARE for channels the user moderates", async () => {
+    mockGetModeratedChannels.mockResolvedValue([
+      {
+        broadcaster_id: "streamer-456",
+        broadcaster_login: "streamer",
+        broadcaster_name: "Streamer",
+      },
+    ]);
+    mockDbGatewayService.getChannelById = jest
+      .fn()
+      .mockImplementation((id: string) => {
+        if (id === "12345") return Promise.resolve(null);
+        if (id === "streamer-456")
+          return Promise.resolve({ id: "streamer-456", name: "Streamer" });
+        return Promise.resolve(null);
+      });
+
+    await syncChannelsAndAreAfterAuth(
+      "12345",
+      mockUser,
+      "access-token",
+      "client-id",
+    );
+
+    expect(mockDbGatewayService.getChannelById).toHaveBeenCalledWith(
+      "streamer-456",
+    );
+    expect(mockDbGatewayService.createAre).toHaveBeenCalledWith(
+      "12345",
+      "streamer-456",
+      "moderator",
+    );
+    expect(mockLogger.info).toHaveBeenCalledWith(
+      "Created moderator ARE link (channel which I moderate)",
+      expect.objectContaining({ userId: "12345", channelId: "streamer-456" }),
+    );
+  });
+
+  it("should skip moderated channel not registered in DB", async () => {
+    mockGetModeratedChannels.mockResolvedValue([
+      {
+        broadcaster_id: "unknown-streamer",
+        broadcaster_login: "unknown",
+        broadcaster_name: "Unknown",
+      },
+    ]);
+    mockDbGatewayService.getChannelById = jest.fn().mockResolvedValue(null);
+
+    await syncChannelsAndAreAfterAuth(
+      "12345",
+      mockUser,
+      "access-token",
+      "client-id",
+    );
+
+    expect(mockDbGatewayService.createAre).toHaveBeenCalledTimes(1); // only owner
+    expect(mockDbGatewayService.createAre).not.toHaveBeenCalledWith(
+      expect.anything(),
+      "unknown-streamer",
+      "moderator",
+    );
+  });
+
+  it("should not create moderator ARE for moderated channel when link already exists", async () => {
+    mockGetModeratedChannels.mockResolvedValue([
+      {
+        broadcaster_id: "streamer-456",
+        broadcaster_login: "streamer",
+        broadcaster_name: "Streamer",
+      },
+    ]);
+    mockDbGatewayService.getChannelById = jest
+      .fn()
+      .mockImplementation((id: string) => {
+        if (id === "12345") return Promise.resolve(null);
+        if (id === "streamer-456")
+          return Promise.resolve({ id: "streamer-456", name: "Streamer" });
+        return Promise.resolve(null);
+      });
+    mockDbGatewayService.getAre = jest
+      .fn()
+      .mockImplementation((userId: string, channelId: string) => {
+        if (channelId === "streamer-456")
+          return Promise.resolve({
+            userId,
+            channelId,
+            userType: "moderator",
+          });
+        return Promise.resolve(null);
+      });
+
+    await syncChannelsAndAreAfterAuth(
+      "12345",
+      mockUser,
+      "access-token",
+      "client-id",
+    );
+
+    expect(mockDbGatewayService.createAre).toHaveBeenCalledTimes(1); // only owner
+    expect(mockDbGatewayService.createAre).not.toHaveBeenCalledWith(
+      "12345",
+      "streamer-456",
+      "moderator",
+    );
   });
 
   it("should not fail when getModeratedChannels throws", async () => {

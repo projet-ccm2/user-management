@@ -4,11 +4,15 @@ interface Config {
   twitch: {
     clientId: string;
     issuer: string;
+    extensionSecret: string;
   };
   cors: {
     allowedOrigins: string[];
   };
   dbGateway: {
+    url: string;
+  };
+  bucketManager: {
     url: string;
   };
   token: {
@@ -30,6 +34,7 @@ interface Config {
 function validateConfig(): Config {
   const requiredEnvVars = {
     TWITCH_CLIENT_ID: process.env.TWITCH_CLIENT_ID,
+    TWITCH_EXTENSION_SECRET: process.env.TWITCH_EXTENSION_SECRET,
   };
 
   for (const [key, value] of Object.entries(requiredEnvVars)) {
@@ -48,6 +53,7 @@ function validateConfig(): Config {
     twitch: {
       clientId: process.env.TWITCH_CLIENT_ID!,
       issuer: process.env.TWITCH_ISSUER || "https://id.twitch.tv/oauth2",
+      extensionSecret: process.env.TWITCH_EXTENSION_SECRET!,
     },
     cors: {
       allowedOrigins: process.env.ALLOWED_ORIGINS
@@ -56,6 +62,12 @@ function validateConfig(): Config {
     },
     dbGateway: {
       url: (process.env.DB_SERVICE_URL || "http://localhost:3001").replace(
+        /\/$/,
+        "",
+      ),
+    },
+    bucketManager: {
+      url: (process.env.BUCKET_MANAGER_URL || "http://localhost:3002").replace(
         /\/$/,
         "",
       ),
