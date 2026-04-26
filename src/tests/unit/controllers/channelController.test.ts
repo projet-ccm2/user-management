@@ -200,26 +200,10 @@ describe("channelController", () => {
   });
 
   describe("getModeratedChannels", () => {
-    let mockExtensionRequest: Partial<
-      Request & {
-        user?: {
-          opaqueUserId: string;
-          userId: string;
-          channelId: string;
-          role: string;
-        };
-      }
-    >;
+    let mockBffRequest: Partial<Request>;
 
     beforeEach(() => {
-      mockExtensionRequest = {
-        user: {
-          opaqueUserId: "UABCD1234",
-          userId: "12345",
-          channelId: "12345",
-          role: "moderator",
-        },
-      };
+      mockBffRequest = { query: { userId: "12345" } };
 
       mockDbGatewayService.getAreByUser = jest
         .fn()
@@ -230,7 +214,7 @@ describe("channelController", () => {
 
     it("should return moderatedChannels array on success", async () => {
       await getModeratedChannels(
-        mockExtensionRequest as Request,
+        mockBffRequest as Request,
         mockResponse as Response,
         mockNext,
       );
@@ -247,7 +231,7 @@ describe("channelController", () => {
       mockDbGatewayService.getAreByUser = jest.fn().mockResolvedValue([]);
 
       await getModeratedChannels(
-        mockExtensionRequest as Request,
+        mockBffRequest as Request,
         mockResponse as Response,
         mockNext,
       );
@@ -256,19 +240,19 @@ describe("channelController", () => {
       expect(mockJson).toHaveBeenCalledWith({ moderatedChannels: [] });
     });
 
-    it("should call next with CustomError 401 when user is missing", async () => {
-      mockExtensionRequest.user = undefined;
+    it("should call next with CustomError 400 when userId is missing", async () => {
+      mockBffRequest.query = {};
 
       await getModeratedChannels(
-        mockExtensionRequest as Request,
+        mockBffRequest as Request,
         mockResponse as Response,
         mockNext,
       );
 
       expect(mockNext).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: "Authentication required",
-          statusCode: 401,
+          message: "Validation failed: Field 'userId' is required",
+          statusCode: 400,
         }),
       );
       expect(mockDbGatewayService.getAreByUser).not.toHaveBeenCalled();

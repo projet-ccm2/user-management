@@ -5,14 +5,6 @@ import { CustomError } from "../middlewares/errorHandler";
 
 type AuthenticatedRequest = Request & { user?: TwitchPassportUser };
 
-type ExtensionAuthenticatedRequest = Request & {
-  user?: {
-    opaqueUserId: string;
-    userId: string;
-    channelId: string;
-    role: string;
-  };
-};
 
 function isValidUrl(value: string): boolean {
   try {
@@ -100,14 +92,16 @@ export const getModeratedChannels = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const { user } = req as ExtensionAuthenticatedRequest;
+    const { userId } = req.query;
 
-    if (!user?.userId) {
-      next(new CustomError("Authentication required", 401));
+    if (!userId || typeof userId !== "string") {
+      next(
+        new CustomError("Validation failed: Field 'userId' is required", 400),
+      );
       return;
     }
 
-    const ares = await dbGatewayService.getAreByUser(user.userId, "moderator");
+    const ares = await dbGatewayService.getAreByUser(userId, "moderator");
 
     res.status(200).json({
       moderatedChannels: ares.map((are) => are.channelId),
