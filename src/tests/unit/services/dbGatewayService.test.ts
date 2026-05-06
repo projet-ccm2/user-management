@@ -464,17 +464,17 @@ describe("DbGatewayService", () => {
         text: jest.fn().mockResolvedValue("Database error"),
       } as any);
 
-      await expect(
-        dbGatewayService.getChannelById("456789"),
-      ).rejects.toThrow(CustomError);
+      await expect(dbGatewayService.getChannelById("456789")).rejects.toThrow(
+        CustomError,
+      );
     });
 
     it("should throw CustomError on network error", async () => {
       mockFetch.mockRejectedValue(new Error("Network error"));
 
-      await expect(
-        dbGatewayService.getChannelById("456789"),
-      ).rejects.toThrow(CustomError);
+      await expect(dbGatewayService.getChannelById("456789")).rejects.toThrow(
+        CustomError,
+      );
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         "Failed to get channel from database gateway",
@@ -498,7 +498,10 @@ describe("DbGatewayService", () => {
         json: jest.fn().mockResolvedValue(mockChannel),
       } as any);
 
-      const result = await dbGatewayService.createChannel("789012", "newchannel");
+      const result = await dbGatewayService.createChannel(
+        "789012",
+        "newchannel",
+      );
 
       expect(mockFetch).toHaveBeenCalledWith(
         "http://localhost:3001/channels",
@@ -619,7 +622,9 @@ describe("DbGatewayService", () => {
 
     it("should throw CustomError 400 when channelId is not numeric", async () => {
       await expect(
-        dbGatewayService.updateChannel("channel-abc", { discordWebhookUrl: null }),
+        dbGatewayService.updateChannel("channel-abc", {
+          discordWebhookUrl: null,
+        }),
       ).rejects.toThrow(CustomError);
       expect(mockFetch).not.toHaveBeenCalled();
     });
@@ -663,23 +668,23 @@ describe("DbGatewayService", () => {
         text: jest.fn().mockResolvedValue("Database error"),
       } as any);
 
-      await expect(
-        dbGatewayService.getAre("111", "222"),
-      ).rejects.toThrow(CustomError);
+      await expect(dbGatewayService.getAre("111", "222")).rejects.toThrow(
+        CustomError,
+      );
     });
 
     it("should throw CustomError on network error", async () => {
       mockFetch.mockRejectedValue(new Error("Network error"));
 
-      await expect(
-        dbGatewayService.getAre("111", "222"),
-      ).rejects.toThrow(CustomError);
+      await expect(dbGatewayService.getAre("111", "222")).rejects.toThrow(
+        CustomError,
+      );
     });
 
     it("should throw CustomError 400 when userId is not numeric", async () => {
-      await expect(
-        dbGatewayService.getAre("user-abc", "222"),
-      ).rejects.toThrow(CustomError);
+      await expect(dbGatewayService.getAre("user-abc", "222")).rejects.toThrow(
+        CustomError,
+      );
       expect(mockFetch).not.toHaveBeenCalled();
     });
 
@@ -771,7 +776,11 @@ describe("DbGatewayService", () => {
         json: jest.fn().mockResolvedValue(mockAre),
       } as any);
 
-      const result = await dbGatewayService.createAre("111", "222", "moderator");
+      const result = await dbGatewayService.createAre(
+        "111",
+        "222",
+        "moderator",
+      );
 
       expect(mockFetch).toHaveBeenCalledWith(
         "http://localhost:3001/are",
@@ -859,17 +868,17 @@ describe("DbGatewayService", () => {
         text: jest.fn().mockResolvedValue("Database error"),
       } as any);
 
-      await expect(
-        dbGatewayService.deleteUserAllData("123"),
-      ).rejects.toThrow(CustomError);
+      await expect(dbGatewayService.deleteUserAllData("123")).rejects.toThrow(
+        CustomError,
+      );
     });
 
     it("should throw CustomError on network error", async () => {
       mockFetch.mockRejectedValue(new Error("Network error"));
 
-      await expect(
-        dbGatewayService.deleteUserAllData("123"),
-      ).rejects.toThrow(CustomError);
+      await expect(dbGatewayService.deleteUserAllData("123")).rejects.toThrow(
+        CustomError,
+      );
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         "Failed to delete user data from database gateway",
@@ -919,17 +928,17 @@ describe("DbGatewayService", () => {
         text: jest.fn().mockResolvedValue("Database error"),
       } as any);
 
-      await expect(
-        dbGatewayService.getBadgeByChannelId("123"),
-      ).rejects.toThrow(CustomError);
+      await expect(dbGatewayService.getBadgeByChannelId("123")).rejects.toThrow(
+        CustomError,
+      );
     });
 
     it("should throw CustomError on network error", async () => {
       mockFetch.mockRejectedValue(new Error("Network error"));
 
-      await expect(
-        dbGatewayService.getBadgeByChannelId("123"),
-      ).rejects.toThrow(CustomError);
+      await expect(dbGatewayService.getBadgeByChannelId("123")).rejects.toThrow(
+        CustomError,
+      );
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         "Failed to get badge from database gateway",
@@ -953,13 +962,21 @@ describe("DbGatewayService", () => {
         json: jest.fn().mockResolvedValue(mockBadge),
       } as any);
 
-      const result = await dbGatewayService.createBadge("123", "Gold", "gold.png");
+      const result = await dbGatewayService.createBadge(
+        "123",
+        "Gold",
+        "gold.png",
+      );
 
       expect(mockFetch).toHaveBeenCalledWith(
         "http://localhost:3001/badges",
         expect.objectContaining({
           method: "POST",
-          body: JSON.stringify({ channelId: "123", title: "Gold", img: "gold.png" }),
+          body: JSON.stringify({
+            channelId: "123",
+            title: "Gold",
+            img: "gold.png",
+          }),
         }),
       );
       expect(result).toEqual(mockBadge);

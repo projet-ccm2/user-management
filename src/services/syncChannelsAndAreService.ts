@@ -3,6 +3,34 @@ import User from "../models/user";
 import { dbGatewayService } from "./dbGatewayService";
 import { getModeratedChannels, getModerators } from "./twitchModerationService";
 
+async function ensureBadgeForChannel(
+  ownChannelId: string,
+  dbUserId: string,
+  userModel: User,
+): Promise<void> {
+  try {
+    const existingBadge =
+      await dbGatewayService.getBadgeByChannelId(ownChannelId);
+    if (!existingBadge) {
+      await dbGatewayService.createBadge(
+        ownChannelId,
+        `${userModel.username}'s badge`,
+        userModel.channel.profileImageUrl,
+      );
+      logger.info("Created badge for channel", {
+        userId: dbUserId,
+        channelId: ownChannelId,
+      });
+    }
+  } catch (err) {
+    logger.warn("Could not ensure badge for channel", {
+      userId: dbUserId,
+      channelId: ownChannelId,
+      error: err instanceof Error ? err.message : "Unknown error",
+    });
+  }
+}
+
 async function syncModeratedChannelAre(
   dbUserId: string,
   modChannel: Awaited<ReturnType<typeof getModeratedChannels>>[number],
@@ -77,27 +105,7 @@ export async function syncChannelsAndAreAfterAuth(
     });
   }
 
-  try {
-    const existingBadge =
-      await dbGatewayService.getBadgeByChannelId(ownChannelId);
-    if (!existingBadge) {
-      await dbGatewayService.createBadge(
-        ownChannelId,
-        `${userModel.username}'s badge`,
-        userModel.channel.profileImageUrl,
-      );
-      logger.info("Created badge for channel", {
-        userId: dbUserId,
-        channelId: ownChannelId,
-      });
-    }
-  } catch (err) {
-    logger.warn("Could not ensure badge for channel", {
-      userId: dbUserId,
-      channelId: ownChannelId,
-      error: err instanceof Error ? err.message : "Unknown error",
-    });
-  }
+  await ensureBadgeForChannel(ownChannelId, dbUserId, userModel);
 
   let moderatedChannels: Awaited<ReturnType<typeof getModeratedChannels>> = [];
   try {
