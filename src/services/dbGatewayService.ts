@@ -7,6 +7,7 @@ import { getGcpIdToken } from "./gcpAuth";
 import type { DbGatewayResponse } from "./types/dbGatewayService/DbGatewayResponse";
 import type { ChannelResponse } from "./types/dbGatewayService/ChannelResponse";
 import type { AreResponse } from "./types/dbGatewayService/AreResponse";
+import type { BadgeResponse } from "./types/dbGatewayService/BadgeResponse";
 
 export class DbGatewayService {
   private readonly dbGatewayUrl: string;
@@ -344,6 +345,58 @@ export class DbGatewayService {
         "Failed to create ARE in database gateway",
         { userId, channelId },
         "Failed to create ARE",
+      );
+    }
+  }
+
+  async getBadgeByChannelId(channelId: string): Promise<BadgeResponse | null> {
+    try {
+      const headers = await this.getHeaders();
+      const response = await fetch(
+        `${this.dbGatewayUrl}/badges/channel/${encodeURIComponent(channelId)}`,
+        {
+          method: "GET",
+          headers,
+          signal: AbortSignal.timeout(this.timeout),
+        },
+      );
+
+      if (response.status === 404) return null;
+
+      await this.throwIfNotOk(response);
+      return (await response.json()) as BadgeResponse;
+    } catch (error) {
+      this.handleFetchError(
+        error,
+        "Failed to get badge from database gateway",
+        { channelId },
+        "Failed to get badge data",
+      );
+    }
+  }
+
+  async createBadge(
+    channelId: string,
+    title: string,
+    img: string,
+  ): Promise<BadgeResponse> {
+    try {
+      const headers = await this.getHeaders();
+      const response = await fetch(`${this.dbGatewayUrl}/badges`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ channelId, title, img }),
+        signal: AbortSignal.timeout(this.timeout),
+      });
+
+      await this.throwIfNotOk(response);
+      return (await response.json()) as BadgeResponse;
+    } catch (error) {
+      this.handleFetchError(
+        error,
+        "Failed to create badge in database gateway",
+        { channelId, title },
+        "Failed to create badge",
       );
     }
   }
