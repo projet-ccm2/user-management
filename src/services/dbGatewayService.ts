@@ -69,6 +69,12 @@ export class DbGatewayService {
     throw new CustomError(errorMessage, 502);
   }
 
+  private static validateId(value: string, fieldName: string): void {
+    if (!/^\d+$/.test(value)) {
+      throw new CustomError(`Invalid ${fieldName} format`, 400);
+    }
+  }
+
   private getScopeString(user: User): string | null {
     return user.auth.scope && user.auth.scope.length > 0
       ? user.auth.scope.join(" ")
@@ -77,6 +83,7 @@ export class DbGatewayService {
 
   async getUserById(id: string): Promise<DbGatewayResponse | null> {
     try {
+      DbGatewayService.validateId(id, "userId");
       const headers = await this.getHeaders();
       const response = await fetch(
         `${this.dbGatewayUrl}/users/${encodeURIComponent(id)}`,
@@ -151,6 +158,7 @@ export class DbGatewayService {
     existing?: DbGatewayResponse | null,
   ): Promise<DbGatewayResponse> {
     try {
+      DbGatewayService.validateId(id, "userId");
       logger.info("Updating user in database gateway", {
         username: user.username,
         channelId: id,
@@ -197,6 +205,7 @@ export class DbGatewayService {
 
   async getChannelById(id: string): Promise<ChannelResponse | null> {
     try {
+      DbGatewayService.validateId(id, "channelId");
       const headers = await this.getHeaders();
       const response = await fetch(
         `${this.dbGatewayUrl}/channels/${encodeURIComponent(id)}`,
@@ -223,6 +232,7 @@ export class DbGatewayService {
 
   async createChannel(id: string, name: string): Promise<ChannelResponse> {
     try {
+      DbGatewayService.validateId(id, "channelId");
       const headers = await this.getHeaders();
       const response = await fetch(`${this.dbGatewayUrl}/channels`, {
         method: "POST",
@@ -248,6 +258,7 @@ export class DbGatewayService {
     payload: { discordWebhookUrl?: string | null },
   ): Promise<ChannelResponse> {
     try {
+      DbGatewayService.validateId(channelId, "channelId");
       const headers = await this.getHeaders();
       const response = await fetch(
         `${this.dbGatewayUrl}/channels/${encodeURIComponent(channelId)}`,
@@ -273,6 +284,8 @@ export class DbGatewayService {
 
   async getAre(userId: string, channelId: string): Promise<AreResponse | null> {
     try {
+      DbGatewayService.validateId(userId, "userId");
+      DbGatewayService.validateId(channelId, "channelId");
       const url = new URL(`${this.dbGatewayUrl}/are`);
       url.searchParams.set("userId", userId);
       url.searchParams.set("channelId", channelId);
@@ -300,6 +313,7 @@ export class DbGatewayService {
 
   async getAreByUser(userId: string, userType: string): Promise<AreResponse[]> {
     try {
+      DbGatewayService.validateId(userId, "userId");
       const headers = await this.getHeaders();
       const response = await fetch(
         `${this.dbGatewayUrl}/are/user/${encodeURIComponent(userId)}`,
@@ -329,6 +343,8 @@ export class DbGatewayService {
     userType: string,
   ): Promise<AreResponse> {
     try {
+      DbGatewayService.validateId(userId, "userId");
+      DbGatewayService.validateId(channelId, "channelId");
       const headers = await this.getHeaders();
       const response = await fetch(`${this.dbGatewayUrl}/are`, {
         method: "POST",
@@ -351,6 +367,7 @@ export class DbGatewayService {
 
   async getBadgeByChannelId(channelId: string): Promise<BadgeResponse | null> {
     try {
+      DbGatewayService.validateId(channelId, "channelId");
       const headers = await this.getHeaders();
       const response = await fetch(
         `${this.dbGatewayUrl}/badges/channel/${encodeURIComponent(channelId)}`,
@@ -381,6 +398,7 @@ export class DbGatewayService {
     img: string,
   ): Promise<BadgeResponse> {
     try {
+      DbGatewayService.validateId(channelId, "channelId");
       const headers = await this.getHeaders();
       const response = await fetch(`${this.dbGatewayUrl}/badges`, {
         method: "POST",
@@ -403,6 +421,7 @@ export class DbGatewayService {
 
   async deleteUserAllData(id: string): Promise<void> {
     try {
+      DbGatewayService.validateId(id, "userId");
       const headers = await this.getHeaders();
       const response = await fetch(
         `${this.dbGatewayUrl}/users/${encodeURIComponent(id)}/all-data`,
