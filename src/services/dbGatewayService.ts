@@ -69,10 +69,11 @@ export class DbGatewayService {
     throw new CustomError(errorMessage, 502);
   }
 
-  private static validateId(value: string, fieldName: string): void {
+  private static sanitizeNumericId(value: string, fieldName: string): string {
     if (!/^\d+$/.test(value)) {
       throw new CustomError(`Invalid ${fieldName} format`, 400);
     }
+    return String(parseInt(value, 10));
   }
 
   private getScopeString(user: User): string | null {
@@ -83,10 +84,10 @@ export class DbGatewayService {
 
   async getUserById(id: string): Promise<DbGatewayResponse | null> {
     try {
-      DbGatewayService.validateId(id, "userId");
+      const safeId = DbGatewayService.sanitizeNumericId(id, "userId");
       const headers = await this.getHeaders();
       const response = await fetch(
-        `${this.dbGatewayUrl}/users/${encodeURIComponent(id)}`,
+        `${this.dbGatewayUrl}/users/${safeId}`,
         {
           method: "GET",
           headers,
@@ -158,10 +159,10 @@ export class DbGatewayService {
     existing?: DbGatewayResponse | null,
   ): Promise<DbGatewayResponse> {
     try {
-      DbGatewayService.validateId(id, "userId");
+      const safeId = DbGatewayService.sanitizeNumericId(id, "userId");
       logger.info("Updating user in database gateway", {
         username: user.username,
-        channelId: id,
+        channelId: safeId,
       });
 
       const body = {
@@ -175,7 +176,7 @@ export class DbGatewayService {
 
       const headers = await this.getHeaders();
       const response = await fetch(
-        `${this.dbGatewayUrl}/users/${encodeURIComponent(id)}`,
+        `${this.dbGatewayUrl}/users/${safeId}`,
         {
           method: "PUT",
           headers,
@@ -205,10 +206,10 @@ export class DbGatewayService {
 
   async getChannelById(id: string): Promise<ChannelResponse | null> {
     try {
-      DbGatewayService.validateId(id, "channelId");
+      const safeId = DbGatewayService.sanitizeNumericId(id, "channelId");
       const headers = await this.getHeaders();
       const response = await fetch(
-        `${this.dbGatewayUrl}/channels/${encodeURIComponent(id)}`,
+        `${this.dbGatewayUrl}/channels/${safeId}`,
         {
           method: "GET",
           headers,
@@ -232,12 +233,12 @@ export class DbGatewayService {
 
   async createChannel(id: string, name: string): Promise<ChannelResponse> {
     try {
-      DbGatewayService.validateId(id, "channelId");
+      const safeId = DbGatewayService.sanitizeNumericId(id, "channelId");
       const headers = await this.getHeaders();
       const response = await fetch(`${this.dbGatewayUrl}/channels`, {
         method: "POST",
         headers,
-        body: JSON.stringify({ id, name }),
+        body: JSON.stringify({ id: safeId, name }),
         signal: AbortSignal.timeout(this.timeout),
       });
 
@@ -258,10 +259,10 @@ export class DbGatewayService {
     payload: { discordWebhookUrl?: string | null },
   ): Promise<ChannelResponse> {
     try {
-      DbGatewayService.validateId(channelId, "channelId");
+      const safeChannelId = DbGatewayService.sanitizeNumericId(channelId, "channelId");
       const headers = await this.getHeaders();
       const response = await fetch(
-        `${this.dbGatewayUrl}/channels/${encodeURIComponent(channelId)}`,
+        `${this.dbGatewayUrl}/channels/${safeChannelId}`,
         {
           method: "PUT",
           headers,
@@ -284,11 +285,11 @@ export class DbGatewayService {
 
   async getAre(userId: string, channelId: string): Promise<AreResponse | null> {
     try {
-      DbGatewayService.validateId(userId, "userId");
-      DbGatewayService.validateId(channelId, "channelId");
+      const safeUserId = DbGatewayService.sanitizeNumericId(userId, "userId");
+      const safeChannelId = DbGatewayService.sanitizeNumericId(channelId, "channelId");
       const url = new URL(`${this.dbGatewayUrl}/are`);
-      url.searchParams.set("userId", userId);
-      url.searchParams.set("channelId", channelId);
+      url.searchParams.set("userId", safeUserId);
+      url.searchParams.set("channelId", safeChannelId);
 
       const headers = await this.getHeaders();
       const response = await fetch(url.toString(), {
@@ -313,10 +314,10 @@ export class DbGatewayService {
 
   async getAreByUser(userId: string, userType: string): Promise<AreResponse[]> {
     try {
-      DbGatewayService.validateId(userId, "userId");
+      const safeUserId = DbGatewayService.sanitizeNumericId(userId, "userId");
       const headers = await this.getHeaders();
       const response = await fetch(
-        `${this.dbGatewayUrl}/are/user/${encodeURIComponent(userId)}`,
+        `${this.dbGatewayUrl}/are/user/${safeUserId}`,
         {
           method: "GET",
           headers,
@@ -343,13 +344,13 @@ export class DbGatewayService {
     userType: string,
   ): Promise<AreResponse> {
     try {
-      DbGatewayService.validateId(userId, "userId");
-      DbGatewayService.validateId(channelId, "channelId");
+      const safeUserId = DbGatewayService.sanitizeNumericId(userId, "userId");
+      const safeChannelId = DbGatewayService.sanitizeNumericId(channelId, "channelId");
       const headers = await this.getHeaders();
       const response = await fetch(`${this.dbGatewayUrl}/are`, {
         method: "POST",
         headers,
-        body: JSON.stringify({ userId, channelId, userType }),
+        body: JSON.stringify({ userId: safeUserId, channelId: safeChannelId, userType }),
         signal: AbortSignal.timeout(this.timeout),
       });
 
@@ -367,10 +368,10 @@ export class DbGatewayService {
 
   async getBadgeByChannelId(channelId: string): Promise<BadgeResponse | null> {
     try {
-      DbGatewayService.validateId(channelId, "channelId");
+      const safeChannelId = DbGatewayService.sanitizeNumericId(channelId, "channelId");
       const headers = await this.getHeaders();
       const response = await fetch(
-        `${this.dbGatewayUrl}/badges/channel/${encodeURIComponent(channelId)}`,
+        `${this.dbGatewayUrl}/badges/channel/${safeChannelId}`,
         {
           method: "GET",
           headers,
@@ -398,12 +399,12 @@ export class DbGatewayService {
     img: string,
   ): Promise<BadgeResponse> {
     try {
-      DbGatewayService.validateId(channelId, "channelId");
+      const safeChannelId = DbGatewayService.sanitizeNumericId(channelId, "channelId");
       const headers = await this.getHeaders();
       const response = await fetch(`${this.dbGatewayUrl}/badges`, {
         method: "POST",
         headers,
-        body: JSON.stringify({ channelId, title, img }),
+        body: JSON.stringify({ channelId: safeChannelId, title, img }),
         signal: AbortSignal.timeout(this.timeout),
       });
 
@@ -421,10 +422,10 @@ export class DbGatewayService {
 
   async deleteUserAllData(id: string): Promise<void> {
     try {
-      DbGatewayService.validateId(id, "userId");
+      const safeId = DbGatewayService.sanitizeNumericId(id, "userId");
       const headers = await this.getHeaders();
       const response = await fetch(
-        `${this.dbGatewayUrl}/users/${encodeURIComponent(id)}/all-data`,
+        `${this.dbGatewayUrl}/users/${safeId}/all-data`,
         {
           method: "DELETE",
           headers,
@@ -438,7 +439,7 @@ export class DbGatewayService {
 
       await this.throwIfNotOk(response);
 
-      logger.info("User data successfully deleted", { userId: id });
+      logger.info("User data successfully deleted", { userId: safeId });
     } catch (error) {
       if (error instanceof CustomError) throw error;
       this.handleFetchError(
