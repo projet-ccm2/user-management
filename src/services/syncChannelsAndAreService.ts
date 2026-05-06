@@ -78,7 +78,8 @@ export async function syncChannelsAndAreAfterAuth(
   }
 
   try {
-    const existingBadge = await dbGatewayService.getBadgeByChannelId(ownChannelId);
+    const existingBadge =
+      await dbGatewayService.getBadgeByChannelId(ownChannelId);
     if (!existingBadge) {
       await dbGatewayService.createBadge(
         ownChannelId,

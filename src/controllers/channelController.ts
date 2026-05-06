@@ -5,7 +5,6 @@ import { CustomError } from "../middlewares/errorHandler";
 
 type AuthenticatedRequest = Request & { user?: TwitchPassportUser };
 
-
 function isValidUrl(value: string): boolean {
   try {
     new URL(value);

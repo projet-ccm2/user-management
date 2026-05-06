@@ -679,9 +679,11 @@ describe("DbGatewayService", () => {
       mockFetch.mockResolvedValue({
         ok: true,
         status: 200,
-        json: jest.fn().mockResolvedValue([
-          { userId: "user-1", channelId: "channel-1", userType: "owner" },
-        ]),
+        json: jest
+          .fn()
+          .mockResolvedValue([
+            { userId: "user-1", channelId: "channel-1", userType: "owner" },
+          ]),
       } as any);
 
       const result = await dbGatewayService.getAreByUser("user-1", "moderator");
