@@ -1002,7 +1002,11 @@ describe("DbGatewayService", () => {
         statusText: "Conflict",
       } as any);
 
-      const result = await dbGatewayService.createBadge("123", "Gold", "gold.png");
+      const result = await dbGatewayService.createBadge(
+        "123",
+        "Gold",
+        "gold.png",
+      );
       expect(result).toBeNull();
     });
 
