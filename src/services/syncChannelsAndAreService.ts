@@ -3,6 +3,8 @@ import User from "../models/user";
 import { dbGatewayService } from "./dbGatewayService";
 import { getModeratedChannels, getModerators } from "./twitchModerationService";
 
+const DEFAULT_BADGE_IMG = "default";
+
 async function ensureBadgeForChannel(
   ownChannelId: string,
   dbUserId: string,
@@ -15,7 +17,7 @@ async function ensureBadgeForChannel(
       await dbGatewayService.createBadge(
         ownChannelId,
         `${userModel.username}'s badge`,
-        userModel.channel.profileImageUrl,
+        DEFAULT_BADGE_IMG,
       );
       logger.info("Created badge for channel", {
         userId: dbUserId,

@@ -995,6 +995,17 @@ describe("DbGatewayService", () => {
       ).rejects.toThrow(CustomError);
     });
 
+    it("should return null when POST returns 409 (badge already exists)", async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 409,
+        statusText: "Conflict",
+      } as any);
+
+      const result = await dbGatewayService.createBadge("123", "Gold", "gold.png");
+      expect(result).toBeNull();
+    });
+
     it("should throw CustomError on network error", async () => {
       mockFetch.mockRejectedValue(new Error("Network error"));
 

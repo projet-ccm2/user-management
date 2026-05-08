@@ -404,7 +404,7 @@ export class DbGatewayService {
     channelId: string,
     title: string,
     img: string,
-  ): Promise<BadgeResponse> {
+  ): Promise<BadgeResponse | null> {
     try {
       const safeChannelId = DbGatewayService.sanitizeNumericId(
         channelId,
@@ -418,6 +418,7 @@ export class DbGatewayService {
         signal: AbortSignal.timeout(this.timeout),
       });
 
+      if (response.status === 409) return null;
       await this.throwIfNotOk(response);
       return (await response.json()) as BadgeResponse;
     } catch (error) {
