@@ -1,10 +1,32 @@
 import { Router, Request, Response, NextFunction } from "express";
 import passport from "passport";
 import { PASSPORT_TWITCH_STRATEGY } from "../config/passport";
-import { callbackConnexion } from "../controllers/authController";
+import {
+  callbackConnexion,
+  deleteAccount,
+} from "../controllers/authController";
 import { logger } from "../utils/logger";
 
 const router = Router();
+
+router.post(
+  "/delete-account",
+  (req: Request, _res: Response, next: NextFunction) => {
+    try {
+      logger.debug("Delete account route hit", {
+        method: req.method,
+        path: req.path,
+      });
+      next();
+    } catch (error) {
+      next(error);
+    }
+  },
+  passport.authenticate(PASSPORT_TWITCH_STRATEGY, { session: false }),
+  (req: Request, res: Response, next: NextFunction) => {
+    deleteAccount(req, res, next).catch(next);
+  },
+);
 
 router.post(
   "/callback",

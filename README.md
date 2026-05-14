@@ -134,6 +134,125 @@ User authentication via Twitch OAuth.
 }
 ```
 
+#### GET /users/:id
+
+Retrieves a user by their Twitch user ID. Used by the Twitch Panel to check if a user exists in the system.
+
+**Authentication:** Twitch OAuth (same pattern as `/auth/callback`). Send `accessToken` and `idToken` in the request body.
+
+**Request Body:**
+
+```json
+{
+  "accessToken": "string",
+  "idToken": "string",
+  "tokenType": "string",
+  "expiresIn": "number",
+  "scope": ["string"],
+  "state": "string"
+}
+```
+
+**Response 200 - User found:**
+
+```json
+{
+  "success": true,
+  "user": {
+    "id": "string",
+    "username": "string",
+    "profileImageUrl": "string | null",
+    "channelDescription": "string | null",
+    "scope": "string | null",
+    "lastUpdateTimestamp": "2024-01-15T10:30:00.000Z",
+    "xp": 0
+  }
+}
+```
+
+**Response 401 - Authentication Error:**
+
+```json
+{
+  "error": "Authentication required",
+  "status": 401,
+  "timestamp": "2024-01-15T10:30:00.000Z"
+}
+```
+
+**Response 404 - User not found:**
+
+```json
+{
+  "error": "User not found",
+  "status": 404,
+  "timestamp": "2024-01-15T10:30:00.000Z"
+}
+```
+
+#### PUT /channels/me
+
+Updates the Discord webhook URL of the authenticated user's channel.
+
+**Authentication:** Twitch OAuth (same pattern as `/auth/callback` and `/auth/delete-account`). Send `accessToken` and `idToken` in the request body along with `discordWebhookUrl`.
+
+**Request Body:**
+
+```json
+{
+  "accessToken": "string",
+  "idToken": "string",
+  "tokenType": "string",
+  "expiresIn": "number",
+  "scope": ["string"],
+  "state": "string",
+  "discordWebhookUrl": "https://discord.com/api/webhooks/123/abc"
+}
+```
+
+- `discordWebhookUrl` (required): A valid Discord webhook URL, or `null` to remove the link.
+
+**Response 200 - Success:**
+
+```json
+{
+  "success": true,
+  "channel": {
+    "id": "string",
+    "name": "string",
+    "discordWebhookUrl": "https://discord.com/api/webhooks/123/abc"
+  }
+}
+```
+
+**Response 400 - Validation Error:**
+
+```json
+{
+  "error": "Validation failed: Field 'discordWebhookUrl' is required",
+  "status": 400,
+  "timestamp": "2024-01-15T10:30:00.000Z"
+}
+```
+
+```json
+{
+  "error": "Validation failed: 'discordWebhookUrl' must be a valid URL",
+  "status": 400,
+  "timestamp": "2024-01-15T10:30:00.000Z"
+}
+```
+
+**Response 401 - Authentication Error:**
+
+```json
+{
+  "error": "Authentication required",
+  "status": 401,
+  "timestamp": "2024-01-15T10:30:00.000Z"
+}
+```
+
 #### POST /tokens
 
 Obtains a JWT for VPC access (db gateway). Used by bastions (user-management via auto-call, or second BFF).

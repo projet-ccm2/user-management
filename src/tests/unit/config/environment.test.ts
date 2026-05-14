@@ -14,6 +14,7 @@ describe("Environment Configuration", () => {
 
   it("should load configuration with required variables", () => {
     process.env.TWITCH_CLIENT_ID = "test_client_id";
+    process.env.TWITCH_EXTENSION_SECRET = "dGVzdF9leHRlbnNpb25fc2VjcmV0";
     process.env.NODE_ENV = "test";
     process.env.PORT = "4000";
 
@@ -26,6 +27,7 @@ describe("Environment Configuration", () => {
 
   it("should use default values for optional variables", () => {
     process.env.TWITCH_CLIENT_ID = "test_client_id";
+    process.env.TWITCH_EXTENSION_SECRET = "dGVzdF9leHRlbnNpb25fc2VjcmV0";
 
     const { config: testConfig } = require("../../../config/environment");
 
@@ -44,8 +46,20 @@ describe("Environment Configuration", () => {
     }).toThrow("Missing required environment variable: TWITCH_CLIENT_ID");
   });
 
+  it("should throw error for missing required TWITCH_EXTENSION_SECRET", () => {
+    process.env.TWITCH_CLIENT_ID = "test_client_id";
+    delete process.env.TWITCH_EXTENSION_SECRET;
+
+    expect(() => {
+      require("../../../config/environment");
+    }).toThrow(
+      "Missing required environment variable: TWITCH_EXTENSION_SECRET",
+    );
+  });
+
   it("should parse ALLOWED_ORIGINS correctly", () => {
     process.env.TWITCH_CLIENT_ID = "test_client_id";
+    process.env.TWITCH_EXTENSION_SECRET = "dGVzdF9leHRlbnNpb25fc2VjcmV0";
     process.env.ALLOWED_ORIGINS =
       "https://app1.com,https://app2.com,http://localhost:3000";
 
@@ -60,6 +74,7 @@ describe("Environment Configuration", () => {
 
   it("should use default allowed origins when ALLOWED_ORIGINS is not set", () => {
     process.env.TWITCH_CLIENT_ID = "test_client_id";
+    process.env.TWITCH_EXTENSION_SECRET = "dGVzdF9leHRlbnNpb25fc2VjcmV0";
     delete process.env.ALLOWED_ORIGINS;
 
     const { config: testConfig } = require("../../../config/environment");
@@ -73,6 +88,7 @@ describe("Environment Configuration", () => {
 
   it("should parse PORT as integer", () => {
     process.env.TWITCH_CLIENT_ID = "test_client_id";
+    process.env.TWITCH_EXTENSION_SECRET = "dGVzdF9leHRlbnNpb25fc2VjcmV0";
     process.env.PORT = "8080";
 
     const { config: testConfig } = require("../../../config/environment");
@@ -83,6 +99,7 @@ describe("Environment Configuration", () => {
 
   it("should handle custom TWITCH_ISSUER", () => {
     process.env.TWITCH_CLIENT_ID = "test_client_id";
+    process.env.TWITCH_EXTENSION_SECRET = "dGVzdF9leHRlbnNpb25fc2VjcmV0";
     process.env.TWITCH_ISSUER = "https://custom.twitch.issuer.com";
 
     const { config: testConfig } = require("../../../config/environment");
@@ -92,6 +109,7 @@ describe("Environment Configuration", () => {
 
   it("should handle custom DB_SERVICE_URL", () => {
     process.env.TWITCH_CLIENT_ID = "test_client_id";
+    process.env.TWITCH_EXTENSION_SECRET = "dGVzdF9leHRlbnNpb25fc2VjcmV0";
     process.env.DB_SERVICE_URL = "https://db-service.example.com";
 
     const { config: testConfig } = require("../../../config/environment");
@@ -101,6 +119,7 @@ describe("Environment Configuration", () => {
 
   it("should set gcp.skipAuth true when NODE_ENV is development", () => {
     process.env.TWITCH_CLIENT_ID = "test_client_id";
+    process.env.TWITCH_EXTENSION_SECRET = "dGVzdF9leHRlbnNpb25fc2VjcmV0";
     process.env.NODE_ENV = "development";
 
     const { config: testConfig } = require("../../../config/environment");
@@ -110,6 +129,7 @@ describe("Environment Configuration", () => {
 
   it("should set gcp.skipAuth false when NODE_ENV is production", () => {
     process.env.TWITCH_CLIENT_ID = "test_client_id";
+    process.env.TWITCH_EXTENSION_SECRET = "dGVzdF9leHRlbnNpb25fc2VjcmV0";
     process.env.NODE_ENV = "production";
 
     const { config: testConfig } = require("../../../config/environment");
@@ -119,6 +139,7 @@ describe("Environment Configuration", () => {
 
   it("should set gcp.skipAuth true when NODE_ENV is unset (defaults to development)", () => {
     process.env.TWITCH_CLIENT_ID = "test_client_id";
+    process.env.TWITCH_EXTENSION_SECRET = "dGVzdF9leHRlbnNpb25fc2VjcmV0";
     delete process.env.NODE_ENV;
 
     const { config: testConfig } = require("../../../config/environment");
@@ -128,6 +149,7 @@ describe("Environment Configuration", () => {
 
   it("should derive gcp.serviceUrl from AUTH_SERVICE_URL", () => {
     process.env.TWITCH_CLIENT_ID = "test_client_id";
+    process.env.TWITCH_EXTENSION_SECRET = "dGVzdF9leHRlbnNpb25fc2VjcmV0";
     process.env.AUTH_SERVICE_URL = "https://user-mgmt.example.com";
 
     const { config: testConfig } = require("../../../config/environment");
@@ -138,10 +160,33 @@ describe("Environment Configuration", () => {
 
   it("should strip trailing slash from AUTH_SERVICE_URL for gcp.serviceUrl", () => {
     process.env.TWITCH_CLIENT_ID = "test_client_id";
+    process.env.TWITCH_EXTENSION_SECRET = "dGVzdF9leHRlbnNpb25fc2VjcmV0";
     process.env.AUTH_SERVICE_URL = "https://user-mgmt.example.com/";
 
     const { config: testConfig } = require("../../../config/environment");
 
     expect(testConfig.gcp.serviceUrl).toBe("https://user-mgmt.example.com");
+  });
+
+  it("should use default BUCKET_MANAGER_URL when not set", () => {
+    process.env.TWITCH_CLIENT_ID = "test_client_id";
+    process.env.TWITCH_EXTENSION_SECRET = "dGVzdF9leHRlbnNpb25fc2VjcmV0";
+    delete process.env.BUCKET_MANAGER_URL;
+
+    const { config: testConfig } = require("../../../config/environment");
+
+    expect(testConfig.bucketManager.url).toBe("http://localhost:3002");
+  });
+
+  it("should handle custom BUCKET_MANAGER_URL", () => {
+    process.env.TWITCH_CLIENT_ID = "test_client_id";
+    process.env.TWITCH_EXTENSION_SECRET = "dGVzdF9leHRlbnNpb25fc2VjcmV0";
+    process.env.BUCKET_MANAGER_URL = "https://bucket-manager.example.com/";
+
+    const { config: testConfig } = require("../../../config/environment");
+
+    expect(testConfig.bucketManager.url).toBe(
+      "https://bucket-manager.example.com",
+    );
   });
 });

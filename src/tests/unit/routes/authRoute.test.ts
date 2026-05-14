@@ -56,4 +56,19 @@ describe("authRoute", () => {
       }),
     );
   });
+
+  it("should have delete-account route that logs when hit", async () => {
+    await request(app)
+      .post("/auth/delete-account")
+      .send({ accessToken: "token", idToken: "id" })
+      .expect(400);
+
+    expect(mockLogger.debug).toHaveBeenCalledWith(
+      "Delete account route hit",
+      expect.objectContaining({
+        method: "POST",
+        path: "/delete-account",
+      }),
+    );
+  });
 });

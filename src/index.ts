@@ -7,7 +7,10 @@ import { logger } from "./utils/logger";
 import { errorHandler, notFoundHandler } from "./middlewares/errorHandler";
 import { securityHeaders, corsValidator } from "./middlewares/security";
 import authRoutes from "./routes/authRoute";
+import apkRoutes from "./routes/apkRoute";
+import channelRoutes from "./routes/channelRoute";
 import tokenRoutes from "./routes/tokenRoute";
+import userRoutes from "./routes/userRoute";
 import { dbGatewayService } from "./services/dbGatewayService";
 
 const app = express();
@@ -21,7 +24,10 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(passport.initialize());
 
 app.use("/auth", authRoutes);
+app.use("/apk", apkRoutes);
+app.use("/channels", channelRoutes);
 app.use("/tokens", tokenRoutes);
+app.use("/users", userRoutes);
 
 app.get("/health", async (req, res, next) => {
   try {

@@ -46,7 +46,7 @@ async function saveOrUpdateUserInDb(
   if (isRecentlyUpdated) {
     return existing;
   }
-  return dbGatewayService.updateUser(userModel.channel.id, userModel);
+  return dbGatewayService.updateUser(userModel.channel.id, userModel, existing);
 }
 
 export const callbackConnexion = async (
@@ -149,5 +149,61 @@ export const callbackConnexion = async (
       stack: error instanceof Error ? error.stack : undefined,
     });
     next(new CustomError("Authentication failed due to internal error", 500));
+  }
+};
+
+export const deleteAccount = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const { user } = req as AuthenticatedRequest;
+
+    if (!user?.userId) {
+      logger.error("Delete account called without authenticated user", {
+        method: req.method,
+        path: req.path,
+      });
+      next(new CustomError("Authentication required", 401));
+      return;
+    }
+
+    if (!user.tokens?.accessToken) {
+      logger.error("Delete account called without access token", {
+        userId: user.userId,
+      });
+      next(new CustomError("Access token required", 401));
+      return;
+    }
+
+    const twitchUser = await fetchTwitchUser(
+      user.tokens.accessToken,
+      config.twitch.clientId,
+    );
+
+    if (twitchUser.id !== user.userId) {
+      logger.warn("Token user mismatch on delete account", {
+        idTokenUserId: user.userId,
+        accessTokenUserId: twitchUser.id,
+      });
+      next(new CustomError("Token does not match user", 403));
+      return;
+    }
+
+    await dbGatewayService.deleteUserAllData(user.userId);
+
+    res.status(204).send();
+  } catch (error) {
+    if (error instanceof CustomError) {
+      next(error);
+      return;
+    }
+
+    logger.error("Unexpected error during account deletion", {
+      error: getErrorMessage(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    next(new CustomError("Account deletion failed", 500));
   }
 };

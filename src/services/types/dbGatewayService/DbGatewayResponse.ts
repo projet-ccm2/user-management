@@ -5,4 +5,5 @@ export interface DbGatewayResponse {
   channelDescription: string | null;
   scope: string | null;
   lastUpdateTimestamp: string;
+  xp: number;
 }
