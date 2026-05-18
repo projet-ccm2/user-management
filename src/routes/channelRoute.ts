@@ -7,6 +7,7 @@ import {
   getModeratedChannels,
 } from "../controllers/channelController";
 import { bffAuthMiddleware } from "../middlewares/bffAuthMiddleware";
+import { twitchAccessTokenAuth } from "../middlewares/twitchAccessTokenAuth";
 import { logger } from "../utils/logger";
 
 const router = Router();
@@ -62,7 +63,7 @@ router.get(
       next(error);
     }
   },
-  bffAuthMiddleware,
+  twitchAccessTokenAuth,
   (req: Request, res: Response, next: NextFunction) => {
     getModeratedChannels(req, res, next).catch(next);
   },
