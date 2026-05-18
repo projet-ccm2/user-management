@@ -1,5 +1,8 @@
 import { Request, Response, NextFunction } from "express";
-import { fetchTwitchUser, type TwitchUser } from "../services/twitchUserService";
+import {
+  fetchTwitchUser,
+  type TwitchUser,
+} from "../services/twitchUserService";
 import { config } from "../config/environment";
 import { CustomError } from "./errorHandler";
 import { logger } from "../utils/logger";
@@ -18,13 +21,18 @@ export const twitchAccessTokenAuth = async (
 
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith("Bearer ")) {
-    return next(new CustomError("Missing or invalid Authorization header", 401));
+    return next(
+      new CustomError("Missing or invalid Authorization header", 401),
+    );
   }
 
   const accessToken = authHeader.slice(7);
 
   try {
-    const twitchUser = await fetchTwitchUser(accessToken, config.twitch.clientId);
+    const twitchUser = await fetchTwitchUser(
+      accessToken,
+      config.twitch.clientId,
+    );
     (req as RequestWithTwitchUser).twitchUser = twitchUser;
     return next();
   } catch (error) {

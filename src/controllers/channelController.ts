@@ -92,10 +92,14 @@ export const getModeratedChannels = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const userId = (req as RequestWithTwitchUser).twitchUser?.id ?? (req.query.userId as string | undefined);
+    const userId =
+      (req as RequestWithTwitchUser).twitchUser?.id ??
+      (req.query.userId as string | undefined);
 
     if (!userId) {
-      next(new CustomError("Validation failed: userId could not be determined", 400));
+      next(
+        new CustomError("Validation failed: Field 'userId' is required", 400),
+      );
       return;
     }
 
