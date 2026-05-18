@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import type { TwitchPassportUser } from "../strategies/twitchTokenStrategy";
+import type { RequestWithTwitchUser } from "../middlewares/twitchAccessTokenAuth";
 import { dbGatewayService } from "../services/dbGatewayService";
 import { CustomError } from "../middlewares/errorHandler";
 
@@ -91,9 +92,11 @@ export const getModeratedChannels = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const { userId } = req.query;
+    const userId =
+      (req as RequestWithTwitchUser).twitchUser?.id ??
+      (req.query.userId as string | undefined);
 
-    if (!userId || typeof userId !== "string") {
+    if (!userId) {
       next(
         new CustomError("Validation failed: Field 'userId' is required", 400),
       );
