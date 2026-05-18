@@ -42,6 +42,7 @@ export const twitchAccessTokenAuth = async (
       );
     }
 
+    /* eslint-disable camelcase */
     const twitchUser: TwitchUser = {
       id: userId,
       login:
@@ -60,6 +61,7 @@ export const twitchAccessTokenAuth = async (
       offline_image_url: "",
       created_at: "",
     };
+    /* eslint-enable camelcase */
 
     (req as RequestWithTwitchUser).twitchUser = twitchUser;
     return next();

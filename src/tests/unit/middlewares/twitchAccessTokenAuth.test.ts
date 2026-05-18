@@ -13,7 +13,10 @@ jest.mock("../../../utils/logger", () => ({
 jest.mock("../../../config/environment", () => ({
   config: {
     gcp: { skipAuth: false },
-    twitch: { clientId: "test-client-id", issuer: "https://id.twitch.tv/oauth2" },
+    twitch: {
+      clientId: "test-client-id",
+      issuer: "https://id.twitch.tv/oauth2",
+    },
   },
 }));
 
@@ -75,10 +78,12 @@ describe("twitchAccessTokenAuth", () => {
   });
 
   it("should attach twitchUser to req and call next on valid token", async () => {
+    /* eslint-disable camelcase */
     mockValidate.mockReturnValueOnce({
       userId: "12345",
       claims: { sub: "12345", preferred_username: "testuser", picture: "" },
     });
+    /* eslint-enable camelcase */
 
     const req = {
       headers: { authorization: "Bearer valid-id-token" },
@@ -86,10 +91,10 @@ describe("twitchAccessTokenAuth", () => {
 
     await twitchAccessTokenAuth(req, mockRes, mockNext);
 
-    expect(mockValidate).toHaveBeenCalledWith(
-      expect.any(TwitchAuthInfo),
-      { clientId: "test-client-id", issuer: "https://id.twitch.tv/oauth2" },
-    );
+    expect(mockValidate).toHaveBeenCalledWith(expect.any(TwitchAuthInfo), {
+      clientId: "test-client-id",
+      issuer: "https://id.twitch.tv/oauth2",
+    });
     expect((req as any).twitchUser).toEqual(
       expect.objectContaining({ id: "12345", login: "testuser" }),
     );
@@ -117,7 +122,10 @@ describe("twitchAccessTokenAuth", () => {
   });
 
   it("should propagate CustomError from validateAndParseTwitchTokens", async () => {
-    const customError = new CustomError("Invalid audience (aud) in id_token", 401);
+    const customError = new CustomError(
+      "Invalid audience (aud) in id_token",
+      401,
+    );
     mockValidate.mockImplementationOnce(() => {
       throw customError;
     });
