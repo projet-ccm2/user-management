@@ -1,36 +1,28 @@
 import { Request, Response } from "express";
 import { twitchAccessTokenAuth } from "../../../middlewares/twitchAccessTokenAuth";
-import { fetchTwitchUser } from "../../../services/twitchUserService";
+import {
+  validateAndParseTwitchTokens,
+  TwitchAuthInfo,
+} from "../../../services/twitchAuthService";
 import { CustomError } from "../../../middlewares/errorHandler";
 
-jest.mock("../../../services/twitchUserService");
+jest.mock("../../../services/twitchAuthService");
 jest.mock("../../../utils/logger", () => ({
   logger: { debug: jest.fn(), warn: jest.fn() },
 }));
 jest.mock("../../../config/environment", () => ({
   config: {
     gcp: { skipAuth: false },
-    twitch: { clientId: "test-client-id" },
+    twitch: {
+      clientId: "test-client-id",
+      issuer: "https://id.twitch.tv/oauth2",
+    },
   },
 }));
 
-const mockFetchTwitchUser = fetchTwitchUser as jest.MockedFunction<
-  typeof fetchTwitchUser
+const mockValidate = validateAndParseTwitchTokens as jest.MockedFunction<
+  typeof validateAndParseTwitchTokens
 >;
-
-/* eslint-disable camelcase */
-const mockTwitchUser = {
-  id: "12345",
-  login: "testuser",
-  display_name: "TestUser",
-  type: "",
-  broadcaster_type: "",
-  description: "",
-  profile_image_url: "",
-  offline_image_url: "",
-  created_at: "2020-01-01T00:00:00Z",
-};
-/* eslint-enable camelcase */
 
 const mockNext = jest.fn();
 const mockRes = {} as Response;
@@ -54,7 +46,7 @@ describe("twitchAccessTokenAuth", () => {
     await twitchAccessTokenAuth(req, mockRes, mockNext);
 
     expect(mockNext).toHaveBeenCalledWith();
-    expect(mockFetchTwitchUser).not.toHaveBeenCalled();
+    expect(mockValidate).not.toHaveBeenCalled();
   });
 
   it("should call next with 401 when Authorization header is missing", async () => {
@@ -68,7 +60,7 @@ describe("twitchAccessTokenAuth", () => {
         message: "Missing or invalid Authorization header",
       }),
     );
-    expect(mockFetchTwitchUser).not.toHaveBeenCalled();
+    expect(mockValidate).not.toHaveBeenCalled();
   });
 
   it("should call next with 401 when Authorization header does not start with Bearer", async () => {
@@ -82,36 +74,79 @@ describe("twitchAccessTokenAuth", () => {
         message: "Missing or invalid Authorization header",
       }),
     );
-    expect(mockFetchTwitchUser).not.toHaveBeenCalled();
+    expect(mockValidate).not.toHaveBeenCalled();
   });
 
   it("should attach twitchUser to req and call next on valid token", async () => {
-    mockFetchTwitchUser.mockResolvedValueOnce(mockTwitchUser);
-    const req = { headers: { authorization: "Bearer valid-token" } } as Request;
+    /* eslint-disable camelcase */
+    mockValidate.mockReturnValueOnce({
+      userId: "12345",
+      claims: { sub: "12345", preferred_username: "testuser", picture: "" },
+    });
+    /* eslint-enable camelcase */
+
+    const req = {
+      headers: { authorization: "Bearer valid-id-token" },
+    } as Request;
 
     await twitchAccessTokenAuth(req, mockRes, mockNext);
 
-    expect(mockFetchTwitchUser).toHaveBeenCalledWith(
-      "valid-token",
-      "test-client-id",
+    expect(mockValidate).toHaveBeenCalledWith(expect.any(TwitchAuthInfo), {
+      clientId: "test-client-id",
+      issuer: "https://id.twitch.tv/oauth2",
+    });
+    expect((req as any).twitchUser).toEqual(
+      expect.objectContaining({ id: "12345", login: "testuser" }),
     );
-    expect((req as any).twitchUser).toEqual(mockTwitchUser);
     expect(mockNext).toHaveBeenCalledWith();
   });
 
-  it("should propagate CustomError from fetchTwitchUser", async () => {
-    const customError = new CustomError("Failed to connect to Twitch API", 502);
-    mockFetchTwitchUser.mockRejectedValueOnce(customError);
-    const req = { headers: { authorization: "Bearer bad-token" } } as Request;
+  it("should call next with 401 when userId is missing from claims", async () => {
+    mockValidate.mockReturnValueOnce({
+      userId: undefined,
+      claims: {},
+    });
+
+    const req = {
+      headers: { authorization: "Bearer valid-id-token" },
+    } as Request;
+
+    await twitchAccessTokenAuth(req, mockRes, mockNext);
+
+    expect(mockNext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        statusCode: 401,
+        message: "Unauthorized: missing user ID in token",
+      }),
+    );
+  });
+
+  it("should propagate CustomError from validateAndParseTwitchTokens", async () => {
+    const customError = new CustomError(
+      "Invalid audience (aud) in id_token",
+      401,
+    );
+    mockValidate.mockImplementationOnce(() => {
+      throw customError;
+    });
+
+    const req = {
+      headers: { authorization: "Bearer bad-token" },
+    } as Request;
 
     await twitchAccessTokenAuth(req, mockRes, mockNext);
 
     expect(mockNext).toHaveBeenCalledWith(customError);
   });
 
-  it("should call next with 401 on unexpected Error from fetchTwitchUser", async () => {
-    mockFetchTwitchUser.mockRejectedValueOnce(new Error("Network error"));
-    const req = { headers: { authorization: "Bearer bad-token" } } as Request;
+  it("should call next with 401 on unexpected Error from validateAndParseTwitchTokens", async () => {
+    mockValidate.mockImplementationOnce(() => {
+      throw new Error("Decode error");
+    });
+
+    const req = {
+      headers: { authorization: "Bearer bad-token" },
+    } as Request;
 
     await twitchAccessTokenAuth(req, mockRes, mockNext);
 
@@ -123,9 +158,14 @@ describe("twitchAccessTokenAuth", () => {
     );
   });
 
-  it("should call next with 401 on non-Error rejection from fetchTwitchUser", async () => {
-    mockFetchTwitchUser.mockRejectedValueOnce("unexpected string error");
-    const req = { headers: { authorization: "Bearer bad-token" } } as Request;
+  it("should call next with 401 on non-Error rejection from validateAndParseTwitchTokens", async () => {
+    mockValidate.mockImplementationOnce(() => {
+      throw "unexpected string error";
+    });
+
+    const req = {
+      headers: { authorization: "Bearer bad-token" },
+    } as Request;
 
     await twitchAccessTokenAuth(req, mockRes, mockNext);
 

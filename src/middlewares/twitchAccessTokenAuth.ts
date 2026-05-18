@@ -1,8 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import {
-  fetchTwitchUser,
-  type TwitchUser,
-} from "../services/twitchUserService";
+  validateAndParseTwitchTokens,
+  TwitchAuthInfo,
+} from "../services/twitchAuthService";
+import type { TwitchUser } from "../services/twitchUserService";
 import { config } from "../config/environment";
 import { CustomError } from "./errorHandler";
 import { logger } from "../utils/logger";
@@ -26,18 +27,47 @@ export const twitchAccessTokenAuth = async (
     );
   }
 
-  const accessToken = authHeader.slice(7);
+  const idToken = authHeader.slice(7);
 
   try {
-    const twitchUser = await fetchTwitchUser(
-      accessToken,
-      config.twitch.clientId,
-    );
+    const info = new TwitchAuthInfo({ accessToken: "", idToken });
+    const { userId, claims } = validateAndParseTwitchTokens(info, {
+      clientId: config.twitch.clientId,
+      issuer: config.twitch.issuer,
+    });
+
+    if (!userId) {
+      return next(
+        new CustomError("Unauthorized: missing user ID in token", 401),
+      );
+    }
+
+    /* eslint-disable camelcase */
+    const twitchUser: TwitchUser = {
+      id: userId,
+      login:
+        typeof claims.preferred_username === "string"
+          ? claims.preferred_username
+          : "",
+      display_name:
+        typeof claims.preferred_username === "string"
+          ? claims.preferred_username
+          : "",
+      type: "",
+      broadcaster_type: "",
+      description: "",
+      profile_image_url:
+        typeof claims.picture === "string" ? claims.picture : "",
+      offline_image_url: "",
+      created_at: "",
+    };
+    /* eslint-enable camelcase */
+
     (req as RequestWithTwitchUser).twitchUser = twitchUser;
     return next();
   } catch (error) {
     if (error instanceof CustomError) return next(error);
-    logger.warn("Twitch access token validation failed", {
+    logger.warn("Twitch id token validation failed", {
       error: error instanceof Error ? error.message : "Unknown",
     });
     return next(new CustomError("Unauthorized: invalid Twitch token", 401));
