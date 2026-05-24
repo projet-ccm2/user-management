@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from "express";
-import { bffAuthMiddleware } from "../middlewares/bffAuthMiddleware";
+import { twitchAccessTokenAuth } from "../middlewares/twitchAccessTokenAuth";
 import { getApkDownloadUrl } from "../controllers/apkController";
 import { logger } from "../utils/logger";
 
@@ -18,7 +18,7 @@ router.get(
       next(error);
     }
   },
-  bffAuthMiddleware,
+  twitchAccessTokenAuth,
   (req: Request, res: Response, next: NextFunction) => {
     getApkDownloadUrl(req, res, next).catch(next);
   },

@@ -6,7 +6,6 @@ import {
   registerDiscordWebhook,
   getModeratedChannels,
 } from "../controllers/channelController";
-import { bffAuthMiddleware } from "../middlewares/bffAuthMiddleware";
 import { twitchAccessTokenAuth } from "../middlewares/twitchAccessTokenAuth";
 import { logger } from "../utils/logger";
 
@@ -44,7 +43,7 @@ router.put(
       next(error);
     }
   },
-  bffAuthMiddleware,
+  twitchAccessTokenAuth,
   (req: Request, res: Response, next: NextFunction) => {
     registerDiscordWebhook(req, res, next).catch(next);
   },
